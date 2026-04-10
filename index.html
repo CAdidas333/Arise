@@ -29,6 +29,12 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     z-index: 100; background: #08080f;
   }
+  @media (max-width: 768px) {
+    #title-screen h1 { font-size: 60px !important; letter-spacing: 15px !important; }
+    .sys-panels { grid-template-columns: 1fr !important; padding: 10px 15px !important; }
+    .hud-skills { bottom: 100px !important; }
+    .hud-bar { width: 180px !important; }
+  }
   #title-screen h1 {
     font-family: 'Orbitron', monospace; font-size: 120px; font-weight: 900;
     letter-spacing: 30px; color: #00d4ff;
@@ -241,6 +247,28 @@
   }
   #death-overlay h2 { font-family: 'Orbitron', monospace; font-size: 48px; letter-spacing: 10px; color: #ff4444; text-shadow: 0 0 40px rgba(255,68,68,0.6); margin-bottom: 20px; }
   #death-overlay p { color: rgba(255,100,100,0.6); font-size: 16px; letter-spacing: 3px; margin-bottom: 40px; }
+
+  /* ===== MOBILE TOUCH CONTROLS ===== */
+  #touch-controls { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 15; pointer-events: none; }
+  #touch-controls * { pointer-events: auto; }
+  .touch-joystick-zone { position: absolute; bottom: 30px; left: 20px; width: 150px; height: 150px; }
+  .touch-joystick-base { width: 120px; height: 120px; border-radius: 50%; background: rgba(0,212,255,0.08); border: 2px solid rgba(0,212,255,0.15); position: absolute; bottom: 15px; left: 15px; }
+  .touch-joystick-thumb { width: 50px; height: 50px; border-radius: 50%; background: rgba(0,212,255,0.25); border: 2px solid rgba(0,212,255,0.4); position: absolute; bottom: 50px; left: 50px; transform: translate(-50%,-50%); transition: none; }
+  .touch-btn-zone { position: absolute; bottom: 30px; right: 20px; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .touch-btn {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(0,15,30,0.7); border: 2px solid rgba(0,212,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: rgba(0,212,255,0.6);
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .touch-btn:active { background: rgba(0,212,255,0.2); border-color: rgba(0,212,255,0.6); }
+  .touch-btn.attack { width: 80px; height: 80px; font-size: 30px; border-color: rgba(255,100,68,0.4); }
+  .touch-btn.attack:active { background: rgba(255,100,68,0.2); }
+  .touch-btn-row { display: flex; gap: 10px; }
+  .touch-btn .btn-label { font-family: 'Orbitron',monospace; font-size: 8px; letter-spacing: 1px; position: absolute; bottom: -14px; color: rgba(0,212,255,0.3); }
+  .touch-btn-sm { width: 52px; height: 52px; font-size: 18px; }
+  .touch-dodge { position: absolute; bottom: 100px; right: 100px; width: 56px; height: 56px; }
 </style>
 </head>
 <body>
@@ -288,6 +316,26 @@
   </div>
   <div class="hud-skills" id="hud-skills"></div>
   <div class="hud-bottom-right"><div id="hud-gate-name">E-RANK GATE</div></div>
+</div>
+
+<div id="touch-controls">
+  <div class="touch-joystick-zone" id="joystick-zone">
+    <div class="touch-joystick-base" id="joystick-base">
+      <div class="touch-joystick-thumb" id="joystick-thumb"></div>
+    </div>
+  </div>
+  <div class="touch-btn-zone">
+    <div class="touch-btn-row">
+      <div class="touch-btn touch-btn-sm" id="tbtn-2">💨</div>
+      <div class="touch-btn touch-btn-sm" id="tbtn-3">🗡️</div>
+    </div>
+    <div class="touch-btn-row">
+      <div class="touch-btn touch-btn-sm" id="tbtn-4">👑</div>
+      <div class="touch-btn touch-btn-sm" id="tbtn-5">☠️</div>
+    </div>
+    <div class="touch-btn attack" id="tbtn-attack">⚔️</div>
+    <div class="touch-btn touch-dodge" id="tbtn-dodge" style="position:relative;bottom:auto;right:auto">🏃</div>
+  </div>
 </div>
 
 <div id="toast-container"></div>
@@ -523,82 +571,94 @@ function playSfx(type) {
   }
 }
 
-// --- BATTLE MUSIC (procedural loop) ---
-const MUSIC_BPM = 140;
+// --- EPIC BATTLE MUSIC (dark orchestral war drums + pads) ---
+const MUSIC_BPM = 100; // slower, heavier
 const BEAT_DUR = 60 / MUSIC_BPM;
 let musicStep = 0;
+let padOscs = []; // sustained drone pads
 
-// A minor pentatonic: A2=110, C3=131, D3=147, E3=165, G3=196, A3=220
-const bassLine = [110,110,131,131, 110,110,147,131, 110,110,165,165, 196,165,147,131];
-const melodyLine = [440,0,523,0, 440,0,392,0, 523,0,587,0, 659,523,440,0,
-                    440,0,523,0, 659,0,784,0, 659,0,523,0, 440,392,440,0];
+// D minor: D2=73.4, F2=87.3, A2=110, D3=146.8, F3=174.6
+const warBass = [73.4,0,73.4,0, 87.3,0,87.3,0, 73.4,0,73.4,65.4, 87.3,0,110,0];
 
 function startMusic() {
   if (!audioCtx || musicPlaying) return;
-  musicPlaying = true;
-  musicStep = 0;
+  musicPlaying = true; musicStep = 0;
+
+  // Sustained dark drone pad (continuous)
+  [73.4, 110, 146.8].forEach((freq,i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sawtooth'; o.frequency.value = freq;
+    const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value = 200;
+    g.gain.value = 0.04;
+    o.connect(f); f.connect(g); g.connect(musicGain); o.start();
+    padOscs.push({o,g,f});
+  });
 
   musicInterval = setInterval(() => {
     if (!audioCtx || !musicPlaying) return;
     const t = audioCtx.currentTime;
-    const step16 = musicStep % 16;
-    const step32 = musicStep % 32;
+    const s16 = musicStep % 16;
 
-    // Kick drum (beats 0, 4, 8, 12)
-    if (step16 % 4 === 0) {
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type = 'sine'; o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(30,t+0.12);
-      g.gain.setValueAtTime(0.35,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
-      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.15);
+    // WAR DRUM — deep boom (beats 0, 4, 8, 12)
+    if (s16 % 4 === 0) {
+      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(25,t+0.4);
+      g.gain.setValueAtTime(0.4,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.5);
+      // Impact layer
+      const o2 = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
+      o2.type = 'triangle'; o2.frequency.setValueAtTime(55,t); o2.frequency.exponentialRampToValueAtTime(20,t+0.3);
+      g2.gain.setValueAtTime(0.25,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      o2.connect(g2); g2.connect(musicGain); o2.start(t); o2.stop(t+0.35);
     }
 
-    // Snare (beats 4, 12)
-    if (step16 % 8 === 4) {
-      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.08, audioCtx.sampleRate);
-      const data = buf.getChannelData(0);
-      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length);
-      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
-      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.15,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
-      const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=2000;
-      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.08);
+    // Secondary drum hit (off-beats: 2, 6, 10, 14)
+    if (s16 % 4 === 2) {
+      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(60,t); o.frequency.exponentialRampToValueAtTime(30,t+0.2);
+      g.gain.setValueAtTime(0.18,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.25);
     }
 
-    // Hi-hat (every other step)
-    if (step16 % 2 === 0) {
-      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.03, audioCtx.sampleRate);
-      const data = buf.getChannelData(0);
-      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length)*0.5;
-      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
-      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.03);
-      const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=6000;
-      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.03);
+    // Timpani accent (beat 0 of every other bar)
+    if (musicStep % 32 === 0) {
+      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(40,t+0.6);
+      g.gain.setValueAtTime(0.35,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.7);
     }
 
-    // Bass (every beat)
-    if (step16 % 1 === 0) {
-      const freq = bassLine[step16];
-      if (freq > 0) {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+    // Dark string stab (every 4 beats, minor chord)
+    if (s16 % 4 === 0) {
+      const chordNotes = s16 < 8 ? [146.8, 174.6, 220] : [130.8, 164.8, 196]; // Dm, Cm
+      chordNotes.forEach(freq => {
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
         o.type = 'sawtooth'; o.frequency.value = freq;
-        const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=300;
-        g.gain.setValueAtTime(0.12,t); g.gain.setValueAtTime(0.12,t+BEAT_DUR*0.7); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*0.95);
-        o.connect(f); f.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR);
-      }
+        const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.setValueAtTime(800,t); f.frequency.exponentialRampToValueAtTime(200,t+BEAT_DUR*3);
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.04,t+0.05); g.gain.setValueAtTime(0.04,t+BEAT_DUR*2); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*3.5);
+        o.connect(f); f.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR*4);
+      });
     }
 
-    // Melody (synth lead)
-    const mFreq = melodyLine[step32];
-    if (mFreq > 0) {
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type = 'square';
-      o.frequency.value = mFreq;
-      const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=1500;
-      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.06,t+0.01);
-      g.gain.setValueAtTime(0.06,t+BEAT_DUR*0.6); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*0.9);
-      o.connect(f); f.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR);
+    // Sub bass pulse
+    const bFreq = warBass[s16];
+    if (bFreq > 0) {
+      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = bFreq;
+      g.gain.setValueAtTime(0.12,t); g.gain.setValueAtTime(0.12,t+BEAT_DUR*0.6); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*0.9);
+      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR);
+    }
+
+    // Subtle metallic shimmer (every 8 beats)
+    if (s16 % 8 === 0) {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.3, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length)*0.15;
+      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.03,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+      const f = audioCtx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=4000; f.Q.value=2;
+      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.3);
     }
 
     musicStep++;
@@ -608,6 +668,8 @@ function startMusic() {
 function stopMusic() {
   musicPlaying = false;
   if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
+  padOscs.forEach(p => { try{p.g.gain.setValueAtTime(0,audioCtx.currentTime);p.o.stop();}catch(e){} });
+  padOscs = [];
 }
 
 // ================================================================
@@ -628,6 +690,99 @@ addEventListener('mousedown', () => { mouse.down = true; onClick(); });
 addEventListener('mouseup', () => { mouse.down = false; });
 addEventListener('contextmenu', e => e.preventDefault());
 
+// --- MOBILE TOUCH CONTROLS ---
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && window.innerWidth < 1024);
+let touchJoystick = { active:false, dx:0, dy:0 };
+
+if (isMobile) {
+  document.body.style.cursor = 'default';
+  document.getElementById('touch-controls').style.display = 'block';
+
+  // Prevent scrolling/zooming
+  document.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
+
+  // Joystick
+  const jZone = document.getElementById('joystick-zone');
+  const jThumb = document.getElementById('joystick-thumb');
+  const jBase = document.getElementById('joystick-base');
+  let jCenter = { x:0, y:0 }, jTouchId = null;
+
+  jZone.addEventListener('touchstart', e => {
+    e.preventDefault(); initAudio();
+    const touch = e.changedTouches[0];
+    const rect = jBase.getBoundingClientRect();
+    jCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+    jTouchId = touch.identifier;
+  });
+
+  document.addEventListener('touchmove', e => {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === jTouchId) {
+        const dx = touch.clientX - jCenter.x;
+        const dy = touch.clientY - jCenter.y;
+        const dist = Math.hypot(dx, dy);
+        const maxR = 45;
+        const clampD = Math.min(dist, maxR);
+        const nx = dist > 0 ? dx/dist : 0;
+        const ny = dist > 0 ? dy/dist : 0;
+        jThumb.style.left = (60 + nx*clampD) + 'px';
+        jThumb.style.bottom = (60 - ny*clampD) + 'px';
+        touchJoystick.active = true;
+        touchJoystick.dx = nx * (clampD/maxR);
+        touchJoystick.dy = ny * (clampD/maxR);
+        // Also set facing direction
+        if (player && dist > 10) player.facing = { x:nx, y:ny };
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', e => {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === jTouchId) {
+        jTouchId = null;
+        touchJoystick.active = false;
+        touchJoystick.dx = 0; touchJoystick.dy = 0;
+        jThumb.style.left = '50px'; jThumb.style.bottom = '50px';
+      }
+    }
+  });
+
+  // Touch buttons
+  const btnMap = { 'tbtn-attack':'1', 'tbtn-2':'2', 'tbtn-3':'3', 'tbtn-4':'4', 'tbtn-5':'5', 'tbtn-dodge':'dodge' };
+  Object.entries(btnMap).forEach(([id, action]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('touchstart', e => {
+      e.preventDefault(); initAudio();
+      if (gameState !== 'DUNGEON' || !player) return;
+      if (action === 'dodge') {
+        // Dash in facing direction
+        if (player.invTimer <= 0) {
+          player.x += player.facing.x*90; player.y += player.facing.y*90;
+          player.x=clamp(player.x,-arenaW/2,arenaW/2); player.y=clamp(player.y,-arenaH/2,arenaH/2);
+          player.invTimer=0.25; player.animState='dash';
+          for(let i=0;i<8;i++) spawnParticle(player.x,player.y,COLORS.primary,{vx:rand(-1,1),vy:rand(-1,1),size:rand(2,4),glow:true,decay:0.05});
+        }
+      } else {
+        const si = parseInt(action) - 1;
+        if (SKILL_DEFS[si] && player.level >= SKILL_DEFS[si].unlockLevel) useSkill(SKILL_DEFS[si]);
+      }
+    });
+  });
+
+  // Auto-attack on attack button hold
+  let attackHoldInterval = null;
+  const atkBtn = document.getElementById('tbtn-attack');
+  atkBtn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    attackHoldInterval = setInterval(() => {
+      if (gameState==='DUNGEON' && player) useSkill(SKILL_DEFS[0]);
+    }, 350);
+  });
+  atkBtn.addEventListener('touchend', () => { clearInterval(attackHoldInterval); });
+  atkBtn.addEventListener('touchcancel', () => { clearInterval(attackHoldInterval); });
+}
+
 // ================================================================
 //  GAME STATE
 // ================================================================
@@ -645,7 +800,7 @@ let lastPlayerAttackTime = 0; // tracks when player last attacked
 let legionTimer = 0; // "Arise: Legion" active duration
 const SHADOW_IDLE_TIMEOUT = 3; // seconds before shadows disengage without player attacking
 const LEGION_DURATION = 12; // seconds of shadow berserk mode
-const arenaW = 1400, arenaH = 1000; // bigger arena for boss hunt
+let arenaW = 1400, arenaH = 1000; // expands during boss hunt
 let lastMovePos = { x:0, y:0 }; // track if player is standing still
 let lastMoveTime = 0; // when player last moved significantly
 const STATIONARY_TIMEOUT = 10; // seconds standing still = shadows disengage
@@ -1163,6 +1318,7 @@ function updateShadows(dt) {
 //  DUNGEON SYSTEM
 // ================================================================
 function startDungeon(gateDef) {
+  arenaW = 1400; arenaH = 1000; // reset to normal, expands for boss
   dungeon = { gate:gateDef, wave:1, maxWaves:gateDef.waves, enemiesRemaining:0, bossSpawned:false, cleared:false, bossRef:null, waveTransition:false };
   entities=[]; projectiles=[]; player.x=0; player.y=0;
   player.hp=player.maxHp; player.mp=player.maxMp;
@@ -1187,9 +1343,11 @@ function startDungeon(gateDef) {
 function spawnWave() {
   if (dungeon.wave > dungeon.maxWaves) return;
   if (dungeon.wave === dungeon.maxWaves) {
+    // Expand arena for boss hunt
+    arenaW = 3000; arenaH = 2200;
     // Boss spawns far away — player must hunt it down
     const bossAngle = rand(0, Math.PI * 2);
-    const bossDist = rand(500, 650);
+    const bossDist = rand(1000, 1300);
     const bx = Math.cos(bossAngle) * bossDist;
     const by = Math.sin(bossAngle) * bossDist;
     const b = spawnEnemy(dungeon.gate.boss, clamp(bx,-arenaW/2+60,arenaW/2-60), clamp(by,-arenaH/2+60,arenaH/2-60), true);
@@ -1455,10 +1613,38 @@ window.autoAssign = function() {
   renderSystemMenu(); saveGame();
   toast('STAT POINTS AUTO-ASSIGNED', 'blue', 2000);
 };
-// Dev mode: press ` (backtick) to gain 5 levels instantly
+// Dev mode: ` = +5 levels, ~ (Shift+`) = -5 levels
 window.devBoost = function() {
   for (let i=0;i<5;i++) playerGainXp(player.xpToNext - player.xp);
-  toast('DEV MODE: +5 LEVELS', 'gold', 1500);
+  toast('DEV: +5 LEVELS → LV.' + player.level, 'gold', 1500);
+  saveGame();
+};
+window.devDown = function() {
+  if (player.level <= 1) return;
+  const newLevel = Math.max(1, player.level - 5);
+  // Remove stat points that were gained from those levels
+  const pointsToRemove = (player.level - newLevel) * 5;
+  player.level = newLevel;
+  player.xp = 0;
+  player.xpToNext = 100;
+  for (let i = 1; i < newLevel; i++) player.xpToNext = Math.floor(player.xpToNext * 1.4);
+  // Reduce stats proportionally
+  player.statPoints = Math.max(0, player.statPoints - pointsToRemove);
+  const excess = pointsToRemove - player.statPoints;
+  if (excess > 0) {
+    const statKeys = ['STR','AGI','INT','VIT','PER'];
+    for (let i = 0; i < excess && i < 100; i++) {
+      // Remove from highest stat
+      let maxStat = statKeys[0], maxVal = 0;
+      statKeys.forEach(k => { if (player.stats[k] > maxVal) { maxVal=player.stats[k]; maxStat=k; } });
+      if (player.stats[maxStat] > 5) player.stats[maxStat]--;
+    }
+  }
+  // Recalc rank
+  player.rank = 'E';
+  for (let i = RANKS.length-1; i >= 0; i--) { if (player.level >= RANK_LEVELS[i]) { player.rank=RANKS[i]; break; } }
+  recalcPlayer(player); player.hp = player.maxHp; player.mp = player.maxMp;
+  toast('DEV: -5 LEVELS → LV.' + player.level, 'red', 1500);
   saveGame();
 };
 window.enterGate = function(id) {
@@ -1512,7 +1698,8 @@ function onKey(key, e) {
         for (let i=0;i<8;i++) spawnParticle(player.x-fx*rand(0,70),player.y-fy*rand(0,70),COLORS.primary,{vx:rand(-1,1),vy:rand(-1,1),size:rand(2,4),glow:true,decay:0.05});
       }
     }
-    if (key === '`' || key === '~') { window.devBoost(); return; }
+    if (key === '~') { window.devDown(); return; } // Shift+` = level down
+    if (key === '`') { window.devBoost(); return; } // ` = level up
     const si = ['1','2','3','4','5'].indexOf(key);
     if (si >= 0 && SKILL_DEFS[si] && player.level >= SKILL_DEFS[si].unlockLevel) {
       // Legion requires at least 1 shadow
@@ -1907,12 +2094,14 @@ function update(dt) {
   gameTime += dt;
   if (gameState !== 'DUNGEON' || !player) return;
 
-  // Movement
+  // Movement (keyboard + touch joystick)
   let dx=0, dy=0;
   if (keys['w']||keys['arrowup']) dy-=1;
   if (keys['s']||keys['arrowdown']) dy+=1;
   if (keys['a']||keys['arrowleft']) dx-=1;
   if (keys['d']||keys['arrowright']) dx+=1;
+  // Mobile joystick input
+  if (touchJoystick.active) { dx += touchJoystick.dx; dy += touchJoystick.dy; }
 
   if (dx||dy) {
     const len = Math.hypot(dx,dy); dx/=len; dy/=len;
