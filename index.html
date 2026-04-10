@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="screen-orientation" content="landscape">
 <title>ARISE — Solo Leveling RPG</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
@@ -254,24 +255,58 @@
   /* ===== MOBILE TOUCH CONTROLS ===== */
   #touch-controls { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 15; pointer-events: none; }
   #touch-controls * { pointer-events: auto; }
-  .touch-joystick-zone { position: absolute; bottom: 30px; left: 20px; width: 150px; height: 150px; }
-  .touch-joystick-base { width: 120px; height: 120px; border-radius: 50%; background: rgba(0,212,255,0.08); border: 2px solid rgba(0,212,255,0.15); position: absolute; bottom: 15px; left: 15px; }
-  .touch-joystick-thumb { width: 50px; height: 50px; border-radius: 50%; background: rgba(0,212,255,0.25); border: 2px solid rgba(0,212,255,0.4); position: absolute; bottom: 50px; left: 50px; transform: translate(-50%,-50%); transition: none; }
-  .touch-btn-zone { position: absolute; bottom: 30px; right: 20px; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .touch-joystick-zone { position: absolute; bottom: 20px; left: 15px; width: 140px; height: 140px; }
+  .touch-joystick-base { width: 110px; height: 110px; border-radius: 50%; background: rgba(0,212,255,0.08); border: 2px solid rgba(0,212,255,0.15); position: absolute; bottom: 15px; left: 15px; }
+  .touch-joystick-thumb { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,212,255,0.25); border: 2px solid rgba(0,212,255,0.4); position: absolute; bottom: 47px; left: 47px; transform: translate(-50%,-50%); transition: none; }
+  .touch-btn-zone { position: absolute; bottom: 20px; right: 15px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
   .touch-btn {
-    width: 64px; height: 64px; border-radius: 50%;
+    width: 54px; height: 54px; border-radius: 50%;
     background: rgba(0,15,30,0.7); border: 2px solid rgba(0,212,255,0.3);
     display: flex; align-items: center; justify-content: center;
-    font-size: 24px; color: rgba(0,212,255,0.6);
+    font-size: 20px; color: rgba(0,212,255,0.6);
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
   .touch-btn:active { background: rgba(0,212,255,0.2); border-color: rgba(0,212,255,0.6); }
-  .touch-btn.attack { width: 80px; height: 80px; font-size: 30px; border-color: rgba(255,100,68,0.4); }
+  .touch-btn.attack { width: 70px; height: 70px; font-size: 28px; border-color: rgba(255,100,68,0.4); }
   .touch-btn.attack:active { background: rgba(255,100,68,0.2); }
-  .touch-btn-row { display: flex; gap: 10px; }
-  .touch-btn .btn-label { font-family: 'Orbitron',monospace; font-size: 8px; letter-spacing: 1px; position: absolute; bottom: -14px; color: rgba(0,212,255,0.3); }
-  .touch-btn-sm { width: 52px; height: 52px; font-size: 18px; }
-  .touch-dodge { position: absolute; bottom: 100px; right: 100px; width: 56px; height: 56px; }
+  .touch-btn-row { display: flex; gap: 8px; }
+  .touch-btn-sm { width: 46px; height: 46px; font-size: 16px; }
+
+  /* Landscape mobile: compact everything */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .touch-joystick-zone { bottom: 10px; left: 10px; width: 120px; height: 120px; }
+    .touch-joystick-base { width: 90px; height: 90px; bottom: 15px; left: 15px; }
+    .touch-joystick-thumb { width: 38px; height: 38px; bottom: 40px; left: 40px; }
+    .touch-btn-zone { bottom: 10px; right: 10px; gap: 6px; }
+    .touch-btn { width: 44px; height: 44px; font-size: 16px; }
+    .touch-btn.attack { width: 56px; height: 56px; font-size: 22px; }
+    .touch-btn-sm { width: 38px; height: 38px; font-size: 14px; }
+    .touch-btn-row { gap: 6px; }
+    .hud-top-left { transform: scale(0.8); transform-origin: top left; }
+    .hud-skills { display: none !important; }
+    .boss-bar-wrap { width: 300px !important; bottom: 70px !important; }
+  }
+
+  /* Portrait: stack controls vertically with more space */
+  @media (orientation: portrait) and (max-width: 768px) {
+    .touch-joystick-zone { bottom: 30px; left: 20px; }
+    .touch-btn-zone { bottom: 30px; right: 15px; }
+    .touch-btn.attack { width: 66px; height: 66px; }
+  }
+
+  /* Rotate prompt for portrait */
+  #rotate-prompt {
+    display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(4,4,10,0.95); z-index: 200;
+    flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Orbitron',monospace; color: rgba(0,212,255,0.6);
+    font-size: 14px; letter-spacing: 4px; text-align: center; padding: 40px;
+  }
+  #rotate-prompt .rotate-icon { font-size: 48px; margin-bottom: 20px; }
+  #rotate-prompt .rotate-dismiss {
+    margin-top: 30px; font-size: 11px; letter-spacing: 3px;
+    color: rgba(255,255,255,0.3); cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -319,6 +354,12 @@
   </div>
   <div class="hud-skills" id="hud-skills"></div>
   <div class="hud-bottom-right"><div id="hud-gate-name">E-RANK GATE</div></div>
+</div>
+
+<div id="rotate-prompt">
+  <div class="rotate-icon">📱↻</div>
+  <div>ROTATE TO LANDSCAPE<br>FOR THE BEST EXPERIENCE</div>
+  <div class="rotate-dismiss" id="rotate-dismiss">TAP TO PLAY IN PORTRAIT</div>
 </div>
 
 <div id="touch-controls">
@@ -455,8 +496,10 @@ let musicPlaying = false;
 let musicInterval = null;
 
 function initAudio() {
-  if (audioCtx) return;
+  if (audioCtx) { audioCtx.resume(); return; }
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // Mobile requires explicit resume after user gesture
+  audioCtx.resume();
   musicGain = audioCtx.createGain();
   musicGain.gain.value = 0.4;
   musicGain.connect(audioCtx.destination);
@@ -585,6 +628,7 @@ const warBass = [73.4,0,73.4,0, 87.3,0,87.3,0, 73.4,0,73.4,65.4, 87.3,0,110,0];
 
 function startMusic() {
   if (!audioCtx || musicPlaying) return;
+  audioCtx.resume(); // critical for mobile
   musicPlaying = true; musicStep = 0;
 
   // Sustained dark drone pad (continuous)
@@ -700,6 +744,24 @@ let touchJoystick = { active:false, dx:0, dy:0 };
 if (isMobile) {
   document.body.style.cursor = 'default';
   document.getElementById('touch-controls').style.display = 'block';
+
+  // Show rotate prompt in portrait
+  if (window.innerHeight > window.innerWidth) {
+    document.getElementById('rotate-prompt').style.display = 'flex';
+  }
+  document.getElementById('rotate-dismiss').addEventListener('click', () => {
+    document.getElementById('rotate-prompt').style.display = 'none';
+  });
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      document.getElementById('rotate-prompt').style.display =
+        window.innerHeight > window.innerWidth ? 'flex' : 'none';
+      resize();
+    }, 200);
+  });
+
+  // Try to lock to landscape
+  try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
 
   // Prevent scrolling/zooming EXCEPT on system menu and overlays
   document.addEventListener('touchmove', e => {
@@ -2167,12 +2229,30 @@ function update(dt) {
     lastMoveTime = gameTime;
   }
 
-  // Facing
-  const wmx = (mouse.x-W/2)/camera.zoom + camera.x;
-  const wmy = (mouse.y-H/2)/camera.zoom + camera.y;
-  const mdx = wmx-player.x, mdy = wmy-player.y;
-  const ml = Math.hypot(mdx,mdy);
-  if (ml > 0) player.facing = { x:mdx/ml, y:mdy/ml };
+  // Facing direction
+  if (isMobile) {
+    // Mobile: face joystick direction, or movement direction
+    if (touchJoystick.active && (Math.abs(touchJoystick.dx) > 0.1 || Math.abs(touchJoystick.dy) > 0.1)) {
+      const jl = Math.hypot(touchJoystick.dx, touchJoystick.dy);
+      if (jl > 0) player.facing = { x: touchJoystick.dx/jl, y: touchJoystick.dy/jl };
+    }
+  } else {
+    // Desktop: face mouse when mouse has moved, otherwise face movement direction
+    const wmx = (mouse.x-W/2)/camera.zoom + camera.x;
+    const wmy = (mouse.y-H/2)/camera.zoom + camera.y;
+    const mdx = wmx-player.x, mdy = wmy-player.y;
+    const ml = Math.hypot(mdx,mdy);
+    if (ml > 5) player.facing = { x:mdx/ml, y:mdy/ml };
+    // Fallback: if using WASD with no mouse movement, face movement direction
+    else if (dx || dy) player.facing = { x:dx, y:dy };
+  }
+  // Keyboard-only fallback: always update facing when moving and mouse is near center
+  if (!isMobile && (dx || dy)) {
+    const wmx2 = (mouse.x-W/2)/camera.zoom + camera.x;
+    const wmy2 = (mouse.y-H/2)/camera.zoom + camera.y;
+    const mouseDist = Math.hypot(wmx2-player.x, wmy2-player.y);
+    if (mouseDist < 30) player.facing = { x:dx, y:dy };
+  }
 
   // Timers
   player.animTime += dt;
