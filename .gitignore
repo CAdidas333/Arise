@@ -1,0 +1,21 @@
+# Obsidian vault config (lives at ~/Projects root)
+.obsidian/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Node (if we add build tools later)
+node_modules/
+dist/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Misc
+.env
+*.log

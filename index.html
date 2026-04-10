@@ -1,0 +1,2122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARISE — Solo Leveling RPG</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #08080f;
+    overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    color: #e0e8ff;
+    cursor: crosshair;
+    user-select: none;
+  }
+
+  canvas {
+    display: block;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 1;
+  }
+
+  /* ========== UI OVERLAY ========== */
+  #ui-layer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  #ui-layer * { pointer-events: auto; }
+
+  /* ========== TITLE SCREEN ========== */
+  #title-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: #08080f;
+  }
+
+  #title-screen h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: 120px;
+    font-weight: 900;
+    letter-spacing: 30px;
+    color: #00d4ff;
+    text-shadow:
+      0 0 20px rgba(0, 212, 255, 0.8),
+      0 0 60px rgba(0, 212, 255, 0.4),
+      0 0 120px rgba(0, 100, 255, 0.3),
+      0 0 200px rgba(68, 0, 255, 0.2);
+    animation: titlePulse 3s ease-in-out infinite, titleFloat 4s ease-in-out infinite;
+    margin-bottom: 60px;
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { text-shadow: 0 0 20px rgba(0,212,255,0.8), 0 0 60px rgba(0,212,255,0.4), 0 0 120px rgba(0,100,255,0.3); }
+    50% { text-shadow: 0 0 40px rgba(0,212,255,1), 0 0 80px rgba(0,212,255,0.6), 0 0 160px rgba(0,100,255,0.5), 0 0 240px rgba(68,0,255,0.3); }
+  }
+
+  @keyframes titleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  #title-screen .subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 12px;
+    color: rgba(0, 212, 255, 0.5);
+    margin-bottom: 80px;
+    text-transform: uppercase;
+  }
+
+  #title-screen .prompt {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    letter-spacing: 6px;
+    color: rgba(255, 255, 255, 0.4);
+    animation: promptBlink 2s ease-in-out infinite;
+  }
+
+  @keyframes promptBlink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* ========== NAME INPUT ========== */
+  #name-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: #08080f;
+  }
+
+  #name-screen .system-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: rgba(0, 212, 255, 0.6);
+    margin-bottom: 30px;
+  }
+
+  #name-screen h2 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: #e0e8ff;
+    margin-bottom: 40px;
+  }
+
+  #name-input {
+    background: rgba(0, 20, 40, 0.8);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #00d4ff;
+    font-family: 'Orbitron', monospace;
+    font-size: 28px;
+    padding: 15px 30px;
+    text-align: center;
+    letter-spacing: 4px;
+    width: 400px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  #name-input:focus {
+    border-color: rgba(0, 212, 255, 0.8);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.2), inset 0 0 30px rgba(0, 212, 255, 0.05);
+  }
+
+  #name-input::placeholder { color: rgba(0, 212, 255, 0.2); }
+
+  #name-confirm {
+    margin-top: 30px;
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: rgba(255, 255, 255, 0.3);
+    animation: promptBlink 2s ease-in-out infinite;
+  }
+
+  /* ========== HUD ========== */
+  #hud {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  #hud * { pointer-events: none; }
+
+  .hud-top-left {
+    position: absolute;
+    top: 20px; left: 20px;
+  }
+
+  .hud-player-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #00d4ff;
+    margin-bottom: 4px;
+  }
+
+  .hud-rank {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(0, 212, 255, 0.5);
+    margin-bottom: 12px;
+  }
+
+  .hud-bar {
+    width: 260px;
+    height: 14px;
+    background: rgba(0, 10, 20, 0.8);
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    margin-bottom: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hud-bar-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+
+  .hud-bar.hp .hud-bar-fill {
+    background: linear-gradient(90deg, #22aa44, #44ff66);
+    box-shadow: 0 0 10px rgba(68, 255, 102, 0.3);
+  }
+
+  .hud-bar.mp .hud-bar-fill {
+    background: linear-gradient(90deg, #2244aa, #4488ff);
+    box-shadow: 0 0 10px rgba(68, 136, 255, 0.3);
+  }
+
+  .hud-bar.xp .hud-bar-fill {
+    background: linear-gradient(90deg, #aa8800, #ffcc00);
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+  }
+
+  .hud-bar-text {
+    position: absolute;
+    top: 0; left: 8px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
+
+  .hud-level {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: #ffaa00;
+    margin-top: 4px;
+    letter-spacing: 2px;
+  }
+
+  /* Skill bar */
+  .hud-skills {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+  }
+
+  .skill-slot {
+    width: 56px; height: 56px;
+    background: rgba(0, 15, 30, 0.85);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .skill-slot .key {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    color: rgba(0, 212, 255, 0.4);
+    position: absolute;
+    top: 3px; left: 5px;
+  }
+
+  .skill-slot .icon {
+    font-size: 22px;
+    margin-top: 4px;
+  }
+
+  .skill-slot .cd-overlay {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    transition: height 0.1s linear;
+  }
+
+  .skill-slot.ready { border-color: rgba(0, 212, 255, 0.6); }
+  .skill-slot.on-cd { border-color: rgba(100, 100, 100, 0.3); }
+
+  .skill-slot .skill-name {
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.5);
+    position: absolute;
+    bottom: 3px;
+    text-transform: uppercase;
+  }
+
+  /* Mini-map placeholder */
+  .hud-bottom-right {
+    position: absolute;
+    bottom: 20px; right: 20px;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(0, 212, 255, 0.3);
+  }
+
+  .hud-wave {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: rgba(0, 212, 255, 0.6);
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  }
+
+  .hud-enemies {
+    position: absolute;
+    top: 42px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(255, 100, 100, 0.6);
+  }
+
+  /* ========== SYSTEM MENU ========== */
+  #system-menu {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(4, 4, 10, 0.92);
+    z-index: 50;
+    backdrop-filter: blur(4px);
+  }
+
+  .sys-header {
+    text-align: center;
+    padding: 30px 0 10px;
+  }
+
+  .sys-header h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    letter-spacing: 8px;
+    color: rgba(0, 212, 255, 0.6);
+    font-weight: 400;
+  }
+
+  .sys-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 20px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    height: calc(100vh - 140px);
+  }
+
+  .sys-panel {
+    background: rgba(0, 15, 30, 0.6);
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sys-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent);
+    animation: scanline 3s linear infinite;
+  }
+
+  @keyframes scanline {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .sys-panel h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: rgba(0, 212, 255, 0.5);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.06);
+  }
+
+  .stat-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 2px;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    color: #00d4ff;
+  }
+
+  .stat-btn {
+    background: rgba(0, 212, 255, 0.15);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #00d4ff;
+    width: 24px; height: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: all 0.2s;
+  }
+
+  .stat-btn:hover {
+    background: rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+  }
+
+  .stat-btn:disabled {
+    opacity: 0.2;
+    cursor: default;
+  }
+
+  .stat-points {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    background: rgba(255, 170, 0, 0.05);
+  }
+
+  .stat-points span {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    color: #ffaa00;
+  }
+
+  /* Gates list */
+  .gate-item {
+    background: rgba(0, 10, 20, 0.5);
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .gate-item:hover {
+    border-color: rgba(0, 212, 255, 0.4);
+    background: rgba(0, 20, 40, 0.5);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+  }
+
+  .gate-item.locked {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .gate-item .gate-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e0e8ff;
+  }
+
+  .gate-item .gate-rank {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: #00d4ff;
+    float: right;
+  }
+
+  .gate-item .gate-desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 4px;
+  }
+
+  /* Shadow army */
+  .shadow-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-bottom: 1px solid rgba(136, 68, 255, 0.1);
+  }
+
+  .shadow-icon {
+    font-size: 24px;
+    filter: brightness(0) saturate(1) drop-shadow(0 0 6px rgba(136, 68, 255, 0.8));
+  }
+
+  .shadow-name {
+    font-size: 14px;
+    color: #bb88ff;
+  }
+
+  .shadow-level {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    color: rgba(136, 68, 255, 0.5);
+  }
+
+  /* Quest list */
+  .quest-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.06);
+  }
+
+  .quest-name {
+    font-size: 14px;
+    color: #e0e8ff;
+  }
+
+  .quest-progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 10, 20, 0.8);
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .quest-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffaa00, #ffcc44);
+    transition: width 0.3s;
+  }
+
+  .quest-reward {
+    font-size: 11px;
+    color: rgba(255, 170, 0, 0.6);
+    margin-top: 4px;
+  }
+
+  /* System footer */
+  .sys-footer {
+    text-align: center;
+    padding: 10px;
+  }
+
+  .sys-footer span {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  /* ========== EXTRACTION OVERLAY ========== */
+  #extraction-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 60;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #extraction-overlay h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 48px;
+    letter-spacing: 12px;
+    color: #8844ff;
+    text-shadow: 0 0 40px rgba(136, 68, 255, 0.8), 0 0 80px rgba(136, 68, 255, 0.4);
+    animation: titlePulse 2s ease-in-out infinite;
+    margin-bottom: 20px;
+  }
+
+  #extraction-overlay .extract-enemy-name {
+    font-size: 24px;
+    color: rgba(136, 68, 255, 0.7);
+    letter-spacing: 4px;
+    margin-bottom: 40px;
+  }
+
+  .extract-btn {
+    background: rgba(136, 68, 255, 0.15);
+    border: 2px solid rgba(136, 68, 255, 0.5);
+    color: #bb88ff;
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    letter-spacing: 6px;
+    padding: 16px 48px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .extract-btn:hover {
+    background: rgba(136, 68, 255, 0.3);
+    box-shadow: 0 0 40px rgba(136, 68, 255, 0.4);
+    transform: scale(1.05);
+  }
+
+  /* ========== LEVEL UP FLASH ========== */
+  #levelup-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 55;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  #levelup-overlay h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 64px;
+    letter-spacing: 16px;
+    color: #ffcc00;
+    text-shadow: 0 0 40px rgba(255, 204, 0, 0.8), 0 0 80px rgba(255, 170, 0, 0.4);
+    animation: titleFloat 1s ease-in-out;
+  }
+
+  #levelup-overlay .level-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 80px;
+    color: #00d4ff;
+    text-shadow: 0 0 40px rgba(0, 212, 255, 0.6);
+    margin-top: 10px;
+  }
+
+  /* ========== VICTORY OVERLAY ========== */
+  #victory-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(4, 4, 10, 0.92);
+    z-index: 55;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #victory-overlay h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 36px;
+    letter-spacing: 10px;
+    color: #00d4ff;
+    text-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+    margin-bottom: 30px;
+  }
+
+  .victory-stats {
+    text-align: center;
+  }
+
+  .victory-stats div {
+    font-size: 18px;
+    margin: 8px 0;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 2px;
+  }
+
+  .victory-stats span {
+    font-family: 'Orbitron', monospace;
+    color: #ffaa00;
+  }
+
+  .continue-btn {
+    margin-top: 40px;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #00d4ff;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    letter-spacing: 4px;
+    padding: 14px 40px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .continue-btn:hover {
+    background: rgba(0, 212, 255, 0.25);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+  }
+
+  /* ========== DEATH SCREEN ========== */
+  #death-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(10, 0, 0, 0.92);
+    z-index: 55;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #death-overlay h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 48px;
+    letter-spacing: 10px;
+    color: #ff4444;
+    text-shadow: 0 0 40px rgba(255, 68, 68, 0.6);
+    margin-bottom: 20px;
+  }
+
+  #death-overlay p {
+    color: rgba(255, 100, 100, 0.6);
+    font-size: 16px;
+    letter-spacing: 3px;
+    margin-bottom: 40px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- Title Screen -->
+<div id="title-screen">
+  <h1>ARISE</h1>
+  <div class="subtitle">Solo Leveling RPG</div>
+  <div class="prompt">PRESS ENTER TO BEGIN</div>
+</div>
+
+<!-- Name Input Screen -->
+<div id="name-screen">
+  <div class="system-label">[ SYSTEM ]</div>
+  <h2>Player designation required</h2>
+  <input type="text" id="name-input" placeholder="ENTER NAME" maxlength="16" autocomplete="off" spellcheck="false">
+  <div id="name-confirm">PRESS ENTER TO CONFIRM</div>
+</div>
+
+<!-- HUD (during dungeon) -->
+<div id="hud">
+  <div class="hud-top-left">
+    <div class="hud-player-name" id="hud-name">—</div>
+    <div class="hud-rank" id="hud-rank">RANK E — HUNTER</div>
+    <div class="hud-bar hp">
+      <div class="hud-bar-fill" id="hud-hp-fill" style="width:100%"></div>
+      <div class="hud-bar-text" id="hud-hp-text">100 / 100</div>
+    </div>
+    <div class="hud-bar mp">
+      <div class="hud-bar-fill" id="hud-mp-fill" style="width:100%"></div>
+      <div class="hud-bar-text" id="hud-mp-text">50 / 50</div>
+    </div>
+    <div class="hud-bar xp">
+      <div class="hud-bar-fill" id="hud-xp-fill" style="width:0%"></div>
+      <div class="hud-bar-text" id="hud-xp-text">0 / 100</div>
+    </div>
+    <div class="hud-level" id="hud-level">LV. 1</div>
+  </div>
+  <div class="hud-wave" id="hud-wave">WAVE 1 / 5</div>
+  <div class="hud-enemies" id="hud-enemies">ENEMIES: 0</div>
+  <div class="hud-skills" id="hud-skills"></div>
+  <div class="hud-bottom-right">
+    <div id="hud-gate-name">E-RANK GATE</div>
+  </div>
+</div>
+
+<!-- System Menu -->
+<div id="system-menu">
+  <div class="sys-header">
+    <h2>[ S Y S T E M ]</h2>
+  </div>
+  <div class="sys-panels">
+    <!-- STATUS + STATS -->
+    <div class="sys-panel">
+      <h3>Status</h3>
+      <div id="sys-stat-points" class="stat-points" style="display:none">
+        Available Points: <span id="sys-points-num">0</span>
+      </div>
+      <div id="sys-stats"></div>
+    </div>
+    <!-- GATES -->
+    <div class="sys-panel">
+      <h3>Gates</h3>
+      <div id="sys-gates"></div>
+      <h3 style="margin-top:24px">Daily Quests</h3>
+      <div id="sys-quests"></div>
+    </div>
+    <!-- SHADOWS -->
+    <div class="sys-panel">
+      <h3>Shadow Army</h3>
+      <div id="sys-shadows"></div>
+      <h3 style="margin-top:24px">Skills</h3>
+      <div id="sys-skills-list"></div>
+    </div>
+  </div>
+  <div class="sys-footer">
+    <span>TAB TO CLOSE &nbsp;&nbsp;|&nbsp;&nbsp; SELECT A GATE TO ENTER</span>
+  </div>
+</div>
+
+<!-- Extraction Overlay -->
+<div id="extraction-overlay">
+  <h2>ARISE</h2>
+  <div class="extract-enemy-name" id="extract-name">—</div>
+  <button class="extract-btn" id="extract-btn">EXTRACT SHADOW</button>
+</div>
+
+<!-- Level Up Overlay -->
+<div id="levelup-overlay">
+  <h2>LEVEL UP</h2>
+  <div class="level-num" id="levelup-num">2</div>
+</div>
+
+<!-- Victory Overlay -->
+<div id="victory-overlay">
+  <h2>GATE CLEARED</h2>
+  <div class="victory-stats" id="victory-stats"></div>
+  <button class="continue-btn" id="victory-btn">RETURN</button>
+</div>
+
+<!-- Death Screen -->
+<div id="death-overlay">
+  <h2>YOU DIED</h2>
+  <p>The shadows grow darker...</p>
+  <button class="continue-btn" id="death-btn">RETURN TO HUB</button>
+</div>
+
+<script>
+// ================================================================
+//  ARISE — Solo Leveling Browser RPG
+// ================================================================
+
+(() => {
+'use strict';
+
+// ==================== CONSTANTS ====================
+const COLORS = {
+  bg: '#08080f',
+  primary: '#00d4ff',
+  secondary: '#2244ff',
+  accent: '#8844ff',
+  danger: '#ff4444',
+  health: '#44ff66',
+  mana: '#4488ff',
+  xp: '#ffcc00',
+  text: '#e0e8ff',
+  dim: '#334466',
+};
+
+const RANKS = ['E', 'D', 'C', 'B', 'A', 'S'];
+const RANK_LEVELS = [1, 10, 25, 45, 70, 100];
+
+const SKILL_DEFS = [
+  { id: 'slash', name: 'Slash', icon: '⚔️', key: '1', unlockLevel: 1, cooldown: 0.4, manaCost: 0, damage: 1.0, desc: 'Basic melee attack', range: 60, type: 'melee' },
+  { id: 'dash_strike', name: 'Dash Strike', icon: '💨', key: '2', unlockLevel: 3, cooldown: 3, manaCost: 15, damage: 2.0, desc: 'Dash forward and strike', range: 150, type: 'dash' },
+  { id: 'shadow_strike', name: 'Shadow Strike', icon: '🗡️', key: '3', unlockLevel: 6, cooldown: 5, manaCost: 25, damage: 3.0, desc: 'Teleport behind nearest enemy', range: 300, type: 'teleport' },
+  { id: 'rulers', name: "Ruler's Domain", icon: '👑', key: '4', unlockLevel: 10, cooldown: 12, manaCost: 50, damage: 4.0, desc: 'AOE blast around player', range: 200, type: 'aoe' },
+];
+
+const GATE_DEFS = [
+  { id: 'e_gate', name: 'Goblin Cavern', rank: 'E', reqLevel: 1, waves: 5, color: '#44aa44',
+    enemies: [
+      { name: 'Goblin', hp: 30, damage: 5, speed: 1.2, size: 14, xp: 15, color: '#55aa55', icon: '👺' },
+      { name: 'Goblin Archer', hp: 20, damage: 8, speed: 0.8, size: 12, xp: 20, color: '#448844', icon: '🏹', ranged: true },
+    ],
+    boss: { name: 'Spider Queen', hp: 200, damage: 15, speed: 0.9, size: 30, xp: 100, color: '#884488', icon: '🕷️', shadow: true }
+  },
+  { id: 'd_gate', name: 'Orc Fortress', rank: 'D', reqLevel: 10, waves: 6, color: '#aa6633',
+    enemies: [
+      { name: 'Orc Warrior', hp: 60, damage: 12, speed: 1.0, size: 18, xp: 30, color: '#886644', icon: '👹' },
+      { name: 'Orc Shaman', hp: 40, damage: 18, speed: 0.7, size: 16, xp: 40, color: '#668844', icon: '🧙', ranged: true },
+    ],
+    boss: { name: 'Orc Chieftain', hp: 500, damage: 25, speed: 0.8, size: 36, xp: 250, color: '#aa4422', icon: '⚔️', shadow: true }
+  },
+  { id: 'c_gate', name: 'Undead Crypt', rank: 'C', reqLevel: 25, waves: 7, color: '#6644aa',
+    enemies: [
+      { name: 'Skeleton', hp: 80, damage: 18, speed: 1.3, size: 16, xp: 50, color: '#aaaaaa', icon: '💀' },
+      { name: 'Lich', hp: 60, damage: 30, speed: 0.6, size: 14, xp: 70, color: '#8866cc', icon: '👻', ranged: true },
+    ],
+    boss: { name: 'Death Knight', hp: 1000, damage: 40, speed: 1.0, size: 40, xp: 500, color: '#6622aa', icon: '🛡️', shadow: true }
+  },
+  { id: 'b_gate', name: 'Demon Realm', rank: 'B', reqLevel: 45, waves: 8, color: '#cc2222',
+    enemies: [
+      { name: 'Demon', hp: 150, damage: 30, speed: 1.1, size: 20, xp: 80, color: '#cc4444', icon: '😈' },
+      { name: 'Succubus', hp: 100, damage: 45, speed: 1.4, size: 16, xp: 100, color: '#cc44aa', icon: '🦇', ranged: true },
+    ],
+    boss: { name: 'Demon Lord', hp: 2500, damage: 60, speed: 0.9, size: 48, xp: 1000, color: '#aa0000', icon: '👿', shadow: true }
+  },
+  { id: 'a_gate', name: "Dragon's Lair", rank: 'A', reqLevel: 70, waves: 10, color: '#ffaa00',
+    enemies: [
+      { name: 'Drake', hp: 300, damage: 50, speed: 1.0, size: 24, xp: 150, color: '#cc8800', icon: '🐉' },
+      { name: 'Wyvern', hp: 200, damage: 65, speed: 1.5, size: 20, xp: 180, color: '#ccaa44', icon: '🦅', ranged: true },
+    ],
+    boss: { name: 'Ancient Dragon', hp: 5000, damage: 90, speed: 0.7, size: 56, xp: 2500, color: '#ffcc00', icon: '🐲', shadow: true }
+  },
+];
+
+const DAILY_QUESTS = [
+  { id: 'pushups', name: 'Run 100 Push-ups', desc: 'Defeat 20 enemies', target: 20, reward: 50, stat: 'kills' },
+  { id: 'situps', name: 'Run 100 Sit-ups', desc: 'Take 500 damage total', target: 500, reward: 50, stat: 'damageTaken' },
+  { id: 'run', name: 'Run 10km', desc: 'Clear 2 gates', target: 2, reward: 100, stat: 'gatesCleared' },
+];
+
+// ==================== UTILITY FUNCTIONS ====================
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const dist = (x1, y1, x2, y2) => Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+const rand = (min, max) => Math.random() * (max - min) + min;
+const randInt = (min, max) => Math.floor(rand(min, max + 1));
+
+// ==================== CANVAS SETUP ====================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ==================== INPUT ====================
+const keys = {};
+const mouse = { x: W/2, y: H/2, down: false };
+
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  handleKeyPress(e.key.toLowerCase(), e);
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mousedown', e => { mouse.down = true; handleClick(); });
+window.addEventListener('mouseup', e => { mouse.down = false; });
+window.addEventListener('contextmenu', e => e.preventDefault());
+
+// ==================== GAME STATE ====================
+let gameState = 'TITLE'; // TITLE, CREATE, HUB, DUNGEON, PAUSED
+let player = null;
+let entities = [];     // enemies
+let projectiles = [];
+let particles = [];
+let floatingTexts = [];
+let bgParticles = [];
+let camera = { x: 0, y: 0, shake: 0 };
+let dungeon = null;
+let questProgress = { kills: 0, damageTaken: 0, gatesCleared: 0 };
+let sessionKills = 0;
+let sessionXp = 0;
+let pendingExtraction = null;
+let dungeonArenaW = 1200;
+let dungeonArenaH = 900;
+
+// Initialize background particles
+for (let i = 0; i < 60; i++) {
+  bgParticles.push({
+    x: rand(0, W), y: rand(0, H),
+    vx: rand(-0.3, 0.3), vy: rand(-0.5, -0.1),
+    size: rand(1, 3), alpha: rand(0.1, 0.4),
+    color: Math.random() > 0.5 ? COLORS.primary : COLORS.accent,
+  });
+}
+
+// ==================== PLAYER CLASS ====================
+function createPlayer(name) {
+  return {
+    name,
+    level: 1,
+    xp: 0,
+    xpToNext: 100,
+    rank: 'E',
+    stats: { STR: 5, AGI: 5, INT: 5, VIT: 5, PER: 5 },
+    statPoints: 0,
+    hp: 100, maxHp: 100,
+    mp: 50, maxMp: 50,
+    x: 0, y: 0,
+    facing: { x: 1, y: 0 },
+    shadows: [],
+    gold: 0,
+    skills: [],
+    skillCooldowns: {},
+    attackCd: 0,
+    dashTimer: 0,
+    isDashing: false,
+    invTimer: 0,
+    hitFlash: 0,
+    get speed() { return 3.5 + this.stats.AGI * 0.12; },
+    get attackDamage() { return 8 + this.stats.STR * 2.5; },
+    get critChance() { return 0.05 + this.stats.PER * 0.012; },
+    get critMulti() { return 1.8 + this.stats.PER * 0.02; },
+    get defense() { return this.stats.VIT * 0.8; },
+  };
+}
+
+function recalcPlayerStats(p) {
+  p.maxHp = 80 + p.stats.VIT * 22;
+  p.maxMp = 30 + p.stats.INT * 12;
+  // Refresh skill list
+  p.skills = SKILL_DEFS.filter(s => p.level >= s.unlockLevel);
+}
+
+function playerGainXp(amount) {
+  player.xp += amount;
+  let leveled = false;
+  while (player.xp >= player.xpToNext) {
+    player.xp -= player.xpToNext;
+    player.level++;
+    player.statPoints += 5;
+    player.xpToNext = Math.floor(player.xpToNext * 1.4);
+    recalcPlayerStats(player);
+    player.hp = player.maxHp;
+    player.mp = player.maxMp;
+    // Rank check
+    for (let i = RANKS.length - 1; i >= 0; i--) {
+      if (player.level >= RANK_LEVELS[i]) { player.rank = RANKS[i]; break; }
+    }
+    leveled = true;
+  }
+  if (leveled) showLevelUp();
+}
+
+// ==================== PARTICLE SYSTEM ====================
+function spawnParticle(x, y, color, opts = {}) {
+  particles.push({
+    x, y,
+    vx: opts.vx ?? rand(-2, 2),
+    vy: opts.vy ?? rand(-2, 2),
+    size: opts.size ?? rand(2, 5),
+    alpha: opts.alpha ?? 1,
+    decay: opts.decay ?? rand(0.015, 0.04),
+    color,
+    glow: opts.glow ?? false,
+  });
+}
+
+function spawnBurst(x, y, color, count = 15) {
+  for (let i = 0; i < count; i++) {
+    const angle = rand(0, Math.PI * 2);
+    const speed = rand(1, 5);
+    spawnParticle(x, y, color, {
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: rand(2, 6),
+      decay: rand(0.02, 0.05),
+      glow: true,
+    });
+  }
+}
+
+function spawnFloatingText(x, y, text, color = '#fff', size = 16) {
+  floatingTexts.push({ x, y, text, color, size, alpha: 1, vy: -1.5, life: 60 });
+}
+
+// ==================== ENEMY SYSTEM ====================
+function spawnEnemy(def, x, y, isB = false) {
+  const hpScale = isB ? 1 : 1;
+  return {
+    ...def,
+    x, y,
+    hp: def.hp * hpScale,
+    maxHp: def.hp * hpScale,
+    isBoss: isB,
+    attackCd: 0,
+    hitFlash: 0,
+    stunTimer: 0,
+    facing: { x: 0, y: 0 },
+    projectileCd: isB ? 1.5 : (def.ranged ? 2 : 999),
+    alive: true,
+  };
+}
+
+function updateEnemy(e, dt) {
+  if (!e.alive) return;
+  if (e.stunTimer > 0) { e.stunTimer -= dt; return; }
+  if (e.hitFlash > 0) e.hitFlash -= dt;
+
+  // Move toward player
+  const dx = player.x - e.x;
+  const dy = player.y - e.y;
+  const d = Math.sqrt(dx*dx + dy*dy);
+  if (d > 0) {
+    e.facing = { x: dx/d, y: dy/d };
+  }
+
+  const minDist = e.ranged ? 180 : 30;
+  if (d > minDist) {
+    const spd = e.speed * (e.isBoss ? 0.8 : 1);
+    e.x += (dx/d) * spd;
+    e.y += (dy/d) * spd;
+  }
+
+  // Keep in arena
+  e.x = clamp(e.x, -dungeonArenaW/2, dungeonArenaW/2);
+  e.y = clamp(e.y, -dungeonArenaH/2, dungeonArenaH/2);
+
+  // Melee attack
+  if (d < e.size + 22 && e.attackCd <= 0 && !e.ranged) {
+    dealDamageToPlayer(e.damage);
+    e.attackCd = 1.0;
+  }
+  if (e.attackCd > 0) e.attackCd -= dt;
+
+  // Ranged attack
+  if (e.ranged || e.isBoss) {
+    e.projectileCd -= dt;
+    if (e.projectileCd <= 0) {
+      const pd = dist(e.x, e.y, player.x, player.y);
+      if (pd < 400) {
+        const px = (player.x - e.x) / pd;
+        const py = (player.y - e.y) / pd;
+        projectiles.push({
+          x: e.x, y: e.y,
+          vx: px * 4, vy: py * 4,
+          damage: e.damage * 0.7,
+          size: e.isBoss ? 8 : 5,
+          color: e.isBoss ? COLORS.danger : '#ff8844',
+          life: 120,
+          fromEnemy: true,
+        });
+      }
+      e.projectileCd = e.isBoss ? 2.0 : 2.5;
+    }
+  }
+
+  // Boss special: periodic burst
+  if (e.isBoss && Math.random() < 0.003) {
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+      projectiles.push({
+        x: e.x, y: e.y,
+        vx: Math.cos(a) * 3, vy: Math.sin(a) * 3,
+        damage: e.damage * 0.5,
+        size: 6, color: COLORS.accent,
+        life: 90, fromEnemy: true,
+      });
+    }
+    camera.shake = 8;
+  }
+}
+
+function damageEnemy(e, dmg) {
+  const isCrit = Math.random() < player.critChance;
+  const finalDmg = Math.floor(isCrit ? dmg * player.critMulti : dmg);
+  e.hp -= finalDmg;
+  e.hitFlash = 0.15;
+  e.stunTimer = 0.1;
+  spawnFloatingText(e.x, e.y - e.size - 10, isCrit ? `CRIT ${finalDmg}` : `${finalDmg}`, isCrit ? '#ffcc00' : '#ff6644', isCrit ? 22 : 16);
+  spawnBurst(e.x, e.y, e.color, 6);
+
+  if (e.hp <= 0) {
+    e.alive = false;
+    spawnBurst(e.x, e.y, e.color, 20);
+    spawnBurst(e.x, e.y, COLORS.primary, 10);
+    playerGainXp(e.xp);
+    sessionXp += e.xp;
+    sessionKills++;
+    questProgress.kills++;
+    if (e.isBoss) camera.shake = 20;
+
+    // Shadow summons also kill
+    player.shadows.forEach(s => {
+      spawnFloatingText(e.x + rand(-20,20), e.y - 30, `+${e.xp} XP`, COLORS.xp, 12);
+    });
+  }
+}
+
+function dealDamageToPlayer(dmg) {
+  if (player.invTimer > 0) return;
+  const finalDmg = Math.max(1, dmg - player.defense);
+  player.hp -= finalDmg;
+  player.hitFlash = 0.2;
+  questProgress.damageTaken += finalDmg;
+  spawnFloatingText(player.x, player.y - 30, `-${finalDmg}`, COLORS.danger, 18);
+  camera.shake = Math.min(camera.shake + 6, 20);
+  spawnBurst(player.x, player.y, COLORS.danger, 8);
+
+  if (player.hp <= 0) {
+    player.hp = 0;
+    showDeath();
+  }
+}
+
+// ==================== SKILL EXECUTION ====================
+function useSkill(skillDef) {
+  if (!skillDef) return;
+  const cd = player.skillCooldowns[skillDef.id] || 0;
+  if (cd > 0) return;
+  if (player.mp < skillDef.manaCost) return;
+
+  player.mp -= skillDef.manaCost;
+  player.skillCooldowns[skillDef.id] = skillDef.cooldown;
+
+  const dmg = player.attackDamage * skillDef.damage;
+  const fx = player.facing.x;
+  const fy = player.facing.y;
+
+  switch (skillDef.type) {
+    case 'melee': {
+      // Slash in facing direction
+      const cx = player.x + fx * 40;
+      const cy = player.y + fy * 40;
+      entities.forEach(e => {
+        if (!e.alive) return;
+        if (dist(cx, cy, e.x, e.y) < skillDef.range) {
+          damageEnemy(e, dmg);
+        }
+      });
+      // Slash visual
+      for (let i = 0; i < 8; i++) {
+        const angle = Math.atan2(fy, fx) + rand(-0.5, 0.5);
+        spawnParticle(cx, cy, COLORS.primary, {
+          vx: Math.cos(angle) * rand(3, 7),
+          vy: Math.sin(angle) * rand(3, 7),
+          size: rand(3, 6),
+          glow: true,
+          decay: 0.05,
+        });
+      }
+      camera.shake = 4;
+      break;
+    }
+    case 'dash': {
+      const dashDist = skillDef.range;
+      player.x += fx * dashDist;
+      player.y += fy * dashDist;
+      player.x = clamp(player.x, -dungeonArenaW/2, dungeonArenaW/2);
+      player.y = clamp(player.y, -dungeonArenaH/2, dungeonArenaH/2);
+      player.invTimer = 0.3;
+      // Damage enemies along path
+      entities.forEach(e => {
+        if (!e.alive) return;
+        if (dist(player.x, player.y, e.x, e.y) < 80) {
+          damageEnemy(e, dmg);
+        }
+      });
+      for (let i = 0; i < 15; i++) {
+        spawnParticle(player.x - fx * rand(0, dashDist), player.y - fy * rand(0, dashDist), COLORS.primary, {
+          vx: rand(-1, 1), vy: rand(-1, 1), size: rand(2, 5), glow: true, decay: 0.04,
+        });
+      }
+      camera.shake = 6;
+      break;
+    }
+    case 'teleport': {
+      // Find nearest enemy
+      let nearest = null, nd = Infinity;
+      entities.forEach(e => {
+        if (!e.alive) return;
+        const d = dist(player.x, player.y, e.x, e.y);
+        if (d < skillDef.range && d < nd) { nearest = e; nd = d; }
+      });
+      if (nearest) {
+        // Teleport behind
+        spawnBurst(player.x, player.y, COLORS.accent, 10);
+        player.x = nearest.x - nearest.facing.x * 40;
+        player.y = nearest.y - nearest.facing.y * 40;
+        player.invTimer = 0.2;
+        damageEnemy(nearest, dmg);
+        spawnBurst(player.x, player.y, COLORS.accent, 15);
+        camera.shake = 8;
+      }
+      break;
+    }
+    case 'aoe': {
+      entities.forEach(e => {
+        if (!e.alive) return;
+        if (dist(player.x, player.y, e.x, e.y) < skillDef.range) {
+          damageEnemy(e, dmg);
+        }
+      });
+      // Massive burst
+      for (let i = 0; i < 40; i++) {
+        const angle = rand(0, Math.PI * 2);
+        const r = rand(10, skillDef.range);
+        spawnParticle(player.x + Math.cos(angle) * r, player.y + Math.sin(angle) * r, COLORS.primary, {
+          vx: Math.cos(angle) * 3, vy: Math.sin(angle) * 3,
+          size: rand(3, 8), glow: true, decay: 0.03,
+        });
+      }
+      camera.shake = 15;
+      break;
+    }
+  }
+}
+
+// ==================== SHADOW SUMMON SYSTEM ====================
+function updateShadows(dt) {
+  player.shadows.forEach((s, i) => {
+    if (!s.active) return;
+    // Find nearest enemy
+    let target = null, td = Infinity;
+    entities.forEach(e => {
+      if (!e.alive) return;
+      const d = dist(s.x, s.y, e.x, e.y);
+      if (d < td) { target = e; td = d; }
+    });
+
+    if (target) {
+      // Move toward
+      const dx = target.x - s.x;
+      const dy = target.y - s.y;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if (d > 30) {
+        s.x += (dx/d) * 2.5;
+        s.y += (dy/d) * 2.5;
+      }
+      // Attack
+      s.attackCd -= dt;
+      if (d < 40 && s.attackCd <= 0) {
+        damageEnemy(target, s.damage);
+        s.attackCd = 1.2;
+        spawnBurst(target.x, target.y, COLORS.accent, 4);
+      }
+    } else {
+      // Follow player
+      const dx = player.x + (i * 30 - 15) - s.x;
+      const dy = player.y + 30 - s.y;
+      s.x += dx * 0.05;
+      s.y += dy * 0.05;
+    }
+
+    // Shadow trail
+    if (Math.random() < 0.15) {
+      spawnParticle(s.x, s.y, COLORS.accent, {
+        vx: rand(-0.5, 0.5), vy: rand(-0.5, 0.5),
+        size: rand(2, 4), alpha: 0.4, decay: 0.03, glow: true,
+      });
+    }
+  });
+}
+
+// ==================== DUNGEON SYSTEM ====================
+function startDungeon(gateDef) {
+  dungeon = {
+    gate: gateDef,
+    wave: 1,
+    maxWaves: gateDef.waves,
+    enemiesRemaining: 0,
+    bossSpawned: false,
+    cleared: false,
+  };
+  entities = [];
+  projectiles = [];
+  player.x = 0;
+  player.y = 0;
+  player.hp = player.maxHp;
+  player.mp = player.maxMp;
+  sessionKills = 0;
+  sessionXp = 0;
+
+  // Activate shadows
+  player.shadows.forEach((s, i) => {
+    s.active = true;
+    s.x = player.x + (i * 40 - 20);
+    s.y = player.y + 40;
+    s.attackCd = 0;
+  });
+
+  spawnWave();
+  gameState = 'DUNGEON';
+  document.getElementById('system-menu').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
+  updateHudGateName(gateDef);
+}
+
+function spawnWave() {
+  if (dungeon.wave > dungeon.maxWaves) return;
+
+  if (dungeon.wave === dungeon.maxWaves) {
+    // Boss wave
+    const b = spawnEnemy(dungeon.gate.boss, rand(-100, 100), -200, true);
+    entities.push(b);
+    dungeon.bossSpawned = true;
+    dungeon.enemiesRemaining = 1;
+    camera.shake = 15;
+    spawnFloatingText(0, -180, `⚠ ${dungeon.gate.boss.name} ⚠`, COLORS.danger, 28);
+  } else {
+    const count = 3 + dungeon.wave * 2;
+    for (let i = 0; i < count; i++) {
+      const def = dungeon.gate.enemies[randInt(0, dungeon.gate.enemies.length - 1)];
+      const angle = rand(0, Math.PI * 2);
+      const r = rand(250, 450);
+      entities.push(spawnEnemy(def, Math.cos(angle) * r, Math.sin(angle) * r));
+    }
+    dungeon.enemiesRemaining = count;
+  }
+}
+
+function checkWaveProgress() {
+  const alive = entities.filter(e => e.alive).length;
+  dungeon.enemiesRemaining = alive;
+
+  if (alive === 0 && !dungeon.cleared) {
+    if (dungeon.wave >= dungeon.maxWaves) {
+      // Dungeon cleared!
+      dungeon.cleared = true;
+      questProgress.gatesCleared++;
+
+      // Check for shadow extraction
+      if (dungeon.gate.boss.shadow) {
+        pendingExtraction = dungeon.gate.boss;
+        showExtraction();
+      } else {
+        showVictory();
+      }
+    } else {
+      dungeon.wave++;
+      setTimeout(() => spawnWave(), 1000);
+    }
+  }
+}
+
+// ==================== UI HELPERS ====================
+function showLevelUp() {
+  const el = document.getElementById('levelup-overlay');
+  document.getElementById('levelup-num').textContent = player.level;
+  el.style.display = 'flex';
+  spawnBurst(player.x, player.y, COLORS.xp, 30);
+  spawnBurst(player.x, player.y, COLORS.primary, 20);
+  setTimeout(() => { el.style.display = 'none'; }, 1500);
+}
+
+function showExtraction() {
+  const el = document.getElementById('extraction-overlay');
+  document.getElementById('extract-name').textContent = pendingExtraction.name;
+  el.style.display = 'flex';
+}
+
+function doExtract() {
+  if (!pendingExtraction) return;
+  player.shadows.push({
+    name: pendingExtraction.name,
+    icon: pendingExtraction.icon,
+    damage: Math.floor(pendingExtraction.damage * 0.6),
+    level: player.level,
+    x: player.x, y: player.y + 30,
+    active: false,
+    attackCd: 0,
+  });
+  spawnBurst(player.x, player.y, COLORS.accent, 40);
+  document.getElementById('extraction-overlay').style.display = 'none';
+  pendingExtraction = null;
+  showVictory();
+}
+
+function showVictory() {
+  const el = document.getElementById('victory-overlay');
+  const stats = document.getElementById('victory-stats');
+  stats.innerHTML = `
+    <div>Enemies Defeated: <span>${sessionKills}</span></div>
+    <div>XP Earned: <span>${sessionXp}</span></div>
+    <div>Level: <span>${player.level}</span></div>
+    <div>Rank: <span>${player.rank}</span></div>
+  `;
+  el.style.display = 'flex';
+}
+
+function showDeath() {
+  document.getElementById('death-overlay').style.display = 'flex';
+}
+
+function returnToHub() {
+  gameState = 'HUB';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('victory-overlay').style.display = 'none';
+  document.getElementById('death-overlay').style.display = 'none';
+  document.getElementById('extraction-overlay').style.display = 'none';
+  document.getElementById('system-menu').style.display = 'block';
+  entities = [];
+  projectiles = [];
+  dungeon = null;
+  renderSystemMenu();
+}
+
+function updateHUD() {
+  if (!player) return;
+  document.getElementById('hud-name').textContent = player.name;
+  document.getElementById('hud-rank').textContent = `RANK ${player.rank} — HUNTER`;
+  document.getElementById('hud-hp-fill').style.width = `${(player.hp / player.maxHp) * 100}%`;
+  document.getElementById('hud-hp-text').textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
+  document.getElementById('hud-mp-fill').style.width = `${(player.mp / player.maxMp) * 100}%`;
+  document.getElementById('hud-mp-text').textContent = `${Math.ceil(player.mp)} / ${player.maxMp}`;
+  document.getElementById('hud-xp-fill').style.width = `${(player.xp / player.xpToNext) * 100}%`;
+  document.getElementById('hud-xp-text').textContent = `${player.xp} / ${player.xpToNext}`;
+  document.getElementById('hud-level').textContent = `LV. ${player.level}`;
+
+  if (dungeon) {
+    document.getElementById('hud-wave').textContent = `WAVE ${dungeon.wave} / ${dungeon.maxWaves}`;
+    document.getElementById('hud-enemies').textContent = `ENEMIES: ${dungeon.enemiesRemaining}`;
+  }
+
+  // Skills
+  const skillsEl = document.getElementById('hud-skills');
+  let sh = '';
+  SKILL_DEFS.forEach(s => {
+    const unlocked = player.level >= s.unlockLevel;
+    const cd = player.skillCooldowns[s.id] || 0;
+    const ready = cd <= 0 && unlocked;
+    const cdPct = unlocked ? (cd > 0 ? (cd / s.cooldown) * 100 : 0) : 100;
+    sh += `<div class="skill-slot ${ready ? 'ready' : 'on-cd'}" style="opacity:${unlocked ? 1 : 0.25}">
+      <span class="key">${s.key}</span>
+      <span class="icon">${s.icon}</span>
+      <div class="cd-overlay" style="height:${cdPct}%"></div>
+      <span class="skill-name">${s.name}</span>
+    </div>`;
+  });
+  skillsEl.innerHTML = sh;
+}
+
+function updateHudGateName(gate) {
+  document.getElementById('hud-gate-name').textContent = `${gate.rank}-RANK: ${gate.name.toUpperCase()}`;
+}
+
+// ==================== SYSTEM MENU RENDERING ====================
+function renderSystemMenu() {
+  if (!player) return;
+
+  // Stats panel
+  const statsEl = document.getElementById('sys-stats');
+  const pointsEl = document.getElementById('sys-stat-points');
+  const pointsNum = document.getElementById('sys-points-num');
+
+  if (player.statPoints > 0) {
+    pointsEl.style.display = 'block';
+    pointsNum.textContent = player.statPoints;
+  } else {
+    pointsEl.style.display = 'none';
+  }
+
+  let statsHtml = `
+    <div class="stat-row"><span class="stat-name">NAME</span><span class="stat-value">${player.name}</span></div>
+    <div class="stat-row"><span class="stat-name">LEVEL</span><span class="stat-value">${player.level}</span></div>
+    <div class="stat-row"><span class="stat-name">RANK</span><span class="stat-value">${player.rank}</span></div>
+    <div class="stat-row"><span class="stat-name">HP</span><span class="stat-value">${Math.ceil(player.hp)} / ${player.maxHp}</span></div>
+    <div class="stat-row"><span class="stat-name">MP</span><span class="stat-value">${Math.ceil(player.mp)} / ${player.maxMp}</span></div>
+    <div style="height:12px"></div>
+  `;
+  for (const [key, val] of Object.entries(player.stats)) {
+    statsHtml += `<div class="stat-row">
+      <span class="stat-name">${key}</span>
+      <span class="stat-value">${val}${player.statPoints > 0 ? `<button class="stat-btn" onclick="allocateStat('${key}')">+</button>` : ''}</span>
+    </div>`;
+  }
+  statsEl.innerHTML = statsHtml;
+
+  // Gates panel
+  const gatesEl = document.getElementById('sys-gates');
+  let gatesHtml = '';
+  GATE_DEFS.forEach(g => {
+    const locked = player.level < g.reqLevel;
+    gatesHtml += `<div class="gate-item ${locked ? 'locked' : ''}" ${locked ? '' : `onclick="enterGate('${g.id}')"`}>
+      <span class="gate-rank">${g.rank}-RANK</span>
+      <div class="gate-name">${g.name}</div>
+      <div class="gate-desc">${locked ? `Requires Level ${g.reqLevel}` : `${g.waves} waves — ${g.boss.name}`}</div>
+    </div>`;
+  });
+  gatesEl.innerHTML = gatesHtml;
+
+  // Quests
+  const questsEl = document.getElementById('sys-quests');
+  let qHtml = '';
+  DAILY_QUESTS.forEach(q => {
+    const prog = Math.min(questProgress[q.stat], q.target);
+    const pct = (prog / q.target) * 100;
+    qHtml += `<div class="quest-item">
+      <div class="quest-name">${q.name}</div>
+      <div class="quest-progress"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
+      <div class="quest-reward">${q.desc} — ${prog}/${q.target} — Reward: ${q.reward} XP</div>
+    </div>`;
+  });
+  questsEl.innerHTML = qHtml;
+
+  // Shadows
+  const shadowsEl = document.getElementById('sys-shadows');
+  if (player.shadows.length === 0) {
+    shadowsEl.innerHTML = '<div style="color:rgba(255,255,255,0.2);font-size:13px;padding:10px 0">No shadows extracted yet.<br>Defeat a boss to extract.</div>';
+  } else {
+    let sHtml = '';
+    player.shadows.forEach(s => {
+      sHtml += `<div class="shadow-item">
+        <span class="shadow-icon">${s.icon}</span>
+        <div>
+          <div class="shadow-name">${s.name}</div>
+          <div class="shadow-level">LV.${s.level} — DMG ${s.damage}</div>
+        </div>
+      </div>`;
+    });
+    shadowsEl.innerHTML = sHtml;
+  }
+
+  // Skills list
+  const skillsListEl = document.getElementById('sys-skills-list');
+  let skHtml = '';
+  SKILL_DEFS.forEach(s => {
+    const unlocked = player.level >= s.unlockLevel;
+    skHtml += `<div class="stat-row" style="opacity:${unlocked ? 1 : 0.3}">
+      <span class="stat-name">${s.icon} ${s.name}</span>
+      <span class="stat-value" style="font-size:11px">${unlocked ? s.desc : `Unlocks Lv.${s.unlockLevel}`}</span>
+    </div>`;
+  });
+  skillsListEl.innerHTML = skHtml;
+}
+
+// Global functions for onclick
+window.allocateStat = function(stat) {
+  if (player.statPoints > 0) {
+    player.stats[stat]++;
+    player.statPoints--;
+    recalcPlayerStats(player);
+    player.hp = Math.min(player.hp, player.maxHp);
+    player.mp = Math.min(player.mp, player.maxMp);
+    renderSystemMenu();
+  }
+};
+
+window.enterGate = function(gateId) {
+  const gate = GATE_DEFS.find(g => g.id === gateId);
+  if (gate && player.level >= gate.reqLevel) {
+    startDungeon(gate);
+  }
+};
+
+// ==================== INPUT HANDLERS ====================
+function handleKeyPress(key, e) {
+  if (gameState === 'TITLE' && key === 'enter') {
+    document.getElementById('title-screen').style.display = 'none';
+    document.getElementById('name-screen').style.display = 'flex';
+    document.getElementById('name-input').focus();
+    gameState = 'CREATE';
+    e.preventDefault();
+    return;
+  }
+
+  if (gameState === 'CREATE' && key === 'enter') {
+    const name = document.getElementById('name-input').value.trim();
+    if (name.length > 0) {
+      player = createPlayer(name);
+      recalcPlayerStats(player);
+      player.hp = player.maxHp;
+      player.mp = player.maxMp;
+      document.getElementById('name-screen').style.display = 'none';
+      gameState = 'HUB';
+      document.getElementById('system-menu').style.display = 'block';
+      renderSystemMenu();
+    }
+    e.preventDefault();
+    return;
+  }
+
+  if (gameState === 'DUNGEON') {
+    if (key === 'tab') {
+      e.preventDefault();
+      // Quick stat menu in dungeon
+      return;
+    }
+    if (key === ' ') {
+      e.preventDefault();
+      // Dash / dodge
+      if (player.invTimer <= 0) {
+        const fx = player.facing.x;
+        const fy = player.facing.y;
+        player.x += fx * 80;
+        player.y += fy * 80;
+        player.x = clamp(player.x, -dungeonArenaW/2, dungeonArenaW/2);
+        player.y = clamp(player.y, -dungeonArenaH/2, dungeonArenaH/2);
+        player.invTimer = 0.25;
+        for (let i = 0; i < 6; i++) {
+          spawnParticle(player.x - fx * rand(0, 60), player.y - fy * rand(0, 60), COLORS.primary, {
+            vx: rand(-1,1), vy: rand(-1,1), size: rand(2,4), glow: true, decay: 0.05,
+          });
+        }
+      }
+    }
+    // Skills
+    const skillIndex = ['1','2','3','4'].indexOf(key);
+    if (skillIndex >= 0) {
+      const skill = SKILL_DEFS[skillIndex];
+      if (skill && player.level >= skill.unlockLevel) {
+        useSkill(skill);
+      }
+    }
+  }
+
+  if (gameState === 'HUB' && key === 'tab') {
+    e.preventDefault();
+    // Toggle system menu (already shown)
+  }
+}
+
+function handleClick() {
+  if (gameState === 'DUNGEON') {
+    // Basic attack (skill 1)
+    useSkill(SKILL_DEFS[0]);
+  }
+}
+
+// Button handlers
+document.getElementById('extract-btn').addEventListener('click', doExtract);
+document.getElementById('victory-btn').addEventListener('click', returnToHub);
+document.getElementById('death-btn').addEventListener('click', () => {
+  player.hp = player.maxHp * 0.5;
+  player.mp = player.maxMp * 0.5;
+  returnToHub();
+});
+
+// ==================== RENDERING ====================
+function drawGame(dt) {
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Background particles (always)
+  drawBgParticles(dt);
+
+  if (gameState === 'DUNGEON' && player) {
+    drawDungeon(dt);
+  }
+
+  // Always draw particles
+  drawParticles(dt);
+  drawFloatingTexts(dt);
+}
+
+function drawBgParticles(dt) {
+  bgParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.y < -10) { p.y = H + 10; p.x = rand(0, W); }
+    if (p.x < -10) p.x = W + 10;
+    if (p.x > W + 10) p.x = -10;
+
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glow
+    ctx.globalAlpha = p.alpha * 0.3;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawDungeon(dt) {
+  // Camera
+  camera.x = lerp(camera.x, player.x, 0.1);
+  camera.y = lerp(camera.y, player.y, 0.1);
+
+  const shakeX = camera.shake > 0 ? rand(-camera.shake, camera.shake) : 0;
+  const shakeY = camera.shake > 0 ? rand(-camera.shake, camera.shake) : 0;
+  camera.shake *= 0.9;
+  if (camera.shake < 0.5) camera.shake = 0;
+
+  const offsetX = W/2 - camera.x + shakeX;
+  const offsetY = H/2 - camera.y + shakeY;
+
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+
+  // Draw arena floor
+  drawArena();
+
+  // Draw shadows (player's army)
+  player.shadows.forEach(s => {
+    if (!s.active) return;
+    // Shadow body (dark with purple glow)
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#220044';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = COLORS.accent;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 20, 0, Math.PI * 2);
+    ctx.fill();
+    // Eyes
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = COLORS.accent;
+    ctx.beginPath();
+    ctx.arc(s.x - 4, s.y - 3, 2, 0, Math.PI * 2);
+    ctx.arc(s.x + 4, s.y - 3, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  // Draw enemies
+  entities.forEach(e => {
+    if (!e.alive) return;
+    drawEnemy(e);
+  });
+
+  // Draw projectiles
+  projectiles.forEach(p => {
+    ctx.globalAlpha = Math.min(1, p.life / 20);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    // Glow
+    ctx.globalAlpha *= 0.3;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  // Draw player
+  drawPlayer();
+
+  ctx.restore();
+}
+
+function drawArena() {
+  // Floor tiles
+  const tileSize = 60;
+  const startX = Math.floor((-dungeonArenaW/2) / tileSize) * tileSize;
+  const startY = Math.floor((-dungeonArenaH/2) / tileSize) * tileSize;
+
+  for (let x = startX; x < dungeonArenaW/2; x += tileSize) {
+    for (let y = startY; y < dungeonArenaH/2; y += tileSize) {
+      const checker = ((x / tileSize + y / tileSize) % 2 === 0);
+      ctx.fillStyle = checker ? '#0c0c14' : '#0a0a12';
+      ctx.fillRect(x, y, tileSize, tileSize);
+    }
+  }
+
+  // Arena border
+  ctx.strokeStyle = 'rgba(0, 212, 255, 0.15)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(-dungeonArenaW/2, -dungeonArenaH/2, dungeonArenaW, dungeonArenaH);
+
+  // Corner glows
+  const corners = [
+    [-dungeonArenaW/2, -dungeonArenaH/2],
+    [dungeonArenaW/2, -dungeonArenaH/2],
+    [-dungeonArenaW/2, dungeonArenaH/2],
+    [dungeonArenaW/2, dungeonArenaH/2],
+  ];
+  corners.forEach(([cx, cy]) => {
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 100);
+    grad.addColorStop(0, 'rgba(0, 212, 255, 0.08)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - 100, cy - 100, 200, 200);
+  });
+}
+
+function drawPlayer() {
+  if (!player) return;
+  const { x, y, facing } = player;
+
+  // Player glow
+  const glowGrad = ctx.createRadialGradient(x, y, 0, x, y, 40);
+  glowGrad.addColorStop(0, 'rgba(0, 180, 255, 0.12)');
+  glowGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(x - 40, y - 40, 80, 80);
+
+  // Invincibility flash
+  if (player.invTimer > 0) {
+    ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.03) * 0.3;
+  }
+
+  // Body
+  ctx.fillStyle = player.hitFlash > 0 ? '#ff4444' : COLORS.primary;
+  ctx.beginPath();
+  ctx.arc(x, y, 16, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inner body
+  ctx.fillStyle = '#0a1428';
+  ctx.beginPath();
+  ctx.arc(x, y, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Core
+  ctx.fillStyle = player.hitFlash > 0 ? '#ff6666' : COLORS.primary;
+  ctx.beginPath();
+  ctx.arc(x, y, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Facing indicator
+  ctx.strokeStyle = COLORS.primary;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + facing.x * 12, y + facing.y * 12);
+  ctx.lineTo(x + facing.x * 24, y + facing.y * 24);
+  ctx.stroke();
+
+  ctx.globalAlpha = 1;
+}
+
+function drawEnemy(e) {
+  const { x, y, size, color, isBoss, maxHp, hp, hitFlash } = e;
+
+  // Boss aura
+  if (isBoss) {
+    const auraGrad = ctx.createRadialGradient(x, y, size, x, y, size * 2.5);
+    auraGrad.addColorStop(0, 'rgba(255, 50, 50, 0.15)');
+    auraGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = auraGrad;
+    ctx.fillRect(x - size * 2.5, y - size * 2.5, size * 5, size * 5);
+  }
+
+  // Body
+  ctx.fillStyle = hitFlash > 0 ? '#ffffff' : color;
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inner
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.65, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = isBoss ? COLORS.danger : '#ff8844';
+  ctx.beginPath();
+  ctx.arc(x - size * 0.25, y - size * 0.15, size * 0.15, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.25, y - size * 0.15, size * 0.15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // HP bar
+  const barW = size * 2.5;
+  const barH = 4;
+  const barY = y - size - 12;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.fillRect(x - barW/2, barY, barW, barH);
+  ctx.fillStyle = hp > maxHp * 0.3 ? COLORS.health : COLORS.danger;
+  ctx.fillRect(x - barW/2, barY, barW * (hp / maxHp), barH);
+
+  // Boss name
+  if (isBoss) {
+    ctx.fillStyle = COLORS.danger;
+    ctx.font = '10px Orbitron, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(e.name, x, barY - 6);
+    ctx.textAlign = 'left';
+  }
+}
+
+function drawParticles(dt) {
+  particles = particles.filter(p => p.alpha > 0);
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.97;
+    p.vy *= 0.97;
+    p.alpha -= p.decay;
+
+    if (gameState === 'DUNGEON') {
+      // Apply camera offset
+      const offsetX = W/2 - camera.x;
+      const offsetY = H/2 - camera.y;
+      const sx = p.x + offsetX;
+      const sy = p.y + offsetY;
+
+      ctx.globalAlpha = clamp(p.alpha, 0, 1);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(sx, sy, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      if (p.glow) {
+        ctx.globalAlpha *= 0.3;
+        ctx.beginPath();
+        ctx.arc(sx, sy, p.size * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawFloatingTexts(dt) {
+  floatingTexts = floatingTexts.filter(t => t.life > 0);
+  floatingTexts.forEach(t => {
+    t.y += t.vy;
+    t.life--;
+    t.alpha = clamp(t.life / 30, 0, 1);
+
+    if (gameState === 'DUNGEON') {
+      const offsetX = W/2 - camera.x;
+      const offsetY = H/2 - camera.y;
+      ctx.globalAlpha = t.alpha;
+      ctx.fillStyle = t.color;
+      ctx.font = `bold ${t.size}px Orbitron, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(t.text, t.x + offsetX, t.y + offsetY);
+      ctx.textAlign = 'left';
+    }
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ==================== UPDATE ====================
+function update(dt) {
+  if (gameState !== 'DUNGEON' || !player) return;
+
+  // Player movement
+  let dx = 0, dy = 0;
+  if (keys['w'] || keys['arrowup']) dy -= 1;
+  if (keys['s'] || keys['arrowdown']) dy += 1;
+  if (keys['a'] || keys['arrowleft']) dx -= 1;
+  if (keys['d'] || keys['arrowright']) dx += 1;
+
+  if (dx || dy) {
+    const len = Math.sqrt(dx*dx + dy*dy);
+    dx /= len; dy /= len;
+    player.x += dx * player.speed;
+    player.y += dy * player.speed;
+  }
+
+  // Clamp to arena
+  player.x = clamp(player.x, -dungeonArenaW/2 + 20, dungeonArenaW/2 - 20);
+  player.y = clamp(player.y, -dungeonArenaH/2 + 20, dungeonArenaH/2 - 20);
+
+  // Facing toward mouse (screen-space to world-space)
+  const worldMouseX = mouse.x - W/2 + camera.x;
+  const worldMouseY = mouse.y - H/2 + camera.y;
+  const mdx = worldMouseX - player.x;
+  const mdy = worldMouseY - player.y;
+  const mlen = Math.sqrt(mdx*mdx + mdy*mdy);
+  if (mlen > 0) {
+    player.facing = { x: mdx/mlen, y: mdy/mlen };
+  }
+
+  // Cooldowns
+  if (player.invTimer > 0) player.invTimer -= dt;
+  if (player.hitFlash > 0) player.hitFlash -= dt;
+  for (const id in player.skillCooldowns) {
+    if (player.skillCooldowns[id] > 0) {
+      player.skillCooldowns[id] -= dt;
+    }
+  }
+
+  // Regen
+  player.hp = Math.min(player.maxHp, player.hp + player.stats.VIT * 0.02 * dt);
+  player.mp = Math.min(player.maxMp, player.mp + player.stats.INT * 0.04 * dt);
+
+  // Update enemies
+  entities.forEach(e => updateEnemy(e, dt));
+
+  // Update projectiles
+  projectiles = projectiles.filter(p => p.life > 0);
+  projectiles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+
+    if (p.fromEnemy) {
+      if (dist(p.x, p.y, player.x, player.y) < 20) {
+        dealDamageToPlayer(p.damage);
+        p.life = 0;
+      }
+    } else {
+      entities.forEach(e => {
+        if (!e.alive) return;
+        if (dist(p.x, p.y, e.x, e.y) < e.size + 5) {
+          damageEnemy(e, p.damage);
+          p.life = 0;
+        }
+      });
+    }
+  });
+
+  // Update shadows
+  updateShadows(dt);
+
+  // Continuous basic attack while holding mouse
+  if (mouse.down && player.skillCooldowns['slash'] <= 0) {
+    useSkill(SKILL_DEFS[0]);
+  }
+
+  // Wave progress check
+  if (dungeon && !dungeon.cleared) {
+    checkWaveProgress();
+  }
+
+  // Player trail particles
+  if ((dx || dy) && Math.random() < 0.3) {
+    spawnParticle(player.x, player.y + 10, COLORS.primary, {
+      vx: -dx * 0.5, vy: -dy * 0.5, size: rand(1, 3), alpha: 0.3, decay: 0.03,
+    });
+  }
+}
+
+// ==================== GAME LOOP ====================
+let lastTime = performance.now();
+
+function gameLoop(now) {
+  const rawDt = (now - lastTime) / 1000;
+  const dt = Math.min(rawDt, 0.05); // Cap delta
+  lastTime = now;
+
+  update(dt);
+  drawGame(dt);
+  updateHUD();
+
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+
+// ==================== QUEST COMPLETION CHECK ====================
+setInterval(() => {
+  if (!player) return;
+  DAILY_QUESTS.forEach(q => {
+    if (questProgress[q.stat] >= q.target && !q.completed) {
+      q.completed = true;
+      playerGainXp(q.reward);
+      spawnFloatingText(player.x, player.y - 50, `QUEST COMPLETE: +${q.reward} XP`, COLORS.xp, 20);
+    }
+  });
+}, 1000);
+
+})();
+</script>
+</body>
+</html>
