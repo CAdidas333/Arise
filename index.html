@@ -35,7 +35,11 @@
     z-index: 100; background: #08080f;
   }
   @media (max-width: 768px) {
-    #title-screen h1 { font-size: 60px !important; letter-spacing: 15px !important; }
+    #title-screen h1 { font-size: 48px !important; letter-spacing: 10px !important; }
+    #title-screen .subtitle { font-size: 14px !important; letter-spacing: 6px !important; margin-bottom: 20px !important; }
+    #title-screen .prompt, #title-screen .title-continue { font-size: 12px !important; }
+    #title-screen { padding: 20px !important; }
+    .title-high-scores { padding: 12px 20px !important; min-width: auto !important; }
     .sys-panels { grid-template-columns: 1fr !important; padding: 10px 15px !important; height: auto !important; max-height: none !important; overflow-y: visible !important; }
     #system-menu { overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
     .sys-panel { overflow: visible !important; }
@@ -285,6 +289,12 @@
   .touch-btn-row { display: flex; gap: 8px; }
   .touch-btn-sm { width: 46px; height: 46px; font-size: 16px; }
 
+  @media (max-height: 500px) and (orientation: landscape) {
+    #title-screen h1 { font-size: 42px !important; letter-spacing: 8px !important; margin-bottom: 10px !important; }
+    #title-screen .subtitle { font-size: 12px !important; margin-bottom: 10px !important; }
+    #title-screen .prompt, #title-screen .title-continue { font-size: 11px !important; }
+    .title-high-scores { display: none !important; }
+  }
   /* Landscape mobile: compact everything */
   @media (max-height: 500px) and (orientation: landscape) {
     .touch-joystick-zone { bottom: 10px; left: 10px; width: 120px; height: 120px; }
@@ -307,7 +317,30 @@
     .touch-btn.attack { width: 66px; height: 66px; }
   }
 
-  /* Fullscreen button */
+  /* Pause overlay */
+  #pause-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(4,4,10,0.85); z-index: 55; backdrop-filter: blur(4px);
+    flex-direction: column; align-items: center; justify-content: center;
+  }
+  #pause-overlay h2 {
+    font-family: 'Orbitron',monospace; font-size: 36px; letter-spacing: 10px;
+    color: rgba(0,212,255,0.6); margin-bottom: 30px;
+  }
+  #pause-overlay .pause-stats { text-align: center; margin-bottom: 30px; }
+  #pause-overlay .pause-stats div { font-size: 14px; color: rgba(255,255,255,0.4); letter-spacing: 2px; margin: 6px 0; }
+
+  /* Fullscreen + pause buttons */
+  .top-btn {
+    position: absolute; top: 10px;
+    width: 40px; height: 40px; border-radius: 8px;
+    background: rgba(0,15,30,0.8); border: 1px solid rgba(0,212,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: rgba(0,212,255,0.5); cursor: pointer;
+    -webkit-tap-highlight-color: transparent; z-index: 25;
+    pointer-events: auto;
+  }
+  .top-btn:active { background: rgba(0,212,255,0.2); }
   .fullscreen-btn {
     position: absolute; top: 10px; right: 10px;
     width: 40px; height: 40px; border-radius: 8px;
@@ -378,6 +411,7 @@
     <div class="audio-ctrl"><label>SFX</label><input type="range" id="vol-sfx" min="0" max="100" value="60"></div>
   </div>
   <div class="hud-skills" id="hud-skills"></div>
+  <div style="position:absolute;top:10px;right:10px;pointer-events:auto"><button class="top-btn" id="hud-pause-btn" style="position:static">⏸</button></div>
   <div class="hud-bottom-right"><div id="hud-gate-name">E-RANK GATE</div></div>
 </div>
 
@@ -387,8 +421,16 @@
   <div class="rotate-dismiss" id="rotate-dismiss">TAP TO PLAY IN PORTRAIT</div>
 </div>
 
+<div id="pause-overlay">
+  <h2>PAUSED</h2>
+  <div class="pause-stats" id="pause-stats"></div>
+  <button class="continue-btn" id="pause-resume">RESUME</button>
+  <button class="continue-btn" id="pause-quit" style="margin-top:12px;border-color:rgba(255,68,68,0.3);color:#ff6644">QUIT TO HUB</button>
+</div>
+
 <div id="touch-controls">
-  <div class="fullscreen-btn" id="fullscreen-btn">⛶</div>
+  <div class="top-btn fullscreen-btn" id="fullscreen-btn" style="right:10px">⛶</div>
+  <div class="top-btn" id="pause-btn" style="right:60px">⏸</div>
   <div class="touch-joystick-zone" id="joystick-zone">
     <div class="touch-joystick-base" id="joystick-base">
       <div class="touch-joystick-thumb" id="joystick-thumb"></div>
@@ -789,16 +831,19 @@ if (isMobile) {
   // Try to lock to landscape
   try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
 
-  // Fullscreen button
+  // Fullscreen button — try every method available
   document.getElementById('fullscreen-btn').addEventListener('click', () => {
     const el = document.documentElement;
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-      if (rfs) rfs.call(el).then(()=>{ resize(); }).catch(()=>{});
-    } else {
-      const efs = document.exitFullscreen || document.webkitExitFullscreen;
-      if (efs) efs.call(document);
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen).call(document);
+      return;
     }
+    // Try standard, then webkit, then ms
+    if (el.requestFullscreen) el.requestFullscreen().then(resize).catch(()=>{});
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); // iOS/Safari
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    // Fallback: scroll away the URL bar
+    setTimeout(() => { window.scrollTo(0, 1); resize(); }, 300);
   });
 
   // Also use 100dvh for proper mobile viewport
@@ -1803,7 +1848,9 @@ function onKey(key, e) {
     e.preventDefault();
     return;
   }
+  if (key === 'escape' && gameState === 'DUNGEON') { e.preventDefault(); togglePause(); return; }
   if (gameState === 'DUNGEON') {
+    if (paused) return; // block all input while paused
     if (key === ' ') {
       e.preventDefault();
       if (player.invTimer <= 0) {
@@ -1830,6 +1877,31 @@ function onClick() {
 }
 
 document.getElementById('extract-btn').addEventListener('click', doExtract);
+
+// Pause system
+let paused = false;
+function togglePause() {
+  if (gameState !== 'DUNGEON') return;
+  paused = !paused;
+  const el = document.getElementById('pause-overlay');
+  if (paused) {
+    el.style.display = 'flex';
+    document.getElementById('pause-stats').innerHTML = `
+      <div>Level: ${player.level} &nbsp; Rank: ${player.rank}</div>
+      <div>Wave: ${dungeon?dungeon.wave:'-'} / ${dungeon?dungeon.maxWaves:'-'}</div>
+      <div>Kills: ${sessionKills} &nbsp; XP: ${fmtNum(sessionXp)}</div>`;
+    stopMusic();
+  } else {
+    el.style.display = 'none';
+    startMusic();
+  }
+}
+document.getElementById('pause-resume').addEventListener('click', () => { if(paused) togglePause(); });
+document.getElementById('pause-quit').addEventListener('click', () => { paused=false; document.getElementById('pause-overlay').style.display='none'; returnToHub(); });
+if (isMobile) {
+  document.getElementById('pause-btn').addEventListener('click', togglePause);
+}
+document.getElementById('hud-pause-btn').addEventListener('click', togglePause);
 
 // Mobile: tap title screen to start
 document.getElementById('title-screen').addEventListener('click', () => {
@@ -2247,7 +2319,7 @@ function drawFloatingTexts(dt) {
 // ================================================================
 function update(dt) {
   gameTime += dt;
-  if (gameState !== 'DUNGEON' || !player) return;
+  if (gameState !== 'DUNGEON' || !player || paused) return;
 
   // Movement (keyboard + touch joystick)
   let dx=0, dy=0;
