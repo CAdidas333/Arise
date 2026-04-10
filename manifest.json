@@ -1,0 +1,10 @@
+{
+  "name": "ARISE — Solo Leveling RPG",
+  "short_name": "ARISE",
+  "start_url": "/Arise/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#08080f",
+  "theme_color": "#00d4ff",
+  "icons": []
+}
