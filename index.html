@@ -31,9 +31,12 @@
   }
   @media (max-width: 768px) {
     #title-screen h1 { font-size: 60px !important; letter-spacing: 15px !important; }
-    .sys-panels { grid-template-columns: 1fr !important; padding: 10px 15px !important; }
+    .sys-panels { grid-template-columns: 1fr !important; padding: 10px 15px !important; height: auto !important; max-height: none !important; overflow-y: visible !important; }
+    #system-menu { overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+    .sys-panel { overflow: visible !important; }
     .hud-skills { bottom: 100px !important; }
     .hud-bar { width: 180px !important; }
+    .sys-footer { padding-bottom: 40px !important; }
   }
   #title-screen h1 {
     font-family: 'Orbitron', monospace; font-size: 120px; font-weight: 900;
@@ -698,8 +701,11 @@ if (isMobile) {
   document.body.style.cursor = 'default';
   document.getElementById('touch-controls').style.display = 'block';
 
-  // Prevent scrolling/zooming
-  document.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
+  // Prevent scrolling/zooming EXCEPT on system menu and overlays
+  document.addEventListener('touchmove', e => {
+    const inMenu = e.target.closest('#system-menu, #extraction-overlay, #victory-overlay, #death-overlay, #name-screen, #title-screen');
+    if (!inMenu) e.preventDefault();
+  }, { passive:false });
 
   // Joystick
   const jZone = document.getElementById('joystick-zone');
