@@ -110,6 +110,29 @@
 
   .hud-bottom-right { position: absolute; bottom: 20px; right: 20px; font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; color: rgba(0,212,255,0.3); }
 
+  /* Audio controls */
+  .audio-panel {
+    position: absolute; top: 20px; right: 160px;
+    display: flex; gap: 12px; align-items: center;
+    pointer-events: auto;
+  }
+  .audio-ctrl { display: flex; align-items: center; gap: 6px; }
+  .audio-ctrl label {
+    font-family: 'Orbitron', monospace; font-size: 8px; letter-spacing: 2px;
+    color: rgba(0,212,255,0.4); text-transform: uppercase;
+  }
+  .audio-ctrl input[type="range"] {
+    -webkit-appearance: none; width: 60px; height: 4px;
+    background: rgba(0,212,255,0.15); outline: none; border-radius: 2px;
+  }
+  .audio-ctrl input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 10px; height: 10px;
+    background: rgba(0,212,255,0.5); border-radius: 50%; cursor: pointer;
+  }
+  .audio-ctrl input[type="range"]::-webkit-slider-thumb:hover {
+    background: rgba(0,212,255,0.8);
+  }
+
   /* Boss HP bar - Dark Souls style */
   .boss-bar-wrap { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); width: 500px; display: none; text-align: center; }
   .boss-bar-name { font-family: 'Orbitron', monospace; font-size: 13px; letter-spacing: 4px; color: #ff6644; text-shadow: 0 0 10px rgba(255,68,68,0.4); margin-bottom: 6px; }
@@ -259,6 +282,10 @@
     <div class="boss-bar-name" id="boss-bar-name">BOSS</div>
     <div class="boss-bar"><div class="boss-bar-fill" id="boss-bar-fill" style="width:100%"></div></div>
   </div>
+  <div class="audio-panel" id="audio-panel">
+    <div class="audio-ctrl"><label>BGM</label><input type="range" id="vol-music" min="0" max="100" value="40"></div>
+    <div class="audio-ctrl"><label>SFX</label><input type="range" id="vol-sfx" min="0" max="100" value="60"></div>
+  </div>
   <div class="hud-skills" id="hud-skills"></div>
   <div class="hud-bottom-right"><div id="hud-gate-name">E-RANK GATE</div></div>
 </div>
@@ -366,6 +393,221 @@ function fmtNum(n) {
   if (n >= 1e4) return (n/1e3).toFixed(1)+'K';
   if (Number.isInteger(n)) return n.toString();
   return Math.round(n).toString();
+}
+
+// ================================================================
+//  AUDIO ENGINE (Web Audio API — procedural music + SFX)
+// ================================================================
+let audioCtx = null;
+let musicGain = null, sfxGain = null;
+let musicPlaying = false;
+let musicInterval = null;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  musicGain = audioCtx.createGain();
+  musicGain.gain.value = 0.4;
+  musicGain.connect(audioCtx.destination);
+  sfxGain = audioCtx.createGain();
+  sfxGain.gain.value = 0.6;
+  sfxGain.connect(audioCtx.destination);
+
+  document.getElementById('vol-music').addEventListener('input', e => { if(musicGain) musicGain.gain.value = e.target.value/100; });
+  document.getElementById('vol-sfx').addEventListener('input', e => { if(sfxGain) sfxGain.gain.value = e.target.value/100; });
+}
+
+// --- SFX ---
+function playSfx(type) {
+  if (!audioCtx || !sfxGain) return;
+  const t = audioCtx.currentTime;
+  switch(type) {
+    case 'slash': {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(100, t+0.08);
+      g.gain.setValueAtTime(0.3, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+      o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+0.1);
+      // Noise component
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.05, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.3;
+      const ns = audioCtx.createBufferSource(); ns.buffer = buf;
+      const ng = audioCtx.createGain(); ng.gain.setValueAtTime(0.2,t); ng.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+      ns.connect(ng); ng.connect(sfxGain); ns.start(t); ns.stop(t+0.06);
+      break;
+    }
+    case 'hit': {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square'; o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(60,t+0.1);
+      g.gain.setValueAtTime(0.2,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+      o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+0.12);
+      break;
+    }
+    case 'crit': {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(600,t); o.frequency.exponentialRampToValueAtTime(150,t+0.15);
+      g.gain.setValueAtTime(0.25,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+0.16);
+      break;
+    }
+    case 'kill': {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(400,t); o.frequency.exponentialRampToValueAtTime(80,t+0.3);
+      g.gain.setValueAtTime(0.15,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+      o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+0.3);
+      break;
+    }
+    case 'levelup': {
+      [0,0.08,0.16,0.24,0.32].forEach((d,i) => {
+        const notes = [523,659,784,1047,1319]; // C5 E5 G5 C6 E6
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = notes[i];
+        g.gain.setValueAtTime(0,t+d); g.gain.linearRampToValueAtTime(0.2,t+d+0.02); g.gain.exponentialRampToValueAtTime(0.001,t+d+0.3);
+        o.connect(g); g.connect(sfxGain); o.start(t+d); o.stop(t+d+0.3);
+      });
+      break;
+    }
+    case 'dash': {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.15, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length)*0.3;
+      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
+      const f = audioCtx.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(2000,t); f.frequency.exponentialRampToValueAtTime(500,t+0.15);
+      ns.connect(f); f.connect(sfxGain); ns.start(t); ns.stop(t+0.15);
+      break;
+    }
+    case 'hurt': {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square'; o.frequency.setValueAtTime(100,t); o.frequency.exponentialRampToValueAtTime(50,t+0.15);
+      g.gain.setValueAtTime(0.15,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+0.16);
+      break;
+    }
+    case 'boss': {
+      [0,0.1,0.2,0.3].forEach((d,i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sawtooth'; o.frequency.value = 55 - i*5;
+        g.gain.setValueAtTime(0,t+d); g.gain.linearRampToValueAtTime(0.2,t+d+0.05); g.gain.exponentialRampToValueAtTime(0.01,t+d+0.4);
+        o.connect(g); g.connect(sfxGain); o.start(t+d); o.stop(t+d+0.4);
+      });
+      break;
+    }
+    case 'extract': {
+      [0,0.15,0.3,0.45,0.6].forEach((d,i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = 110*(i+1);
+        g.gain.setValueAtTime(0,t+d); g.gain.linearRampToValueAtTime(0.15,t+d+0.05); g.gain.exponentialRampToValueAtTime(0.001,t+d+0.25);
+        o.connect(g); g.connect(sfxGain); o.start(t+d); o.stop(t+d+0.25);
+      });
+      break;
+    }
+    case 'legion': {
+      // Deep dramatic chord
+      [55,110,165,220].forEach((freq,i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = i<2?'sawtooth':'sine'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.12,t+0.1); g.gain.setValueAtTime(0.12,t+0.8); g.gain.exponentialRampToValueAtTime(0.001,t+1.5);
+        o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+1.5);
+      });
+      break;
+    }
+  }
+}
+
+// --- BATTLE MUSIC (procedural loop) ---
+const MUSIC_BPM = 140;
+const BEAT_DUR = 60 / MUSIC_BPM;
+let musicStep = 0;
+
+// A minor pentatonic: A2=110, C3=131, D3=147, E3=165, G3=196, A3=220
+const bassLine = [110,110,131,131, 110,110,147,131, 110,110,165,165, 196,165,147,131];
+const melodyLine = [440,0,523,0, 440,0,392,0, 523,0,587,0, 659,523,440,0,
+                    440,0,523,0, 659,0,784,0, 659,0,523,0, 440,392,440,0];
+
+function startMusic() {
+  if (!audioCtx || musicPlaying) return;
+  musicPlaying = true;
+  musicStep = 0;
+
+  musicInterval = setInterval(() => {
+    if (!audioCtx || !musicPlaying) return;
+    const t = audioCtx.currentTime;
+    const step16 = musicStep % 16;
+    const step32 = musicStep % 32;
+
+    // Kick drum (beats 0, 4, 8, 12)
+    if (step16 % 4 === 0) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(30,t+0.12);
+      g.gain.setValueAtTime(0.35,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.15);
+    }
+
+    // Snare (beats 4, 12)
+    if (step16 % 8 === 4) {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.08, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length);
+      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.15,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=2000;
+      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.08);
+    }
+
+    // Hi-hat (every other step)
+    if (step16 % 2 === 0) {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.03, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length)*0.5;
+      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.03);
+      const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=6000;
+      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.03);
+    }
+
+    // Bass (every beat)
+    if (step16 % 1 === 0) {
+      const freq = bassLine[step16];
+      if (freq > 0) {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sawtooth'; o.frequency.value = freq;
+        const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=300;
+        g.gain.setValueAtTime(0.12,t); g.gain.setValueAtTime(0.12,t+BEAT_DUR*0.7); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*0.95);
+        o.connect(f); f.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR);
+      }
+    }
+
+    // Melody (synth lead)
+    const mFreq = melodyLine[step32];
+    if (mFreq > 0) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square';
+      o.frequency.value = mFreq;
+      const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=1500;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.06,t+0.01);
+      g.gain.setValueAtTime(0.06,t+BEAT_DUR*0.6); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*0.9);
+      o.connect(f); f.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR);
+    }
+
+    musicStep++;
+  }, BEAT_DUR * 1000);
+}
+
+function stopMusic() {
+  musicPlaying = false;
+  if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
 }
 
 // ================================================================
@@ -521,7 +763,7 @@ function playerGainXp(amount) {
     leveled = true;
   }
   if (leveled) {
-    toast(`LEVEL UP — LV.${player.level}  (+5 stat points)`, 'gold', 2500);
+    toast(`LEVEL UP — LV.${player.level}  (+5 stat points)`, 'gold', 2500); playSfx('levelup');
     spawnBurst(player.x, player.y, COLORS.xp, 30);
     spawnBurst(player.x, player.y, COLORS.primary, 20);
     screenFlash = { alpha: 0.4, color: '#ffcc00' };
@@ -747,9 +989,10 @@ function damageEnemy(e, dmg) {
   e.stunTimer = 0.1;
   spawnFloatingText(e.x, e.y - e.size - 10, isCrit ? `CRIT ${fmtNum(finalDmg)}` : fmtNum(finalDmg), isCrit ? '#ffcc00' : '#ff6644', isCrit ? 24 : 16);
   spawnBurst(e.x, e.y, e.color, 6);
+  if (isCrit) playSfx('crit'); else playSfx('hit');
 
   if (e.hp <= 0) {
-    e.alive = false;
+    e.alive = false; playSfx('kill');
     spawnBurst(e.x, e.y, e.color, 25);
     spawnBurst(e.x, e.y, '#ffffff', 8);
     playerGainXp(e.xp);
@@ -781,6 +1024,7 @@ function dealDamageToPlayer(dmg) {
   player.hp -= finalDmg;
   player.hitFlash = 0.2;
   questProgress.damageTaken += finalDmg;
+  playSfx('hurt');
   spawnFloatingText(player.x, player.y - 40, `-${fmtNum(finalDmg)}`, COLORS.danger, 18);
   camera.shake = Math.min(camera.shake + 6, 20);
   spawnBurst(player.x, player.y, COLORS.danger, 8);
@@ -803,6 +1047,7 @@ function useSkill(sd) {
     case 'melee': {
       player.animState = 'attack'; player.attackAnimTimer = 0.25;
       player.attackAngle = Math.atan2(fy, fx);
+      playSfx('slash');
       const cx = player.x + fx*45, cy = player.y + fy*45;
       entities.forEach(e => { if (e.alive && dist(cx,cy,e.x,e.y) < sd.range) damageEnemy(e, dmg); });
       for (let i = 0; i < 8; i++) {
@@ -813,7 +1058,7 @@ function useSkill(sd) {
       break;
     }
     case 'dash': {
-      player.animState = 'dash';
+      player.animState = 'dash'; playSfx('dash');
       player.x += fx*sd.range; player.y += fy*sd.range;
       player.x = clamp(player.x,-arenaW/2,arenaW/2); player.y = clamp(player.y,-arenaH/2,arenaH/2);
       player.invTimer = 0.3;
@@ -826,7 +1071,7 @@ function useSkill(sd) {
       let nearest=null, nd=Infinity;
       entities.forEach(e => { if (!e.alive) return; const d=dist(player.x,player.y,e.x,e.y); if(d<sd.range&&d<nd){nearest=e;nd=d;} });
       if (nearest) {
-        spawnBurst(player.x,player.y,COLORS.accent,12);
+        playSfx('dash'); spawnBurst(player.x,player.y,COLORS.accent,12);
         player.x = nearest.x - nearest.facing.x*40;
         player.y = nearest.y - nearest.facing.y*40;
         player.invTimer = 0.2;
@@ -837,7 +1082,7 @@ function useSkill(sd) {
       }
       break;
     }
-    case 'aoe': {
+    case 'aoe': { playSfx('crit');
       entities.forEach(e => { if (e.alive && dist(player.x,player.y,e.x,e.y)<sd.range) damageEnemy(e, dmg); });
       for (let i = 0; i < 50; i++) {
         const a=rand(0,Math.PI*2), r=rand(10,sd.range);
@@ -849,7 +1094,7 @@ function useSkill(sd) {
     }
     case 'legion': {
       if (player.shadows.length === 0) { player.mp += sd.manaCost; player.skillCooldowns[sd.id] = 0; toast('NO SHADOWS TO COMMAND', 'red', 1500); break; }
-      legionTimer = LEGION_DURATION;
+      legionTimer = LEGION_DURATION; playSfx('legion');
       toast('ARISE — SHADOW LEGION UNLEASHED', 'purple', 3000, true);
       screenFlash = { alpha:0.5, color:'#8844ff' };
       camera.shake = 15;
@@ -936,6 +1181,7 @@ function startDungeon(gateDef) {
   document.getElementById('hud-gate-name').textContent=`${gateDef.rank}-RANK: ${gateDef.name.toUpperCase()}`;
   document.getElementById('boss-bar-wrap').style.display='none';
   toast(`ENTERING ${gateDef.rank}-RANK GATE: ${gateDef.name.toUpperCase()}`, 'blue', 2000);
+  initAudio(); startMusic();
 }
 
 function spawnWave() {
@@ -952,7 +1198,7 @@ function spawnWave() {
     dungeon.bossRef = b;
     dungeon.enemiesRemaining = 1;
     camera.shake = 12;
-    toast(`⚠ BOSS DETECTED — HUNT IT DOWN ⚠`, 'red', 3000, true);
+    toast(`⚠ BOSS DETECTED — HUNT IT DOWN ⚠`, 'red', 3000, true); playSfx('boss');
     document.getElementById('boss-bar-wrap').style.display='block';
     document.getElementById('boss-bar-name').textContent=dungeon.gate.boss.name;
   } else {
@@ -1008,7 +1254,7 @@ function showExtraction() {
 function doExtract() {
   if (!pendingExtraction) return;
   player.shadows.push({ name:pendingExtraction.name, damage:Math.floor(pendingExtraction.damage*0.6), level:player.level, color:pendingExtraction.color||COLORS.accent, size:Math.min(pendingExtraction.size*0.4,18), x:player.x, y:player.y+30, active:false, attackCd:0 });
-  spawnBurst(player.x, player.y, COLORS.accent, 50);
+  spawnBurst(player.x, player.y, COLORS.accent, 50); playSfx('extract');
   screenFlash = { alpha:0.5, color:'#8844ff' };
   toast(`SHADOW EXTRACTED: ${pendingExtraction.name}`, 'purple', 3000);
   document.getElementById('extraction-overlay').style.display = 'none';
@@ -1039,7 +1285,7 @@ function returnToHub() {
   ['hud','victory-overlay','death-overlay','extraction-overlay'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('system-menu').style.display='block';
   entities=[]; projectiles=[]; dungeon=null; legionTimer=0;
-  renderSystemMenu();
+  stopMusic(); renderSystemMenu();
   saveGame();
 }
 
@@ -1224,6 +1470,7 @@ window.enterGate = function(id) {
 //  INPUT HANDLERS
 // ================================================================
 function onKey(key, e) {
+  initAudio(); // Browser requires user gesture to start audio
   if (gameState === 'TITLE' && key === 'enter') {
     e.preventDefault();
     if (hasSave()) {
