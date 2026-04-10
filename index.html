@@ -44,7 +44,8 @@
     .sys-panels { grid-template-columns: 1fr !important; padding: 10px 15px !important; height: auto !important; max-height: none !important; overflow-y: visible !important; overflow-x: hidden !important; }
     #system-menu { overflow-y: auto !important; overflow-x: hidden !important; -webkit-overflow-scrolling: touch; overscroll-behavior-x: none; }
     .sys-panel { overflow: visible !important; overflow-x: hidden !important; }
-    .hud-skills { bottom: 100px !important; }
+    .hud-skills { display: none !important; }
+    .audio-panel { display: none !important; }
     .hud-bar { width: 180px !important; }
     .sys-footer { padding-bottom: 40px !important; }
   }
@@ -131,7 +132,7 @@
 
   /* Audio controls */
   .audio-panel {
-    position: absolute; top: 20px; right: 160px;
+    position: absolute; top: 20px; right: 200px;
     display: flex; gap: 12px; align-items: center;
     pointer-events: auto;
   }
@@ -361,19 +362,7 @@
   }
   .fullscreen-btn:active { background: rgba(0,212,255,0.2); }
 
-  /* Rotate prompt for portrait */
-  #rotate-prompt {
-    display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(4,4,10,0.95); z-index: 200;
-    flex-direction: column; align-items: center; justify-content: center;
-    font-family: 'Orbitron',monospace; color: rgba(0,212,255,0.6);
-    font-size: 14px; letter-spacing: 4px; text-align: center; padding: 40px;
-  }
-  #rotate-prompt .rotate-icon { font-size: 48px; margin-bottom: 20px; }
-  #rotate-prompt .rotate-dismiss {
-    margin-top: 30px; font-size: 11px; letter-spacing: 3px;
-    color: rgba(255,255,255,0.3); cursor: pointer;
-  }
+  /* Rotate prompt removed — portrait plays well now */
 </style>
 </head>
 <body>
@@ -422,12 +411,6 @@
   <div class="hud-skills" id="hud-skills"></div>
   <div class="hud-pause-desktop" style="position:absolute;top:10px;right:10px;pointer-events:auto"><button class="top-btn" id="hud-pause-btn" style="position:static">⏸ </button></div>
   <div class="hud-bottom-right"><div id="hud-gate-name">E-RANK GATE</div></div>
-</div>
-
-<div id="rotate-prompt">
-  <div class="rotate-icon">📱↻</div>
-  <div>ROTATE TO LANDSCAPE<br>FOR THE BEST EXPERIENCE</div>
-  <div class="rotate-dismiss" id="rotate-dismiss">TAP TO PLAY IN PORTRAIT</div>
 </div>
 
 <div id="pause-overlay">
@@ -822,23 +805,8 @@ if (isMobile) {
   document.body.style.cursor = 'default';
   document.getElementById('touch-controls').style.display = 'block';
 
-  // Show rotate prompt in portrait
-  if (window.innerHeight > window.innerWidth) {
-    document.getElementById('rotate-prompt').style.display = 'flex';
-  }
-  document.getElementById('rotate-dismiss').addEventListener('click', () => {
-    document.getElementById('rotate-prompt').style.display = 'none';
-  });
-  window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-      document.getElementById('rotate-prompt').style.display =
-        window.innerHeight > window.innerWidth ? 'flex' : 'none';
-      resize();
-    }, 200);
-  });
-
-  // Try to lock to landscape
-  try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
+  // Resize on orientation change
+  window.addEventListener('orientationchange', () => { setTimeout(resize, 200); });
 
   // Fullscreen button — try every method available
   document.getElementById('fullscreen-btn').addEventListener('click', () => {
