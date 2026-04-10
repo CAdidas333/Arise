@@ -107,7 +107,7 @@
   #hud { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 20; }
   #hud * { pointer-events: none; }
 
-  .hud-top-left { position: absolute; top: 20px; left: 20px; }
+  .hud-top-left { position: absolute; top: calc(20px + env(safe-area-inset-top, 0px)); left: calc(20px + env(safe-area-inset-left, 0px)); }
   .hud-player-name { font-family: 'Orbitron', monospace; font-size: 14px; letter-spacing: 2px; color: #00d4ff; margin-bottom: 4px; }
   .hud-rank { font-family: 'Orbitron', monospace; font-size: 11px; letter-spacing: 3px; color: rgba(0,212,255,0.5); margin-bottom: 12px; }
 
@@ -128,7 +128,7 @@
   .skill-slot.on-cd { border-color: rgba(100,100,100,0.3); }
   .skill-slot .skill-name { font-size: 7px; letter-spacing: 1px; color: rgba(255,255,255,0.5); position: absolute; bottom: 3px; text-transform: uppercase; }
 
-  .hud-bottom-right { position: absolute; bottom: 20px; right: 20px; font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; color: rgba(0,212,255,0.3); }
+  .hud-bottom-right { position: absolute; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; color: rgba(0,212,255,0.3); }
 
   /* Audio controls */
   .audio-panel {
@@ -160,14 +160,14 @@
   .boss-bar-fill { height: 100%; background: linear-gradient(90deg, #cc2200, #ff4422); box-shadow: 0 0 12px rgba(255,68,68,0.4); transition: width 0.2s; }
 
   /* Combo display */
-  .hud-combo { position: absolute; top: 160px; left: 20px; text-align: left; display: none; }
+  .hud-combo { position: absolute; top: calc(160px + env(safe-area-inset-top, 0px)); left: calc(20px + env(safe-area-inset-left, 0px)); text-align: left; display: none; }
   .combo-count { font-family: 'Orbitron', monospace; font-size: 48px; font-weight: 900; color: #ffcc00; text-shadow: 0 0 20px rgba(255,204,0,0.6); line-height: 1; }
   .combo-label { font-family: 'Orbitron', monospace; font-size: 12px; letter-spacing: 4px; color: rgba(255,204,0,0.6); }
   .combo-multi { font-family: 'Orbitron', monospace; font-size: 14px; color: #ff8844; margin-top: 2px; }
 
   /* Wave / enemies - top center */
-  .hud-wave { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', monospace; font-size: 14px; letter-spacing: 4px; color: rgba(0,212,255,0.6); text-shadow: 0 0 20px rgba(0,212,255,0.3); }
-  .hud-enemies { position: absolute; top: 42px; left: 50%; transform: translateX(-50%); font-size: 12px; letter-spacing: 2px; color: rgba(255,100,100,0.6); }
+  .hud-wave { position: absolute; top: calc(20px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); font-family: 'Orbitron', monospace; font-size: 14px; letter-spacing: 4px; color: rgba(0,212,255,0.6); text-shadow: 0 0 20px rgba(0,212,255,0.3); }
+  .hud-enemies { position: absolute; top: calc(42px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); font-size: 12px; letter-spacing: 2px; color: rgba(255,100,100,0.6); }
 
   /* ===== TOAST NOTIFICATIONS (top of screen) ===== */
   #toast-container { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
@@ -282,10 +282,10 @@
   /* ===== MOBILE TOUCH CONTROLS ===== */
   #touch-controls { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 15; pointer-events: none; }
   #touch-controls * { pointer-events: auto; }
-  .touch-joystick-zone { position: absolute; bottom: 20px; left: 15px; width: 140px; height: 140px; }
+  .touch-joystick-zone { position: absolute; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: calc(15px + env(safe-area-inset-left, 0px)); width: 140px; height: 140px; }
   .touch-joystick-base { width: 110px; height: 110px; border-radius: 50%; background: rgba(0,212,255,0.08); border: 2px solid rgba(0,212,255,0.15); position: absolute; bottom: 15px; left: 15px; }
   .touch-joystick-thumb { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,212,255,0.25); border: 2px solid rgba(0,212,255,0.4); position: absolute; bottom: 47px; left: 47px; transform: translate(-50%,-50%); transition: none; }
-  .touch-btn-zone { position: absolute; bottom: 20px; right: 15px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+  .touch-btn-zone { position: absolute; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); right: calc(15px + env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
   .touch-btn {
     width: 54px; height: 54px; border-radius: 50%;
     background: rgba(0,15,30,0.7); border: 2px solid rgba(0,212,255,0.3);
@@ -342,7 +342,7 @@
 
   /* Fullscreen + pause buttons */
   .top-btn {
-    position: absolute; top: 10px;
+    position: absolute; top: calc(10px + env(safe-area-inset-top, 0px));
     width: 40px; height: 40px; border-radius: 8px;
     background: rgba(0,15,30,0.8); border: 1px solid rgba(0,212,255,0.3);
     display: flex; align-items: center; justify-content: center;
