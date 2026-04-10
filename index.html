@@ -149,8 +149,12 @@
   }
   .sys-header { text-align: center; padding: 30px 0 10px; }
   .sys-header h2 { font-family: 'Orbitron', monospace; font-size: 16px; letter-spacing: 8px; color: rgba(0,212,255,0.6); font-weight: 400; }
-  .sys-panels { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 20px 40px; max-width: 1200px; margin: 0 auto; height: calc(100vh - 140px); overflow-y: auto; }
-  .sys-panel { background: rgba(0,15,30,0.6); border: 1px solid rgba(0,212,255,0.15); padding: 20px; position: relative; overflow: hidden; }
+  .sys-panels { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 20px 40px; max-width: 1200px; margin: 0 auto; height: calc(100vh - 140px); }
+  .sys-panel { background: rgba(0,15,30,0.6); border: 1px solid rgba(0,212,255,0.15); padding: 20px; position: relative; overflow-y: auto; overflow-x: hidden; }
+  .sys-panel::-webkit-scrollbar { width: 4px; }
+  .sys-panel::-webkit-scrollbar-track { background: rgba(0,10,20,0.5); }
+  .sys-panel::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 2px; }
+  .sys-panel::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.4); }
   .sys-panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, rgba(0,212,255,0.5), transparent); animation: scanline 3s linear infinite; }
   @keyframes scanline { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
   .sys-panel h3 { font-family: 'Orbitron', monospace; font-size: 11px; letter-spacing: 4px; color: rgba(0,212,255,0.5); margin-bottom: 16px; text-transform: uppercase; }
@@ -821,20 +825,44 @@ function useSkill(sd) {
 //  SHADOW SUMMONS
 // ================================================================
 function updateShadows(dt) {
+  const aliveEnemies = entities.filter(e => e.alive);
+  const total = player.shadows.filter(s => s.active).length;
+
   player.shadows.forEach((s, i) => {
     if (!s.active) return;
-    let target=null, td=Infinity;
-    entities.forEach(e => { if (!e.alive) return; const d=dist(s.x,s.y,e.x,e.y); if(d<td){target=e;td=d;} });
-    if (target) {
-      const dx=target.x-s.x, dy=target.y-s.y, d=Math.hypot(dx,dy);
-      if (d>30) { s.x+=(dx/d)*2.5; s.y+=(dy/d)*2.5; }
-      s.attackCd -= dt;
-      if (d<40 && s.attackCd<=0) { damageEnemy(target, s.damage); s.attackCd=1.2; spawnBurst(target.x,target.y,COLORS.accent,4); }
-    } else {
-      s.x += (player.x+(i*30-15)-s.x)*0.05;
-      s.y += (player.y+30-s.y)*0.05;
+
+    // Assign each shadow a different enemy target (distribute across enemies)
+    let target = null;
+    if (aliveEnemies.length > 0) {
+      // Distribute shadows across enemies — each shadow picks a different one if possible
+      const targetIndex = i % aliveEnemies.length;
+      target = aliveEnemies[targetIndex];
     }
-    if (Math.random()<0.12) spawnParticle(s.x,s.y,COLORS.accent,{vx:rand(-0.5,0.5),vy:rand(-1,-0.2),size:rand(2,4),alpha:0.4,decay:0.03,glow:true});
+
+    if (target) {
+      // Charge toward assigned target
+      const dx=target.x-s.x, dy=target.y-s.y, d=Math.hypot(dx,dy);
+      if (d > 30) {
+        const chargeSpeed = 3.5;
+        s.x += (dx/d)*chargeSpeed; s.y += (dy/d)*chargeSpeed;
+      }
+      s.attackCd -= dt;
+      if (d < 40 && s.attackCd <= 0) { damageEnemy(target, s.damage); s.attackCd = 1.0; spawnBurst(target.x,target.y,COLORS.accent,4); }
+    } else {
+      // No enemies — form V-formation behind the player
+      // Formation: rows of 3, each row further back, spread wider
+      const row = Math.floor(i / 3);
+      const col = (i % 3) - 1; // -1, 0, 1
+      const spreadX = col * (35 + row * 8);
+      const spreadY = (row + 1) * 35;
+      // "Behind" = opposite of player facing
+      const behindX = player.x - player.facing.x * spreadY + (-player.facing.y) * spreadX;
+      const behindY = player.y - player.facing.y * spreadY + player.facing.x * spreadX;
+      s.x += (behindX - s.x) * 0.08;
+      s.y += (behindY - s.y) * 0.08;
+    }
+
+    if (Math.random()<0.1) spawnParticle(s.x,s.y,COLORS.accent,{vx:rand(-0.5,0.5),vy:rand(-1,-0.2),size:rand(2,4),alpha:0.4,decay:0.03,glow:true});
   });
 }
 
@@ -846,7 +874,13 @@ function startDungeon(gateDef) {
   entities=[]; projectiles=[]; player.x=0; player.y=0;
   player.hp=player.maxHp; player.mp=player.maxMp;
   sessionKills=0; sessionXp=0; comboCount=0; comboTimer=0;
-  player.shadows.forEach((s,i) => { s.active=true; s.x=player.x+(i*40-20); s.y=player.y+40; s.attackCd=0; });
+  player.shadows.forEach((s,i) => {
+    s.active=true; s.attackCd=0;
+    // Start in V-formation behind player
+    const row = Math.floor(i/3), col = (i%3)-1;
+    s.x = player.x + col*35;
+    s.y = player.y + (row+1)*35;
+  });
   spawnWave();
   gameState='DUNGEON';
   document.getElementById('system-menu').style.display='none';
