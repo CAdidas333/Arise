@@ -677,27 +677,27 @@ function playSfx(type) {
   }
 }
 
-// --- EPIC BATTLE MUSIC (dark orchestral war drums + pads) ---
-const MUSIC_BPM = 100; // slower, heavier
+// --- BATTLE MUSIC (driving, aggressive, high energy) ---
+const MUSIC_BPM = 135;
 const BEAT_DUR = 60 / MUSIC_BPM;
 let musicStep = 0;
-let padOscs = []; // sustained drone pads
+let padOscs = [];
 
-// D minor: D2=73.4, F2=87.3, A2=110, D3=146.8, F3=174.6
-const warBass = [73.4,0,73.4,0, 87.3,0,87.3,0, 73.4,0,73.4,65.4, 87.3,0,110,0];
+// E minor power: E2=82.4, G2=98, B2=123.5, E3=164.8, G3=196
+const bassLine = [82.4,82.4,0,82.4, 0,82.4,98,0, 82.4,82.4,0,82.4, 98,0,73.4,0];
+const powerLine = [164.8,0,196,0, 164.8,0,146.8,0, 164.8,0,196,0, 220,196,164.8,0];
 
 function startMusic() {
   if (!audioCtx || musicPlaying) return;
-  audioCtx.resume(); // critical for mobile
+  audioCtx.resume();
   musicPlaying = true; musicStep = 0;
 
-  // Sustained dark drone pad (continuous)
-  [73.4, 110, 146.8].forEach((freq,i) => {
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
+  // Low power drone (subtle, just for depth)
+  [82.4, 164.8].forEach(freq => {
+    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
     o.type = 'sawtooth'; o.frequency.value = freq;
-    const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value = 200;
-    g.gain.value = 0.04;
+    const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value = 150;
+    g.gain.value = 0.025;
     o.connect(f); f.connect(g); g.connect(musicGain); o.start();
     padOscs.push({o,g,f});
   });
@@ -706,66 +706,90 @@ function startMusic() {
     if (!audioCtx || !musicPlaying) return;
     const t = audioCtx.currentTime;
     const s16 = musicStep % 16;
+    const s32 = musicStep % 32;
 
-    // WAR DRUM — deep boom (beats 0, 4, 8, 12)
-    if (s16 % 4 === 0) {
+    // KICK — punchy, every beat (four on the floor)
+    if (s16 % 2 === 0) {
       const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-      o.type = 'sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(25,t+0.4);
-      g.gain.setValueAtTime(0.4,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
-      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.5);
-      // Impact layer
+      o.type = 'sine';
+      o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(35,t+0.08);
+      g.gain.setValueAtTime(0.45,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.15);
+      // Click transient
       const o2 = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
-      o2.type = 'triangle'; o2.frequency.setValueAtTime(55,t); o2.frequency.exponentialRampToValueAtTime(20,t+0.3);
-      g2.gain.setValueAtTime(0.25,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.35);
-      o2.connect(g2); g2.connect(musicGain); o2.start(t); o2.stop(t+0.35);
+      o2.type = 'square'; o2.frequency.value = 800;
+      g2.gain.setValueAtTime(0.1,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.01);
+      o2.connect(g2); g2.connect(musicGain); o2.start(t); o2.stop(t+0.015);
     }
 
-    // Secondary drum hit (off-beats: 2, 6, 10, 14)
-    if (s16 % 4 === 2) {
+    // SNARE — beats 4 and 12 (hard hitting)
+    if (s16 % 8 === 4) {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.1, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length);
+      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1500;
+      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.1);
+      // Snare body
+      const o = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
+      o.type = 'triangle'; o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(100,t+0.05);
+      g2.gain.setValueAtTime(0.15,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      o.connect(g2); g2.connect(musicGain); o.start(t); o.stop(t+0.08);
+    }
+
+    // HI-HAT — 16th notes (driving energy)
+    {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.02, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length)*0.7;
+      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
+      const vol = (s16 % 2 === 0) ? 0.08 : 0.04; // accent on beats
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.02);
+      const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=7000;
+      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.025);
+    }
+
+    // BASS — aggressive saw bass, syncopated
+    const bFreq = bassLine[s16];
+    if (bFreq > 0) {
       const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-      o.type = 'sine'; o.frequency.setValueAtTime(60,t); o.frequency.exponentialRampToValueAtTime(30,t+0.2);
-      g.gain.setValueAtTime(0.18,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
-      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.25);
+      o.type = 'sawtooth'; o.frequency.value = bFreq;
+      const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value = 400;
+      g.gain.setValueAtTime(0.14,t); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*0.8);
+      o.connect(f); f.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR*0.85);
     }
 
-    // Timpani accent (beat 0 of every other bar)
-    if (musicStep % 32 === 0) {
-      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-      o.type = 'sine'; o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(40,t+0.6);
-      g.gain.setValueAtTime(0.35,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.7);
-      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.7);
-    }
-
-    // Dark string stab (every 4 beats, minor chord)
-    if (s16 % 4 === 0) {
-      const chordNotes = s16 < 8 ? [146.8, 174.6, 220] : [130.8, 164.8, 196]; // Dm, Cm
-      chordNotes.forEach(freq => {
+    // POWER RIFF — aggressive stabs (octave doubled)
+    const pFreq = powerLine[s32 % 16];
+    if (pFreq > 0 && s32 >= 16) { // only plays 2nd half of loop for dynamics
+      [pFreq, pFreq*2].forEach(freq => {
         const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
         o.type = 'sawtooth'; o.frequency.value = freq;
-        const f = audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.setValueAtTime(800,t); f.frequency.exponentialRampToValueAtTime(200,t+BEAT_DUR*3);
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.04,t+0.05); g.gain.setValueAtTime(0.04,t+BEAT_DUR*2); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*3.5);
-        o.connect(f); f.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR*4);
+        const f = audioCtx.createBiquadFilter(); f.type='lowpass';
+        f.frequency.setValueAtTime(2000,t); f.frequency.exponentialRampToValueAtTime(600,t+BEAT_DUR*0.5);
+        g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*0.6);
+        o.connect(f); f.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR*0.65);
       });
     }
 
-    // Sub bass pulse
-    const bFreq = warBass[s16];
-    if (bFreq > 0) {
-      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-      o.type = 'sine'; o.frequency.value = bFreq;
-      g.gain.setValueAtTime(0.12,t); g.gain.setValueAtTime(0.12,t+BEAT_DUR*0.6); g.gain.exponentialRampToValueAtTime(0.001,t+BEAT_DUR*0.9);
-      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+BEAT_DUR);
+    // CRASH — every 16 beats (bar accent)
+    if (s16 === 0) {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.4, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length)*0.4;
+      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.08,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      const f = audioCtx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=3000; f.Q.value=0.5;
+      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.4);
     }
 
-    // Subtle metallic shimmer (every 8 beats)
-    if (s16 % 8 === 0) {
-      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.3, audioCtx.sampleRate);
-      const data = buf.getChannelData(0);
-      for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*(1-i/data.length)*0.15;
-      const ns = audioCtx.createBufferSource(); ns.buffer=buf;
-      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.03,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
-      const f = audioCtx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=4000; f.Q.value=2;
-      ns.connect(f); f.connect(g); g.connect(musicGain); ns.start(t); ns.stop(t+0.3);
+    // FILL — rapid hits before bar change (beats 14,15)
+    if (s16 >= 14) {
+      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(120 + s16*10,t); o.frequency.exponentialRampToValueAtTime(60,t+0.06);
+      g.gain.setValueAtTime(0.2,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.08);
     }
 
     musicStep++;
