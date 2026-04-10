@@ -403,7 +403,11 @@ let lastPlayerAttackTime = 0; // tracks when player last attacked
 let legionTimer = 0; // "Arise: Legion" active duration
 const SHADOW_IDLE_TIMEOUT = 3; // seconds before shadows disengage without player attacking
 const LEGION_DURATION = 12; // seconds of shadow berserk mode
-const arenaW = 1200, arenaH = 900;
+const arenaW = 1400, arenaH = 1000; // bigger arena for boss hunt
+let lastMovePos = { x:0, y:0 }; // track if player is standing still
+let lastMoveTime = 0; // when player last moved significantly
+const STATIONARY_TIMEOUT = 10; // seconds standing still = shadows disengage
+let allQuestsJustCompleted = false;
 let gameTime = 0;
 let screenFlash = { alpha:0, color:'#fff' };
 let vignetteIntensity = 0;
@@ -770,7 +774,10 @@ function damageEnemy(e, dmg) {
 
 function dealDamageToPlayer(dmg) {
   if (player.invTimer > 0) return;
-  const finalDmg = Math.max(1, dmg - player.defense);
+  // Standing still = compounding damage (enemies hit the same spot)
+  const stationaryTime = gameTime - lastMoveTime;
+  const stationaryMulti = stationaryTime > 3 ? 1 + Math.min((stationaryTime - 3) * 0.15, 2.0) : 1; // up to 3x damage
+  const finalDmg = Math.max(1, Math.floor((dmg - player.defense) * stationaryMulti));
   player.hp -= finalDmg;
   player.hitFlash = 0.2;
   questProgress.damageTaken += finalDmg;
@@ -859,10 +866,11 @@ function useSkill(sd) {
 // ================================================================
 function updateShadows(dt) {
   const aliveEnemies = entities.filter(e => e.alive);
-  // Shadows only attack if: player is actively fighting OR legion mode is active
+  // Shadows only attack if: player is actively fighting AND moving, OR legion mode is active
   const playerEngaged = (gameTime - lastPlayerAttackTime) < SHADOW_IDLE_TIMEOUT;
+  const playerMoving = (gameTime - lastMoveTime) < STATIONARY_TIMEOUT;
   const legionActive = legionTimer > 0;
-  const shadowsCanAttack = (playerEngaged || legionActive) && aliveEnemies.length > 0;
+  const shadowsCanAttack = ((playerEngaged && playerMoving) || legionActive) && aliveEnemies.length > 0;
   const berserk = legionActive; // legion = faster, stronger
 
   if (legionTimer > 0) legionTimer -= dt;
@@ -886,11 +894,14 @@ function updateShadows(dt) {
         spawnBurst(target.x, target.y, COLORS.accent, berserk ? 8 : 4);
       }
     } else {
-      // Idle — V-formation behind the player
-      const row = Math.floor(i / 3);
-      const col = (i % 3) - 1;
-      const spreadX = col * (35 + row * 8);
-      const spreadY = (row + 1) * 35;
+      // Dynamic military formation behind the player
+      const totalActive = player.shadows.filter(s=>s.active).length;
+      const perRow = totalActive <= 3 ? totalActive : totalActive <= 9 ? 3 : totalActive <= 16 ? 4 : 5;
+      const row = Math.floor(i / perRow);
+      const colCount = Math.min(perRow, totalActive - row * perRow);
+      const col = (i % perRow) - (colCount - 1) / 2;
+      const spreadX = col * (30 + row * 4);
+      const spreadY = (row + 1) * 30;
       const behindX = player.x - player.facing.x * spreadY + (-player.facing.y) * spreadX;
       const behindY = player.y - player.facing.y * spreadY + player.facing.x * spreadX;
       s.x += (behindX - s.x) * 0.08;
@@ -930,15 +941,18 @@ function startDungeon(gateDef) {
 function spawnWave() {
   if (dungeon.wave > dungeon.maxWaves) return;
   if (dungeon.wave === dungeon.maxWaves) {
-    const b = spawnEnemy(dungeon.gate.boss, rand(-100,100), -300, true);
+    // Boss spawns far away — player must hunt it down
+    const bossAngle = rand(0, Math.PI * 2);
+    const bossDist = rand(500, 650);
+    const bx = Math.cos(bossAngle) * bossDist;
+    const by = Math.sin(bossAngle) * bossDist;
+    const b = spawnEnemy(dungeon.gate.boss, clamp(bx,-arenaW/2+60,arenaW/2-60), clamp(by,-arenaH/2+60,arenaH/2-60), true);
     entities.push(b);
     dungeon.bossSpawned = true;
     dungeon.bossRef = b;
     dungeon.enemiesRemaining = 1;
-    camera.shake = 20;
-    camera.targetZoom = 0.85;
-    setTimeout(()=>{ camera.targetZoom=1; }, 2000);
-    toast(`⚠ BOSS: ${dungeon.gate.boss.name.toUpperCase()} ⚠`, 'red', 3000, true);
+    camera.shake = 12;
+    toast(`⚠ BOSS DETECTED — HUNT IT DOWN ⚠`, 'red', 3000, true);
     document.getElementById('boss-bar-wrap').style.display='block';
     document.getElementById('boss-bar-name').textContent=dungeon.gate.boss.name;
   } else {
@@ -993,7 +1007,7 @@ function showExtraction() {
 
 function doExtract() {
   if (!pendingExtraction) return;
-  player.shadows.push({ name:pendingExtraction.name, damage:Math.floor(pendingExtraction.damage*0.6), level:player.level, color:pendingExtraction.color, x:player.x, y:player.y+30, active:false, attackCd:0 });
+  player.shadows.push({ name:pendingExtraction.name, damage:Math.floor(pendingExtraction.damage*0.6), level:player.level, color:pendingExtraction.color||COLORS.accent, size:Math.min(pendingExtraction.size*0.4,18), x:player.x, y:player.y+30, active:false, attackCd:0 });
   spawnBurst(player.x, player.y, COLORS.accent, 50);
   screenFlash = { alpha:0.5, color:'#8844ff' };
   toast(`SHADOW EXTRACTED: ${pendingExtraction.name}`, 'purple', 3000);
@@ -1024,7 +1038,7 @@ function returnToHub() {
   gameState='HUB';
   ['hud','victory-overlay','death-overlay','extraction-overlay'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('system-menu').style.display='block';
-  entities=[]; projectiles=[]; dungeon=null;
+  entities=[]; projectiles=[]; dungeon=null; legionTimer=0;
   renderSystemMenu();
   saveGame();
 }
@@ -1089,8 +1103,10 @@ function renderSystemMenu() {
   if (!player) return;
   const pointsEl = document.getElementById('sys-stat-points');
   const pointsNum = document.getElementById('sys-points-num');
-  if (player.statPoints > 0) { pointsEl.style.display='block'; pointsNum.textContent=player.statPoints; }
-  else pointsEl.style.display='none';
+  if (player.statPoints > 0) {
+    pointsEl.style.display='block';
+    pointsNum.innerHTML=`${player.statPoints} <button class="stat-btn" style="margin-left:12px;width:auto;padding:0 10px;font-size:11px;letter-spacing:1px" onclick="autoAssign()">AUTO</button>`;
+  } else pointsEl.style.display='none';
 
   let statsHtml = `
     <div class="stat-row"><span class="stat-name">NAME</span><span class="stat-value">${player.name}</span></div>
@@ -1115,7 +1131,13 @@ function renderSystemMenu() {
   document.getElementById('sys-gates').innerHTML = gh;
 
   // Quests
-  let qh = '';
+  // Daily reset countdown
+  const now = new Date();
+  const midnight = new Date(now); midnight.setHours(24,0,0,0);
+  const msLeft = midnight - now;
+  const hLeft = Math.floor(msLeft/3600000);
+  const mLeft = Math.floor((msLeft%3600000)/60000);
+  let qh = `<div style="text-align:center;margin-bottom:10px;padding:6px;border:1px solid rgba(0,212,255,0.1);font-family:Orbitron,monospace;font-size:10px;letter-spacing:2px;color:rgba(0,212,255,0.4)">RESETS IN ${hLeft}h ${mLeft}m</div>`;
   DAILY_QUESTS.forEach(q => {
     const prog = Math.min(questProgress[q.stat] || 0, q.target);
     qh += `<div class="quest-item"><div class="quest-name">${q.name} ${q.completed?'✓':''}</div>
@@ -1172,6 +1194,27 @@ function renderSystemMenu() {
 window.allocateStat = function(stat) {
   if (player.statPoints>0) { player.stats[stat]++; player.statPoints--; recalcPlayer(player); player.hp=Math.min(player.hp,player.maxHp); player.mp=Math.min(player.mp,player.maxMp); renderSystemMenu(); saveGame(); }
 };
+window.autoAssign = function() {
+  if (player.statPoints <= 0) return;
+  // Smart distribution: balanced with slight STR/VIT bias for survivability
+  const priority = ['STR','VIT','AGI','PER','INT'];
+  while (player.statPoints > 0) {
+    // Find lowest stat among priorities, allocate there
+    let lowest = priority[0], lowestVal = Infinity;
+    priority.forEach(s => { if (player.stats[s] < lowestVal) { lowestVal = player.stats[s]; lowest = s; } });
+    player.stats[lowest]++;
+    player.statPoints--;
+  }
+  recalcPlayer(player); player.hp = player.maxHp; player.mp = player.maxMp;
+  renderSystemMenu(); saveGame();
+  toast('STAT POINTS AUTO-ASSIGNED', 'blue', 2000);
+};
+// Dev mode: press ` (backtick) to gain 5 levels instantly
+window.devBoost = function() {
+  for (let i=0;i<5;i++) playerGainXp(player.xpToNext - player.xp);
+  toast('DEV MODE: +5 LEVELS', 'gold', 1500);
+  saveGame();
+};
 window.enterGate = function(id) {
   const g = GATE_DEFS.find(x=>x.id===id);
   if (g && player.level >= g.reqLevel) startDungeon(g);
@@ -1222,6 +1265,7 @@ function onKey(key, e) {
         for (let i=0;i<8;i++) spawnParticle(player.x-fx*rand(0,70),player.y-fy*rand(0,70),COLORS.primary,{vx:rand(-1,1),vy:rand(-1,1),size:rand(2,4),glow:true,decay:0.05});
       }
     }
+    if (key === '`' || key === '~') { window.devBoost(); return; }
     const si = ['1','2','3','4','5'].indexOf(key);
     if (si >= 0 && SKILL_DEFS[si] && player.level >= SKILL_DEFS[si].unlockLevel) {
       // Legion requires at least 1 shadow
@@ -1323,14 +1367,31 @@ function drawDungeon(dt) {
     ctx.fillRect(-arenaW, -arenaH, arenaW*2, arenaH*2);
   }
 
-  // Shadows
+  // Shadows — each type is distinguishable by color and size
   player.shadows.forEach(s => {
     if (!s.active) return;
-    drawStickFigure(s.x, s.y, {x:1,y:0}, 'walk', gameTime, 0.8, COLORS.accent);
-    // Shadow aura
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = COLORS.accent;
-    ctx.beginPath(); ctx.arc(s.x, s.y-10, 20, 0, Math.PI*2); ctx.fill();
+    const sColor = s.color || COLORS.accent;
+    const sScale = s.size ? (s.size / 14) * 0.8 : 0.8;
+    const berserk = legionTimer > 0;
+    // Shadow body — unique color per boss type
+    ctx.globalAlpha = berserk ? 0.85 : 0.65;
+    ctx.fillStyle = sColor;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 10 * sScale, 0, Math.PI*2); ctx.fill();
+    // Dark inner
+    ctx.fillStyle = '#110022';
+    ctx.beginPath(); ctx.arc(s.x, s.y, 7 * sScale, 0, Math.PI*2); ctx.fill();
+    // Glowing eyes
+    ctx.globalAlpha = berserk ? 1 : 0.8;
+    ctx.fillStyle = berserk ? '#ff44ff' : sColor;
+    ctx.beginPath();
+    ctx.arc(s.x - 3*sScale, s.y - 2*sScale, 1.5*sScale, 0, Math.PI*2);
+    ctx.arc(s.x + 3*sScale, s.y - 2*sScale, 1.5*sScale, 0, Math.PI*2);
+    ctx.fill();
+    // Aura ring
+    ctx.globalAlpha = berserk ? 0.25 : 0.1;
+    ctx.strokeStyle = sColor;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 16 * sScale, 0, Math.PI*2); ctx.stroke();
     ctx.globalAlpha = 1;
   });
 
@@ -1366,24 +1427,63 @@ function drawDungeon(dt) {
 
 function drawArena() {
   const ts = 60;
+  // Themed floor colors per gate
+  const themes = {
+    'e_gate': { light:'#0e120e', dark:'#0a0e0a', accent:'rgba(68,170,68,0.06)' },
+    'd_gate': { light:'#12100c', dark:'#0e0c0a', accent:'rgba(170,102,51,0.06)' },
+    'c_gate': { light:'#0e0c14', dark:'#0a0812', accent:'rgba(136,102,204,0.06)' },
+    'b_gate': { light:'#140c0c', dark:'#120a0a', accent:'rgba(204,68,68,0.06)' },
+    'a_gate': { light:'#14120c', dark:'#120e0a', accent:'rgba(204,170,0,0.06)' },
+  };
+  const t = dungeon ? (themes[dungeon.gate.id] || themes['e_gate']) : themes['e_gate'];
+
   for (let x = -arenaW/2; x < arenaW/2; x += ts) {
     for (let y = -arenaH/2; y < arenaH/2; y += ts) {
-      ctx.fillStyle = ((Math.floor(x/ts)+Math.floor(y/ts))%2===0) ? '#0c0c14' : '#0a0a12';
+      ctx.fillStyle = ((Math.floor(x/ts)+Math.floor(y/ts))%2===0) ? t.light : t.dark;
       ctx.fillRect(x, y, ts, ts);
     }
   }
+
+  // Subtle grid lines
+  ctx.strokeStyle = t.accent;
+  ctx.lineWidth = 0.5;
+  for (let x = -arenaW/2; x <= arenaW/2; x += ts) {
+    ctx.beginPath(); ctx.moveTo(x, -arenaH/2); ctx.lineTo(x, arenaH/2); ctx.stroke();
+  }
+  for (let y = -arenaH/2; y <= arenaH/2; y += ts) {
+    ctx.beginPath(); ctx.moveTo(-arenaW/2, y); ctx.lineTo(arenaW/2, y); ctx.stroke();
+  }
+
+  // Arena border
   ctx.strokeStyle = 'rgba(0,212,255,0.12)';
   ctx.lineWidth = 2;
   ctx.strokeRect(-arenaW/2, -arenaH/2, arenaW, arenaH);
 
+  // Corner glows in gate theme color
+  const gc = dungeon ? dungeon.gate.ambientColor : '#002244';
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([cx,cy]) => {
     const px = cx*arenaW/2, py = cy*arenaH/2;
-    const g = ctx.createRadialGradient(px,py,0,px,py,120);
-    g.addColorStop(0,'rgba(0,212,255,0.08)');
+    const g = ctx.createRadialGradient(px,py,0,px,py,150);
+    g.addColorStop(0, gc + '33');
     g.addColorStop(1,'transparent');
     ctx.fillStyle = g;
-    ctx.fillRect(px-120,py-120,240,240);
+    ctx.fillRect(px-150,py-150,300,300);
   });
+
+  // Decorative runes/cracks on floor (procedural, based on gate)
+  if (dungeon) {
+    ctx.globalAlpha = 0.04;
+    ctx.strokeStyle = gc;
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 12; i++) {
+      const rx = ((i * 137) % arenaW) - arenaW/2;
+      const ry = ((i * 251) % arenaH) - arenaH/2;
+      ctx.beginPath();
+      ctx.arc(rx, ry, 30 + (i%3)*15, (i*0.5)%Math.PI, (i*0.5+2)%Math.PI);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
 }
 
 function drawEnemy(e) {
@@ -1490,6 +1590,30 @@ function drawMinimap() {
     ctx.beginPath(); ctx.arc(mx+mw/2+s.x*sx, my+mh/2+s.y*sy, 2, 0, Math.PI*2); ctx.fill();
   });
 
+  // Boss direction arrow (when boss is off-screen)
+  if (dungeon && dungeon.bossRef && dungeon.bossRef.alive) {
+    const b = dungeon.bossRef;
+    const bx = mx + mw/2 + b.x*sx, by = my + mh/2 + b.y*sy;
+    // Pulsing boss marker
+    ctx.globalAlpha = 0.6 + Math.sin(gameTime*4)*0.3;
+    ctx.fillStyle = '#ff2222';
+    ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#ff4444';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(bx, by, 8 + Math.sin(gameTime*6)*2, 0, Math.PI*2); ctx.stroke();
+  }
+
+  // Stationary warning
+  const stationarySec = gameTime - lastMoveTime;
+  if (stationarySec > 3 && entities.some(e=>e.alive)) {
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = '#ff4444';
+    ctx.font = '9px Orbitron, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚠ MOVE! DMG x' + (1 + Math.min((stationarySec-3)*0.15, 2.0)).toFixed(1), mx+mw/2, my+mh+14);
+    ctx.textAlign = 'left';
+  }
+
   ctx.globalAlpha = 1;
 }
 
@@ -1555,6 +1679,12 @@ function update(dt) {
 
   player.x = clamp(player.x, -arenaW/2+20, arenaW/2-20);
   player.y = clamp(player.y, -arenaH/2+20, arenaH/2-20);
+
+  // Track movement — if player moved significantly, reset timer
+  if (dist(player.x, player.y, lastMovePos.x, lastMovePos.y) > 15) {
+    lastMovePos = { x:player.x, y:player.y };
+    lastMoveTime = gameTime;
+  }
 
   // Facing
   const wmx = (mouse.x-W/2)/camera.zoom + camera.x;
@@ -1637,10 +1767,28 @@ setInterval(() => {
     }
     if (!q.completed) allDailyDone = false;
   });
-  // Unlock bonus quests when all dailies done
+  // Unlock bonus quests when all dailies done + confetti
   if (allDailyDone && !bonusQuestsUnlocked) {
     bonusQuestsUnlocked = true;
-    toast('BONUS QUESTS UNLOCKED — STAT POINT REWARDS', 'purple', 3000, true);
+    toast('ALL DAILY QUESTS COMPLETE', 'green', 2500, true);
+    toast('BONUS QUESTS UNLOCKED — STAT POINT REWARDS', 'purple', 3500, true);
+    // Confetti burst
+    if (player) for (let i=0;i<60;i++) {
+      const colors = ['#ffcc00','#ff4444','#44ff66','#4488ff','#ff44ff','#00d4ff'];
+      spawnParticle(player.x+rand(-100,100), player.y+rand(-100,100), colors[i%colors.length], {
+        vx:rand(-4,4), vy:rand(-6,-1), size:rand(3,7), decay:0.01, glow:true });
+    }
+    screenFlash = { alpha:0.3, color:'#44ff66' };
+  }
+  // Check if ALL bonus quests done too
+  if (bonusQuestsUnlocked && !allQuestsJustCompleted && BONUS_QUESTS.every(q=>q.completed)) {
+    allQuestsJustCompleted = true;
+    toast('⚡ ALL QUESTS MASTERED ⚡', 'purple', 4000, true);
+    if (player) for (let i=0;i<80;i++) {
+      const colors = ['#8844ff','#bb88ff','#ffcc00','#00d4ff'];
+      spawnParticle(player.x+rand(-150,150), player.y+rand(-150,150), colors[i%colors.length], {
+        vx:rand(-5,5), vy:rand(-8,-2), size:rand(4,8), decay:0.008, glow:true });
+    }
   }
   if (bonusQuestsUnlocked) {
     // Track best combo for bonus quest
