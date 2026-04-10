@@ -117,7 +117,7 @@
   .boss-bar-fill { height: 100%; background: linear-gradient(90deg, #cc2200, #ff4422); box-shadow: 0 0 12px rgba(255,68,68,0.4); transition: width 0.2s; }
 
   /* Combo display */
-  .hud-combo { position: absolute; top: 80px; right: 30px; text-align: right; display: none; }
+  .hud-combo { position: absolute; top: 160px; left: 20px; text-align: left; display: none; }
   .combo-count { font-family: 'Orbitron', monospace; font-size: 48px; font-weight: 900; color: #ffcc00; text-shadow: 0 0 20px rgba(255,204,0,0.6); line-height: 1; }
   .combo-label { font-family: 'Orbitron', monospace; font-size: 12px; letter-spacing: 4px; color: rgba(255,204,0,0.6); }
   .combo-multi { font-family: 'Orbitron', monospace; font-size: 14px; color: #ff8844; margin-top: 2px; }
@@ -309,24 +309,25 @@ const SKILL_DEFS = [
   { id:'dash_strike', name:'Dash Strike', icon:'💨', key:'2', unlockLevel:3, cooldown:3, manaCost:15, damage:2.0, desc:'Dash forward and strike', range:150, type:'dash' },
   { id:'shadow_strike', name:'Shadow Strike', icon:'🗡️', key:'3', unlockLevel:6, cooldown:5, manaCost:25, damage:3.0, desc:'Teleport behind target', range:300, type:'teleport' },
   { id:'rulers', name:"Ruler's Domain", icon:'👑', key:'4', unlockLevel:10, cooldown:12, manaCost:50, damage:4.0, desc:'AOE blast around you', range:200, type:'aoe' },
+  { id:'legion', name:'Arise: Legion', icon:'☠️', key:'5', unlockLevel:1, cooldown:30, manaCost:40, damage:0, desc:'Unleash shadow army (12s)', range:0, type:'legion' },
 ];
 
 const GATE_DEFS = [
   { id:'e_gate', name:'Goblin Cavern', rank:'E', reqLevel:1, waves:5, ambientColor:'#224422',
-    enemies:[ { name:'Goblin', hp:30, damage:5, speed:1.2, size:14, xp:15, color:'#55aa55' }, { name:'Goblin Archer', hp:20, damage:8, speed:0.8, size:12, xp:20, color:'#448844', ranged:true } ],
-    boss:{ name:'Spider Queen', hp:200, damage:15, speed:0.9, size:32, xp:100, color:'#884488', shadow:true } },
+    enemies:[ { name:'Goblin', hp:40, damage:8, speed:1.4, size:14, xp:15, color:'#55aa55' }, { name:'Goblin Archer', hp:25, damage:12, speed:1.0, size:12, xp:20, color:'#448844', ranged:true } ],
+    boss:{ name:'Spider Queen', hp:300, damage:22, speed:1.1, size:32, xp:100, color:'#884488', shadow:true } },
   { id:'d_gate', name:'Orc Fortress', rank:'D', reqLevel:10, waves:6, ambientColor:'#332211',
-    enemies:[ { name:'Orc Warrior', hp:60, damage:12, speed:1.0, size:18, xp:30, color:'#886644' }, { name:'Orc Shaman', hp:40, damage:18, speed:0.7, size:16, xp:40, color:'#668844', ranged:true } ],
-    boss:{ name:'Orc Chieftain', hp:500, damage:25, speed:0.8, size:38, xp:250, color:'#aa4422', shadow:true } },
+    enemies:[ { name:'Orc Warrior', hp:90, damage:18, speed:1.2, size:18, xp:30, color:'#886644' }, { name:'Orc Shaman', hp:55, damage:25, speed:0.9, size:16, xp:40, color:'#668844', ranged:true } ],
+    boss:{ name:'Orc Chieftain', hp:700, damage:35, speed:1.0, size:38, xp:250, color:'#aa4422', shadow:true } },
   { id:'c_gate', name:'Undead Crypt', rank:'C', reqLevel:25, waves:7, ambientColor:'#1a1133',
-    enemies:[ { name:'Skeleton', hp:80, damage:18, speed:1.3, size:16, xp:50, color:'#aaaaaa' }, { name:'Lich', hp:60, damage:30, speed:0.6, size:14, xp:70, color:'#8866cc', ranged:true } ],
-    boss:{ name:'Death Knight', hp:1000, damage:40, speed:1.0, size:42, xp:500, color:'#6622aa', shadow:true } },
+    enemies:[ { name:'Skeleton', hp:120, damage:28, speed:1.5, size:16, xp:50, color:'#aaaaaa' }, { name:'Lich', hp:80, damage:42, speed:0.8, size:14, xp:70, color:'#8866cc', ranged:true } ],
+    boss:{ name:'Death Knight', hp:1500, damage:55, speed:1.2, size:42, xp:500, color:'#6622aa', shadow:true } },
   { id:'b_gate', name:'Demon Realm', rank:'B', reqLevel:45, waves:8, ambientColor:'#331111',
-    enemies:[ { name:'Demon', hp:150, damage:30, speed:1.1, size:20, xp:80, color:'#cc4444' }, { name:'Succubus', hp:100, damage:45, speed:1.4, size:16, xp:100, color:'#cc44aa', ranged:true } ],
-    boss:{ name:'Demon Lord', hp:2500, damage:60, speed:0.9, size:50, xp:1000, color:'#aa0000', shadow:true } },
+    enemies:[ { name:'Demon', hp:220, damage:45, speed:1.3, size:20, xp:80, color:'#cc4444' }, { name:'Succubus', hp:140, damage:60, speed:1.6, size:16, xp:100, color:'#cc44aa', ranged:true } ],
+    boss:{ name:'Demon Lord', hp:3500, damage:80, speed:1.1, size:50, xp:1000, color:'#aa0000', shadow:true } },
   { id:'a_gate', name:"Dragon's Lair", rank:'A', reqLevel:70, waves:10, ambientColor:'#332200',
-    enemies:[ { name:'Drake', hp:300, damage:50, speed:1.0, size:24, xp:150, color:'#cc8800' }, { name:'Wyvern', hp:200, damage:65, speed:1.5, size:20, xp:180, color:'#ccaa44', ranged:true } ],
-    boss:{ name:'Ancient Dragon', hp:5000, damage:90, speed:0.7, size:58, xp:2500, color:'#ffcc00', shadow:true } },
+    enemies:[ { name:'Drake', hp:450, damage:70, speed:1.2, size:24, xp:150, color:'#cc8800' }, { name:'Wyvern', hp:300, damage:85, speed:1.7, size:20, xp:180, color:'#ccaa44', ranged:true } ],
+    boss:{ name:'Ancient Dragon', hp:7000, damage:120, speed:0.9, size:58, xp:2500, color:'#ffcc00', shadow:true } },
 ];
 
 const DAILY_QUESTS = [
@@ -334,6 +335,14 @@ const DAILY_QUESTS = [
   { id:'situps', name:'100 Sit-ups', desc:'Take 500 damage', target:500, reward:50, stat:'damageTaken' },
   { id:'run', name:'Run 10km', desc:'Clear 2 gates', target:2, reward:100, stat:'gatesCleared' },
 ];
+
+const BONUS_QUESTS = [
+  { id:'bonus_slayer', name:'Shadow Slayer', desc:'Defeat 50 enemies', target:50, reward:2, rewardType:'statPoints', stat:'kills' },
+  { id:'bonus_combo', name:'Combo Master', desc:'Get a 15+ combo', target:15, reward:3, rewardType:'statPoints', stat:'bestCombo' },
+  { id:'bonus_gates', name:'Gate Crusher', desc:'Clear 5 gates', target:5, reward:3, rewardType:'statPoints', stat:'gatesCleared' },
+  { id:'bonus_tank', name:'Iron Will', desc:'Take 2000 damage', target:2000, reward:2, rewardType:'statPoints', stat:'damageTaken' },
+];
+let bonusQuestsUnlocked = false;
 
 const KILL_STREAKS = [
   { count:5, label:'FIVE KILL STREAK', color:'gold' },
@@ -351,6 +360,13 @@ const clamp = (v,mn,mx) => Math.max(mn,Math.min(mx,v));
 const dist = (x1,y1,x2,y2) => Math.hypot(x2-x1,y2-y1);
 const rand = (a,b) => Math.random()*(b-a)+a;
 const randInt = (a,b) => Math.floor(rand(a,b+1));
+// Clean number formatting — no decimal spam
+function fmtNum(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e4) return (n/1e3).toFixed(1)+'K';
+  if (Number.isInteger(n)) return n.toString();
+  return Math.round(n).toString();
+}
 
 // ================================================================
 //  CANVAS + INPUT
@@ -380,9 +396,13 @@ let camera = { x:0, y:0, shake:0, zoom:1, targetZoom:1 };
 let dungeon = null;
 let questProgress = { kills:0, damageTaken:0, gatesCleared:0 };
 let highScores = { bestLevel:0, bestCombo:0, totalKills:0, gatesCleared:0, bestGate:'-' };
-let sessionKills = 0, sessionXp = 0;
+let sessionKills = 0, sessionXp = 0, sessionBestCombo = 0;
 let pendingExtraction = null;
 let comboCount = 0, comboTimer = 0;
+let lastPlayerAttackTime = 0; // tracks when player last attacked
+let legionTimer = 0; // "Arise: Legion" active duration
+const SHADOW_IDLE_TIMEOUT = 3; // seconds before shadows disengage without player attacking
+const LEGION_DURATION = 12; // seconds of shadow berserk mode
 const arenaW = 1200, arenaH = 900;
 let gameTime = 0;
 let screenFlash = { alpha:0, color:'#fff' };
@@ -721,7 +741,7 @@ function damageEnemy(e, dmg) {
   e.hp -= finalDmg;
   e.hitFlash = 0.15;
   e.stunTimer = 0.1;
-  spawnFloatingText(e.x, e.y - e.size - 10, isCrit ? `CRIT ${finalDmg}` : `${finalDmg}`, isCrit ? '#ffcc00' : '#ff6644', isCrit ? 24 : 16);
+  spawnFloatingText(e.x, e.y - e.size - 10, isCrit ? `CRIT ${fmtNum(finalDmg)}` : fmtNum(finalDmg), isCrit ? '#ffcc00' : '#ff6644', isCrit ? 24 : 16);
   spawnBurst(e.x, e.y, e.color, 6);
 
   if (e.hp <= 0) {
@@ -737,6 +757,7 @@ function damageEnemy(e, dmg) {
     // Combo
     comboCount++;
     comboTimer = 3;
+    if (comboCount > sessionBestCombo) sessionBestCombo = comboCount;
     if (comboCount > highScores.bestCombo) highScores.bestCombo = comboCount;
     // Kill streak announcements
     KILL_STREAKS.forEach(ks => {
@@ -753,7 +774,7 @@ function dealDamageToPlayer(dmg) {
   player.hp -= finalDmg;
   player.hitFlash = 0.2;
   questProgress.damageTaken += finalDmg;
-  spawnFloatingText(player.x, player.y - 40, `-${finalDmg}`, COLORS.danger, 18);
+  spawnFloatingText(player.x, player.y - 40, `-${fmtNum(finalDmg)}`, COLORS.danger, 18);
   camera.shake = Math.min(camera.shake + 6, 20);
   spawnBurst(player.x, player.y, COLORS.danger, 8);
   if (player.hp <= 0) { player.hp = 0; showDeath(); }
@@ -769,6 +790,7 @@ function useSkill(sd) {
   player.skillCooldowns[sd.id] = sd.cooldown;
   const dmg = player.attackDamage * sd.damage;
   const fx = player.facing.x, fy = player.facing.y;
+  lastPlayerAttackTime = gameTime; // track engagement for shadow AI
 
   switch (sd.type) {
     case 'melee': {
@@ -818,6 +840,17 @@ function useSkill(sd) {
       screenFlash = { alpha:0.3, color:COLORS.primary };
       break;
     }
+    case 'legion': {
+      if (player.shadows.length === 0) { player.mp += sd.manaCost; player.skillCooldowns[sd.id] = 0; toast('NO SHADOWS TO COMMAND', 'red', 1500); break; }
+      legionTimer = LEGION_DURATION;
+      toast('ARISE — SHADOW LEGION UNLEASHED', 'purple', 3000, true);
+      screenFlash = { alpha:0.5, color:'#8844ff' };
+      camera.shake = 15;
+      spawnBurst(player.x, player.y, COLORS.accent, 40);
+      // Boost all shadows
+      player.shadows.forEach(s => { spawnBurst(s.x, s.y, COLORS.accent, 10); });
+      break;
+    }
   }
 }
 
@@ -826,43 +859,47 @@ function useSkill(sd) {
 // ================================================================
 function updateShadows(dt) {
   const aliveEnemies = entities.filter(e => e.alive);
-  const total = player.shadows.filter(s => s.active).length;
+  // Shadows only attack if: player is actively fighting OR legion mode is active
+  const playerEngaged = (gameTime - lastPlayerAttackTime) < SHADOW_IDLE_TIMEOUT;
+  const legionActive = legionTimer > 0;
+  const shadowsCanAttack = (playerEngaged || legionActive) && aliveEnemies.length > 0;
+  const berserk = legionActive; // legion = faster, stronger
+
+  if (legionTimer > 0) legionTimer -= dt;
 
   player.shadows.forEach((s, i) => {
     if (!s.active) return;
 
-    // Assign each shadow a different enemy target (distribute across enemies)
-    let target = null;
-    if (aliveEnemies.length > 0) {
-      // Distribute shadows across enemies — each shadow picks a different one if possible
+    if (shadowsCanAttack) {
+      // Distribute shadows across enemies
       const targetIndex = i % aliveEnemies.length;
-      target = aliveEnemies[targetIndex];
-    }
-
-    if (target) {
-      // Charge toward assigned target
+      const target = aliveEnemies[targetIndex];
       const dx=target.x-s.x, dy=target.y-s.y, d=Math.hypot(dx,dy);
-      if (d > 30) {
-        const chargeSpeed = 3.5;
-        s.x += (dx/d)*chargeSpeed; s.y += (dy/d)*chargeSpeed;
-      }
+      const chargeSpeed = berserk ? 5.5 : 3.0;
+      if (d > 30) { s.x += (dx/d)*chargeSpeed; s.y += (dy/d)*chargeSpeed; }
       s.attackCd -= dt;
-      if (d < 40 && s.attackCd <= 0) { damageEnemy(target, s.damage); s.attackCd = 1.0; spawnBurst(target.x,target.y,COLORS.accent,4); }
+      const atkSpeed = berserk ? 0.5 : 1.2;
+      const dmgMulti = berserk ? 1.8 : 1.0;
+      if (d < 40 && s.attackCd <= 0) {
+        damageEnemy(target, Math.floor(s.damage * dmgMulti));
+        s.attackCd = atkSpeed;
+        spawnBurst(target.x, target.y, COLORS.accent, berserk ? 8 : 4);
+      }
     } else {
-      // No enemies — form V-formation behind the player
-      // Formation: rows of 3, each row further back, spread wider
+      // Idle — V-formation behind the player
       const row = Math.floor(i / 3);
-      const col = (i % 3) - 1; // -1, 0, 1
+      const col = (i % 3) - 1;
       const spreadX = col * (35 + row * 8);
       const spreadY = (row + 1) * 35;
-      // "Behind" = opposite of player facing
       const behindX = player.x - player.facing.x * spreadY + (-player.facing.y) * spreadX;
       const behindY = player.y - player.facing.y * spreadY + player.facing.x * spreadX;
       s.x += (behindX - s.x) * 0.08;
       s.y += (behindY - s.y) * 0.08;
     }
 
-    if (Math.random()<0.1) spawnParticle(s.x,s.y,COLORS.accent,{vx:rand(-0.5,0.5),vy:rand(-1,-0.2),size:rand(2,4),alpha:0.4,decay:0.03,glow:true});
+    // More intense particles during legion
+    const particleChance = berserk ? 0.25 : 0.08;
+    if (Math.random() < particleChance) spawnParticle(s.x,s.y, berserk ? '#bb44ff' : COLORS.accent, {vx:rand(-0.5,0.5),vy:rand(-1,-0.2),size:rand(berserk?3:2, berserk?6:4),alpha:0.5,decay:0.03,glow:true});
   });
 }
 
@@ -873,7 +910,7 @@ function startDungeon(gateDef) {
   dungeon = { gate:gateDef, wave:1, maxWaves:gateDef.waves, enemiesRemaining:0, bossSpawned:false, cleared:false, bossRef:null, waveTransition:false };
   entities=[]; projectiles=[]; player.x=0; player.y=0;
   player.hp=player.maxHp; player.mp=player.maxMp;
-  sessionKills=0; sessionXp=0; comboCount=0; comboTimer=0;
+  sessionKills=0; sessionXp=0; comboCount=0; comboTimer=0; sessionBestCombo=0; legionTimer=0; lastPlayerAttackTime=0;
   player.shadows.forEach((s,i) => {
     s.active=true; s.attackCd=0;
     // Start in V-formation behind player
@@ -905,11 +942,16 @@ function spawnWave() {
     document.getElementById('boss-bar-wrap').style.display='block';
     document.getElementById('boss-bar-name').textContent=dungeon.gate.boss.name;
   } else {
-    const count = 3 + dungeon.wave * 2;
+    const count = 4 + dungeon.wave * 2 + Math.floor(dungeon.wave / 3); // more enemies per wave
+    const waveScale = 1 + (dungeon.wave - 1) * 0.12; // +12% HP/DMG per wave
     for (let i=0;i<count;i++) {
       const def=dungeon.gate.enemies[randInt(0,dungeon.gate.enemies.length-1)];
       const a=rand(0,Math.PI*2), r=rand(280,480);
-      entities.push(spawnEnemy(def, Math.cos(a)*r, Math.sin(a)*r));
+      const e = spawnEnemy(def, Math.cos(a)*r, Math.sin(a)*r);
+      e.hp = Math.floor(e.hp * waveScale); e.maxHp = e.hp;
+      e.damage = Math.floor(e.damage * waveScale);
+      e.speed *= (1 + (dungeon.wave - 1) * 0.04); // slightly faster each wave
+      entities.push(e);
     }
     dungeon.enemiesRemaining = count;
     toast(`WAVE ${dungeon.wave}`, 'blue', 1500);
@@ -966,7 +1008,7 @@ function showVictory() {
   document.getElementById('victory-stats').innerHTML = `
     <div>Enemies Defeated: <span>${sessionKills}</span></div>
     <div>XP Earned: <span>${sessionXp}</span></div>
-    <div>Best Combo: <span>${comboCount > 0 ? comboCount : highScores.bestCombo}x</span></div>
+    <div>Best Combo: <span>${sessionBestCombo}x</span></div>
     <div>Level: <span>${player.level}</span></div>
     <div>Rank: <span>${player.rank}</span></div>`;
   el.style.display = 'flex';
@@ -995,16 +1037,23 @@ function updateHUD() {
   document.getElementById('hud-name').textContent = player.name;
   document.getElementById('hud-rank').textContent = `RANK ${player.rank} — HUNTER`;
   document.getElementById('hud-hp-fill').style.width = `${(player.hp/player.maxHp)*100}%`;
-  document.getElementById('hud-hp-text').textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
+  document.getElementById('hud-hp-text').textContent = `${fmtNum(Math.ceil(player.hp))} / ${fmtNum(player.maxHp)}`;
   document.getElementById('hud-mp-fill').style.width = `${(player.mp/player.maxMp)*100}%`;
-  document.getElementById('hud-mp-text').textContent = `${Math.ceil(player.mp)} / ${player.maxMp}`;
+  document.getElementById('hud-mp-text').textContent = `${fmtNum(Math.ceil(player.mp))} / ${fmtNum(player.maxMp)}`;
   document.getElementById('hud-xp-fill').style.width = `${(player.xp/player.xpToNext)*100}%`;
-  document.getElementById('hud-xp-text').textContent = `${player.xp} / ${player.xpToNext}`;
+  document.getElementById('hud-xp-text').textContent = `${fmtNum(player.xp)} / ${fmtNum(player.xpToNext)}`;
   document.getElementById('hud-level').textContent = `LV. ${player.level}`;
 
   if (dungeon) {
     document.getElementById('hud-wave').textContent = `WAVE ${dungeon.wave} / ${dungeon.maxWaves}`;
     document.getElementById('hud-enemies').textContent = `ENEMIES: ${dungeon.enemiesRemaining}`;
+  }
+
+  // Legion active indicator
+  if (legionTimer > 0 && dungeon) {
+    document.getElementById('hud-level').textContent = `LV. ${player.level}  ☠️ LEGION ${Math.ceil(legionTimer)}s`;
+  } else {
+    document.getElementById('hud-level').textContent = `LV. ${player.level}`;
   }
 
   // Combo
@@ -1068,11 +1117,20 @@ function renderSystemMenu() {
   // Quests
   let qh = '';
   DAILY_QUESTS.forEach(q => {
-    const prog = Math.min(questProgress[q.stat], q.target);
+    const prog = Math.min(questProgress[q.stat] || 0, q.target);
     qh += `<div class="quest-item"><div class="quest-name">${q.name} ${q.completed?'✓':''}</div>
       <div class="quest-progress"><div class="quest-progress-fill" style="width:${(prog/q.target)*100}%"></div></div>
-      <div class="quest-reward">${q.desc} — ${prog}/${q.target} — ${q.completed?'COMPLETE':`Reward: ${q.reward} XP`}</div></div>`;
+      <div class="quest-reward">${q.desc} — ${fmtNum(prog)}/${fmtNum(q.target)} — ${q.completed?'COMPLETE':`Reward: ${fmtNum(q.reward)} XP`}</div></div>`;
   });
+  if (bonusQuestsUnlocked) {
+    qh += '<h3 style="margin-top:16px;font-family:Orbitron,monospace;font-size:11px;letter-spacing:4px;color:rgba(136,68,255,0.5)">BONUS QUESTS</h3>';
+    BONUS_QUESTS.forEach(q => {
+      const prog = Math.min(questProgress[q.stat] || 0, q.target);
+      qh += `<div class="quest-item"><div class="quest-name" style="color:#bb88ff">${q.name} ${q.completed?'✓':''}</div>
+        <div class="quest-progress"><div class="quest-progress-fill" style="width:${(prog/q.target)*100}%;background:linear-gradient(90deg,#8844ff,#bb88ff)"></div></div>
+        <div class="quest-reward" style="color:rgba(136,68,255,0.6)">${q.desc} — ${fmtNum(prog)}/${fmtNum(q.target)} — ${q.completed?'COMPLETE':`Reward: ${q.reward} Stat Points`}</div></div>`;
+    });
+  }
   document.getElementById('sys-quests').innerHTML = qh;
 
   // Shadows
@@ -1164,8 +1222,12 @@ function onKey(key, e) {
         for (let i=0;i<8;i++) spawnParticle(player.x-fx*rand(0,70),player.y-fy*rand(0,70),COLORS.primary,{vx:rand(-1,1),vy:rand(-1,1),size:rand(2,4),glow:true,decay:0.05});
       }
     }
-    const si = ['1','2','3','4'].indexOf(key);
-    if (si >= 0 && SKILL_DEFS[si] && player.level >= SKILL_DEFS[si].unlockLevel) useSkill(SKILL_DEFS[si]);
+    const si = ['1','2','3','4','5'].indexOf(key);
+    if (si >= 0 && SKILL_DEFS[si] && player.level >= SKILL_DEFS[si].unlockLevel) {
+      // Legion requires at least 1 shadow
+      if (SKILL_DEFS[si].type === 'legion' && player.shadows.length === 0) return;
+      useSkill(SKILL_DEFS[si]);
+    }
   }
 }
 
@@ -1566,13 +1628,33 @@ setupTitle();
 // Quest check
 setInterval(() => {
   if (!player) return;
+  let allDailyDone = true;
   DAILY_QUESTS.forEach(q => {
     if (questProgress[q.stat] >= q.target && !q.completed) {
       q.completed = true;
       playerGainXp(q.reward);
-      toast(`QUEST COMPLETE: ${q.name} (+${q.reward} XP)`, 'green', 3000);
+      toast(`QUEST COMPLETE: ${q.name} (+${fmtNum(q.reward)} XP)`, 'green', 3000);
     }
+    if (!q.completed) allDailyDone = false;
   });
+  // Unlock bonus quests when all dailies done
+  if (allDailyDone && !bonusQuestsUnlocked) {
+    bonusQuestsUnlocked = true;
+    toast('BONUS QUESTS UNLOCKED — STAT POINT REWARDS', 'purple', 3000, true);
+  }
+  if (bonusQuestsUnlocked) {
+    // Track best combo for bonus quest
+    questProgress.bestCombo = Math.max(questProgress.bestCombo || 0, sessionBestCombo, highScores.bestCombo);
+    BONUS_QUESTS.forEach(q => {
+      if ((questProgress[q.stat] || 0) >= q.target && !q.completed) {
+        q.completed = true;
+        player.statPoints += q.reward;
+        recalcPlayer(player);
+        toast(`BONUS QUEST: ${q.name} (+${q.reward} STAT POINTS)`, 'purple', 3500);
+        saveGame();
+      }
+    });
+  }
 }, 1000);
 
 // ================================================================
