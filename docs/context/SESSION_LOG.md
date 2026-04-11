@@ -1,5 +1,33 @@
 # Arise — Session Log
 
+## Session 2 — 2026-04-09 — Orientation & Architecture Review (No Code Changes)
+
+### Focus
+Codebase review and session planning. No feature work was started.
+
+### What Happened
+- Read and mapped the full `index.html` (2501 lines) — game states, player system, skill system, enemy AI, shadow army, dungeon waves, audio engine, rendering pipeline, save/load, mobile controls
+- Reviewed all context docs (MASTER_CONTEXT.md, ACTIVE_PROJECTS.md, SESSION_LOG.md, CLAUDE.md)
+- Asked Chris for session priorities; wrap occurred before feature work began
+
+### Decisions Made
+None — orientation session only.
+
+### Code Changes
+None. V16 remains the live version.
+
+### Live URL
+https://cadidas333.github.io/Arise/
+
+### What's Next (Session 3)
+- Skill tree — branching upgrade paths, dedicated tree screen
+- Firebase leaderboard (shared high scores)
+- More enemy variety and attack patterns
+- Portrait mobile optimization
+- Sound design iteration
+
+---
+
 ## Session 1 — 2026-04-09 — Zero to Deployed in 16 Versions
 
 ### Focus
