@@ -502,7 +502,7 @@
     <div class="boss-bar-title" id="boss-bar-title"></div>
     <div class="boss-bar"><div class="boss-bar-ghost" id="boss-bar-ghost" style="width:100%"></div><div class="boss-bar-fill" id="boss-bar-fill" style="width:100%"></div></div>
   </div>
-  <div class="hud-hint">SPACE DODGE &nbsp;·&nbsp; E ARISE &nbsp;·&nbsp; F POTION &nbsp;·&nbsp; R AWAKEN</div>
+  <div class="hud-hint">X ATTACK &nbsp;·&nbsp; SPACE DODGE &nbsp;·&nbsp; E ARISE &nbsp;·&nbsp; F POTION &nbsp;·&nbsp; R AWAKEN &nbsp;·&nbsp; M AIM MODE</div>
   <div class="hud-skills" id="hud-skills"></div>
   <div class="hud-pause-desktop" style="position:absolute;top:10px;right:10px;pointer-events:auto"><button class="top-btn" id="hud-pause-btn" style="position:static">II</button></div>
   <div class="hud-bottom-right"><div id="hud-gate-name">E-RANK GATE</div></div>
@@ -519,6 +519,7 @@
   </div>
   <button class="continue-btn" id="pause-resume">RESUME</button>
   <button class="continue-btn" id="pause-fullscreen" style="margin-top:12px">FULLSCREEN</button>
+  <button class="continue-btn" id="pause-aim" style="margin-top:12px">AIM: AUTO</button>
   <button class="continue-btn" id="pause-quit" style="margin-top:12px;border-color:rgba(255,68,68,0.3);color:#ff6644">QUIT TO HUB</button>
 </div>
 
@@ -733,7 +734,7 @@ function segDist(px,py,x1,y1,x2,y2) {
 // ================================================================
 let AC = null, master, musicGain, sfxGain, revSend, noiseBuf;
 let musicMode = 'off', musicStep = 0, nextStepT = 0, musicIntensity = 0.5;
-const settings = { music:0.4, sfx:0.6 };
+const settings = { music:0.4, sfx:0.6, aim:'auto' };
 
 function initAudio() {
   if (AC) { if (AC.state !== 'running' && !paused) AC.resume(); return; }
@@ -964,6 +965,7 @@ function loadGame() {
     toast(`SAVE UPGRADED TO V17 — ${player.skillPoints} SKILL POINTS GRANTED`, 'purple', 5000);
   }
   if (d.settings) Object.assign(settings, d.settings);
+  if (!AIM_MODES.includes(settings.aim)) settings.aim = 'auto';
   highScores = Object.assign(highScores, d.highScores || {});
   questProgress = Object.assign({ kills:0, damageTaken:0, gatesCleared:0 }, d.questProgress || {});
   questDate = d.questDate || '';
@@ -1001,12 +1003,16 @@ function toast(text, style = 'blue', duration = 2000, isStreak = false) {
 //  INPUT
 // ================================================================
 const keys = {};
-const mouse = { x:W/2, y:H/2, down:false, moved:false };
+const mouse = { x:W/2, y:H/2, down:false, moved:false, lastMove:-99, ax:0, ay:0 };
 let touchAttack = false;
 addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (e.repeat && k !== 'tab') { if (k === ' ') e.preventDefault(); return; } keys[k] = true; onKey(k, e); });
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouse.down = false; });
-addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.moved = true; });
+addEventListener('mousemove', e => {
+  mouse.x = e.clientX; mouse.y = e.clientY; mouse.moved = true;
+  // only a deliberate move counts as aiming — a trackpad click that jitters a few pixels does not
+  if (Math.hypot(mouse.x-mouse.ax, mouse.y-mouse.ay) > 14) { mouse.ax = mouse.x; mouse.ay = mouse.y; mouse.lastMove = clock; }
+});
 addEventListener('mousedown', e => {
   initAudio();
   if (e.target !== canvas || gameState !== 'DUNGEON') return;
@@ -1530,6 +1536,9 @@ function usePotion() {
 // ================================================================
 const canAct = () => gameState === 'DUNGEON' && !paused && dungeon && dungeon.state === 'fight' && player.hp > 0;
 const mouseWorld = () => ({ x:(mouse.x-W/2)/camera.zoom + camera.x, y:(mouse.y-H/2)/camera.zoom + camera.y });
+// Aim mode — 'keys': face where you move. 'mouse': face the pointer. 'auto': keys, unless the pointer was moved in the last few seconds
+const AIM_MODES = ['auto','keys','mouse'];
+const mouseAiming = () => !isMobile && (settings.aim === 'mouse' || (settings.aim === 'auto' && clock - mouse.lastMove < 4));
 const liveEnemies = () => enemies.filter(e => e.alive && e.spawnT <= 0);
 let lastWarn = 0;
 function warn(msg) { if (clock - lastWarn > 1.2) { lastWarn = clock; toast(msg, 'red', 1100); playSfx('deny'); } }
@@ -1587,7 +1596,7 @@ function useSkill(sd) {
       break;
     }
     case 'teleport': {
-      const aim = isMobile ? player : mouseWorld();
+      const aim = mouseAiming() ? mouseWorld() : player;
       const cands = liveEnemies().filter(e => dist(player.x, player.y, e.x, e.y) < sd.range).sort((a,b) => dist(aim.x,aim.y,a.x,a.y) - dist(aim.x,aim.y,b.x,b.y));
       if (!cands.length) { player.mp += sd.manaCost; player.cds[sd.id] = 0; warn('NO TARGET IN RANGE'); break; }
       cands.slice(0, 1 + tr('phantom')).forEach((t, i) => {
@@ -2019,7 +2028,8 @@ function renderSystemMenu() {
     ${row('GOLD', `<span style="color:#ffd866">◈ ${fmtNum(player.gold)}</span>`)}
     ${row('POTIONS', `<span style="color:#ff7788">✚ ${player.potions}</span>`)}
     ${row('ARMY', `<span style="color:#bb88ff">${Math.min(player.shadows.length, armyCap())} / ${armyCap()}</span>`)}
-    <div style="margin-top:12px;font-size:12px;color:${w.color};letter-spacing:1px;text-align:center">⚔ ${w.name}</div>`;
+    <div style="margin-top:12px;font-size:12px;color:${w.color};letter-spacing:1px;text-align:center">⚔ ${w.name}</div>
+    ${isMobile ? '' : `<button class="sys-btn" data-act="aim" style="width:100%;margin-top:14px">AIM: ${settings.aim.toUpperCase()} &nbsp;[M]</button>`}`;
 
   $('sys-main').innerHTML = ({ status:tabStatus, gates:tabGates, tree:tabTree, shadows:tabShadows, armory:tabArmory })[menuTab]();
 }
@@ -2198,6 +2208,7 @@ $('system-menu').addEventListener('click', e => {
     case 'respec': respec(); break;
     case 'weapon': buyWeapon(); break;
     case 'potion': buyPotion(); break;
+    case 'aim': cycleAim(); break;
     case 'gate': enterGate(v); return;
     case 'endless': if (player.level >= ENDLESS.reqLevel) startDungeon(ENDLESS, true); return;
   }
@@ -2210,6 +2221,12 @@ $('system-menu').addEventListener('click', e => {
 function applySettings() {
   $('vol-music-pause').value = Math.round(settings.music*100); $('vol-sfx-pause').value = Math.round(settings.sfx*100);
   if (musicGain) { musicGain.gain.value = settings.music; sfxGain.gain.value = settings.sfx; }
+  $('pause-aim').textContent = 'AIM: ' + settings.aim.toUpperCase(); $('pause-aim').style.display = isMobile ? 'none' : '';
+}
+function cycleAim() {
+  settings.aim = AIM_MODES[(AIM_MODES.indexOf(settings.aim)+1) % AIM_MODES.length];
+  applySettings(); saveGame(); playSfx('ui');
+  toast({ auto:'AIM: AUTO — KEYS, UNTIL YOU MOVE THE MOUSE', keys:'AIM: KEYS — FACE WHERE YOU MOVE', mouse:'AIM: MOUSE — FACE THE POINTER' }[settings.aim], 'blue', 2400);
 }
 function enterHub() { gameState = 'HUB'; show('system-menu'); applySettings(); setMusic('hub'); renderSystemMenu(); }
 function beginFromTitle() {
@@ -2232,6 +2249,7 @@ function onKey(key, e) {
   if (gameState === 'CREATE') { if (key === 'enter') { e.preventDefault(); confirmName(); } return; }
   if (key === '`') { window.devBoost(); return; }
   if (key === '~') { window.devDown(); return; }
+  if (key === 'm' && !isMobile) { cycleAim(); if (gameState === 'HUB') renderSystemMenu(); return; }
   if (gameState === 'HUB') { const i = ['1','2','3','4','5'].indexOf(key); if (i >= 0) { menuTab = TABS[i][0]; playSfx('ui'); renderSystemMenu(); } return; }
   if (gameState !== 'DUNGEON') return;
   if (key === 'tab') { e.preventDefault(); return; }
@@ -2239,6 +2257,7 @@ function onKey(key, e) {
   if (paused) return; // block all input while paused
   if (dungeon.state === 'boon') { const i = ['1','2','3'].indexOf(key); if (i >= 0) chooseBoon(i); return; }
   if (key === ' ' || key === 'shift') { e.preventDefault(); dodge(); return; }
+  if (key === 'x' || key === 'j') { useSkill(SKILL.slash); return; }
   if (key === 'e') { tryArise(); return; }
   if (key === 'f') { usePotion(); return; }
   if (key === 'r' || key === 'q') { useSkill(SKILL.ult); return; }
@@ -2256,6 +2275,7 @@ $('boon-cards').addEventListener('click', e => { const c = e.target.closest('[da
 $('pause-resume').addEventListener('click', () => { if (paused) togglePause(); });
 $('pause-quit').addEventListener('click', () => { if (dungeon && dungeon.endless) highScores.bestFloor = Math.max(highScores.bestFloor, dungeon.wave-1); returnToHub(); });
 $('hud-pause-btn').addEventListener('click', togglePause);
+$('pause-aim').addEventListener('click', cycleAim);
 $('pause-fullscreen').addEventListener('click', () => {
   const el = document.documentElement;
   if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
@@ -2327,7 +2347,7 @@ setInterval(() => {
 // ================================================================
 //  RENDERING — world
 // ================================================================
-let floorPat = null, floorTheme = GATE_DEFS[0].theme;
+let floorPat = null, floorTheme = GATE_DEFS[0].theme, floorSides = 6;
 const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
 const disc = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); };
 
@@ -2352,23 +2372,33 @@ function buildFloor(g) {
     const x = randInt(0, n-1)*ts + ts/2, y = randInt(0, n-1)*ts + ts/2;
     c.globalAlpha = 0.16; c.beginPath(); c.moveTo(x, y-18); c.lineTo(x+18, y); c.lineTo(x, y+18); c.lineTo(x-18, y); c.closePath(); c.stroke();
   }
-  floorPat = ctx.createPattern(oc, 'repeat'); floorTheme = th;
+  floorPat = ctx.createPattern(oc, 'repeat'); floorTheme = th; floorSides = GATE_DEFS.indexOf(g) % 2 ? 8 : 6;
 }
 
 function drawArena(vx0, vy0, vx1, vy1) {
   const hw = arenaW/2, hh = arenaH/2, th = floorTheme;
   const x0 = Math.max(vx0, -hw), y0 = Math.max(vy0, -hh), x1 = Math.min(vx1, hw), y1 = Math.min(vy1, hh);
   if (x1 > x0 && y1 > y0 && floorPat) { ctx.fillStyle = floorPat; ctx.fillRect(x0, y0, x1-x0, y1-y0); }
-  // A System-style gate ring at the heart of the arena: a dial of ticks and broken arcs, slowly turning
+  // The gate circle at the heart of the arena: nested rings, four orbiting circles and a turning polygon.
+  // Deliberately no star shapes of any kind (no pentagram / hexagram).
   ctx.save();
-  ctx.strokeStyle = th.line; ctx.lineWidth = 2; ctx.globalAlpha = 0.11 + 0.04*Math.sin(clock*1.5);
-  ctx.beginPath(); ctx.arc(0, 0, 130, 0, TAU); ctx.stroke();
-  ctx.beginPath(); ctx.arc(0, 0, 280, 0, TAU); ctx.stroke();
-  ctx.rotate(clock*0.06);
-  for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(0, 0, 205, i*TAU/4 + 0.25, (i+1)*TAU/4 - 0.25); ctx.stroke(); }
+  ctx.strokeStyle = th.line; ctx.lineWidth = 2; ctx.globalAlpha = 0.12 + 0.04*Math.sin(clock*1.5);
+  const ringAt = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke(); };
+  ringAt(0, 0, 280); ringAt(0, 0, 268); ringAt(0, 0, 130); ringAt(0, 0, 56);
+  ctx.save(); ctx.rotate(clock*0.06);
   ctx.beginPath();
-  for (let i = 0; i < 48; i++) { const a = i*TAU/48, r0 = i % 4 ? 268 : 254; ctx.moveTo(Math.cos(a)*r0, Math.sin(a)*r0); ctx.lineTo(Math.cos(a)*280, Math.sin(a)*280); }
+  for (let i = 0; i < 48; i++) { const a = i*TAU/48, r0 = i % 4 ? 258 : 246; ctx.moveTo(Math.cos(a)*r0, Math.sin(a)*r0); ctx.lineTo(Math.cos(a)*268, Math.sin(a)*268); }
   ctx.stroke();
+  for (let i = 0; i < 4; i++) {
+    const a = i*TAU/4, x = Math.cos(a)*205, y = Math.sin(a)*205;
+    ringAt(x, y, 26); ringAt(x, y, 8);
+    ctx.beginPath(); ctx.arc(0, 0, 205, a + 0.2, a + TAU/4 - 0.2); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.rotate(-clock*0.09);
+  const sides = floorSides, ap = 130*Math.cos(Math.PI/sides);
+  ctx.beginPath(); for (let i = 0; i <= sides; i++) { const a = i*TAU/sides; ctx.lineTo(Math.cos(a)*130, Math.sin(a)*130); } ctx.stroke();
+  ctx.beginPath(); for (let i = 0; i < sides; i++) { const a = (i+0.5)*TAU/sides; ctx.moveTo(Math.cos(a)*56, Math.sin(a)*56); ctx.lineTo(Math.cos(a)*ap, Math.sin(a)*ap); } ctx.stroke();
   ctx.restore();
   // Walls
   ctx.save();
@@ -2733,8 +2763,8 @@ function updatePlayer(dt) {
   // Track movement — standing still gets punished
   if (dist(player.x, player.y, lastMovePos.x, lastMovePos.y) > 15) { lastMovePos = { x:player.x, y:player.y }; lastMoveTime = gameTime; }
 
-  // Facing: mouse on desktop (movement until the mouse is first used), joystick on touch
-  if (isMobile || !mouse.moved) { if (player.moving && player.atkT <= 0) player.facing = { x:dx, y:dy }; }
+  // Facing: the direction you move (keys / joystick), or the pointer when mouse aim is active
+  if (!mouseAiming()) { if (player.moving && (!isMobile || player.atkT <= 0)) player.facing = { x:dx, y:dy }; }
   else {
     const m = mouseWorld(), mdx = m.x - player.x, mdy = m.y - (player.y-12), ml = Math.hypot(mdx, mdy);
     if (ml > 30) player.facing = { x:mdx/ml, y:mdy/ml }; else if (player.moving) player.facing = { x:dx, y:dy };
@@ -2759,7 +2789,7 @@ function updatePlayer(dt) {
   if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) comboCount = 0; }
 
   // Hold-to-attack
-  if ((mouse.down || touchAttack) && (player.cds.slash || 0) <= 0) useSkill(SKILL.slash);
+  if ((mouse.down || touchAttack || keys['x'] || keys['j']) && (player.cds.slash || 0) <= 0) useSkill(SKILL.slash);
 
   if (remnants.length) { for (const r of remnants) r.t += dt; remnants = remnants.filter(r => r.t < r.dur); }
   if (player.moving && Math.random() < 12*dt) spawnParticle(player.x, player.y + 10, COLORS.primary, { vx:-dx*30, vy:-dy*30, size:rand(1,3), alpha:0.3, life:0.5 });
