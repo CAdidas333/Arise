@@ -2348,10 +2348,9 @@ function buildFloor(g) {
     for (let k = 0; k < 5; k++) { x += rand(-34, 34); y += rand(-34, 34); c.lineTo(x, y); }
     c.stroke();
   }
-  for (let i = 0; i < 5; i++) { // rune tiles
+  for (let i = 0; i < 5; i++) { // marked tiles — a plain inset diamond
     const x = randInt(0, n-1)*ts + ts/2, y = randInt(0, n-1)*ts + ts/2;
-    c.globalAlpha = 0.16; c.beginPath(); c.arc(x, y, 18, 0, TAU); c.stroke();
-    c.beginPath(); for (let k = 0; k < 3; k++) { const a = k*TAU/3 + i; c.moveTo(x + Math.cos(a)*18, y + Math.sin(a)*18); c.lineTo(x - Math.cos(a)*9, y - Math.sin(a)*9); } c.stroke();
+    c.globalAlpha = 0.16; c.beginPath(); c.moveTo(x, y-18); c.lineTo(x+18, y); c.lineTo(x, y+18); c.lineTo(x-18, y); c.closePath(); c.stroke();
   }
   floorPat = ctx.createPattern(oc, 'repeat'); floorTheme = th;
 }
@@ -2360,12 +2359,16 @@ function drawArena(vx0, vy0, vx1, vy1) {
   const hw = arenaW/2, hh = arenaH/2, th = floorTheme;
   const x0 = Math.max(vx0, -hw), y0 = Math.max(vy0, -hh), x1 = Math.min(vx1, hw), y1 = Math.min(vy1, hh);
   if (x1 > x0 && y1 > y0 && floorPat) { ctx.fillStyle = floorPat; ctx.fillRect(x0, y0, x1-x0, y1-y0); }
-  // The gate's sigil, slowly turning at the heart of the arena
+  // A System-style gate ring at the heart of the arena: a dial of ticks and broken arcs, slowly turning
   ctx.save();
   ctx.strokeStyle = th.line; ctx.lineWidth = 2; ctx.globalAlpha = 0.11 + 0.04*Math.sin(clock*1.5);
-  for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(0, 0, 130 + i*75, 0, TAU); ctx.stroke(); }
+  ctx.beginPath(); ctx.arc(0, 0, 130, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, 280, 0, TAU); ctx.stroke();
   ctx.rotate(clock*0.06);
-  for (let k = 0; k < 2; k++) { ctx.beginPath(); for (let i = 0; i <= 3; i++) { const a = i*TAU/3 + k*Math.PI/3; ctx.lineTo(Math.cos(a)*280, Math.sin(a)*280); } ctx.stroke(); }
+  for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(0, 0, 205, i*TAU/4 + 0.25, (i+1)*TAU/4 - 0.25); ctx.stroke(); }
+  ctx.beginPath();
+  for (let i = 0; i < 48; i++) { const a = i*TAU/48, r0 = i % 4 ? 268 : 254; ctx.moveTo(Math.cos(a)*r0, Math.sin(a)*r0); ctx.lineTo(Math.cos(a)*280, Math.sin(a)*280); }
+  ctx.stroke();
   ctx.restore();
   // Walls
   ctx.save();
