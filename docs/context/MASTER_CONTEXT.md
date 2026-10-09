@@ -37,7 +37,7 @@ Arise is a browser-based action RPG inspired by the manga/anime **Solo Leveling*
 - **Pause menu** — volume slider, fullscreen toggle
 - **Dev mode** — backtick = +5 levels, shift+backtick = -5 levels (hidden, not in UI)
 
-### V17 "Monarch Update" (Session 3, branch `v17-monarch` until merged)
+### V17 "Monarch Update" (Session 3, live since 2026-10-09)
 Full script rewrite. Adds: frame-rate-independent engine, 3-hit combo + dodge, six enemy archetypes with telegraphed attacks, pattern bosses with an enrage phase, remnant extraction (E), army cap and grades, skill tree, run boons, Monarch's Awakening ultimate (R), gold + armory, S-rank gate, endless Demon Castle, adaptive music. Controls: WASD move, mouse aim/attack, Space dodge, 1–5 skills, R ultimate, E arise, F potion, Esc pause. See SESSION_LOG Session 3 for the full list. `#debug` in the URL exposes `window.__arise`.
 
 ### Origin

@@ -1,6 +1,6 @@
 # Arise — Session Log
 
-## Session 3 — 2026-10-09 — V17 "Monarch Update" (full rewrite, on branch `v17-monarch`)
+## Session 3 — 2026-10-09 — V17 "Monarch Update" (full rewrite, merged to `main` and deployed)
 
 ### Focus
 Chris gave total creative freedom for a one-shot upgrade. The game script was rewritten from scratch; the V16 CSS was kept and extended. Still one `index.html`, zero dependencies (2,828 lines).
@@ -18,7 +18,7 @@ Chris gave total creative freedom for a one-shot upgrade. The game script was re
 - **Rewrite over patch**: frame-rate independence touches every system, so patching V16 would have cost more than a clean build.
 - **Kept from V16 without change**: shadow engagement rule, boss-hunt arena expansion, stationary damage penalty, dev keys, single file, zero dependencies.
 - **Balance** was set from scripted bot runs of every gate at entry level (no dodging). Numbers are in `GATE_DEFS`.
-- **Not deployed**: `main` is untouched, so the live site is still V16 until the branch is merged.
+- **Deployed 2026-10-09**: Chris said to merge and deploy the same evening, before a human play-test. V16 is the commit before the merge (`1b73efe`) if it ever needs to come back.
 
 ### Verification
 Scripted bot cleared all six gates and 17 endless floors with no errors; death, extraction, V16 save migration, menu purchases, touch controls (emulated) and a heavy-scene frame-time check (median 16.7 ms) all passed in the browser pane. Not yet tested: real phone, real audio by ear, a human play-through.
@@ -28,7 +28,6 @@ Open with `#debug` to get `window.__arise` (player, dungeon, enemies, `startDung
 
 ### What's Next
 - Chris and Kevin play-test; tune feel and balance from that
-- Merge `v17-monarch` to `main` to deploy
 - Listen to the music and iterate
 - Still open from before: shared leaderboard, multi-room dungeons, equipment beyond weapons
 
