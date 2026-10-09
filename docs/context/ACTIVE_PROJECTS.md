@@ -1,6 +1,6 @@
 # Arise — Active Projects
 
-## Current Phase: Phase 1 — Complete. Phase 2 — Polish & Expansion
+## Current Phase: Phase 2 — V17 built on a branch, awaiting play-test and merge
 **Priority**: MEDIUM (fun/showcase project)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
@@ -28,17 +28,24 @@
 - [x] Pause menu with volume slider + fullscreen toggle
 - [x] Dev mode (backtick +5 levels, shift+backtick -5 levels)
 
-### Next Up (Session 2)
-- [ ] Skill tree — branching upgrade paths, dedicated tree screen
+### Completed (Session 3 — V17 Monarch Update, branch `v17-monarch`, not yet merged)
+- [x] Skill tree — 3 branches, 12 nodes, dedicated tab
+- [x] More enemy variety and attack patterns (6 archetypes, elites, pattern bosses)
+- [x] S-Rank gate content (Cartenon Temple)
+- [x] Sound design pass (adaptive music, reverb, ~25 SFX)
+- [x] Portrait-mode HUD pass
+- [x] Frame-rate independence, combo attacks, dodge, ultimate, run boons, armory, endless mode
+- [x] Remnant extraction + army cap and grades
+
+### Next Up
+- [ ] Human play-test of V17 (Chris + Kevin), then tune feel and balance
+- [ ] Merge `v17-monarch` to `main` (deploys to GitHub Pages)
+- [ ] Test on a real phone; listen to the music
 - [ ] Firebase leaderboard (shared high scores across players)
-- [ ] More enemy variety and attack patterns
-- [ ] More mobile portrait-mode optimization
-- [ ] Sound design iteration (music quality pass)
 
 ### Backlog / Future Vision
 - [ ] Multi-room procedural dungeons (replace arena format)
-- [ ] S-Rank gate content
-- [ ] Equipment/inventory system
+- [ ] Equipment/inventory beyond the weapon ladder
 - [ ] Character classes / hunter specializations
 - [ ] Multiplayer (WebSocket-based, toward Kevin's MMO vision)
 - [ ] Guild system

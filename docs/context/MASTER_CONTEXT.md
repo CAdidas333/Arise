@@ -4,7 +4,7 @@ tags: [project]
 
 # Arise — Master Context
 
-**Last updated**: 2026-04-09
+**Last updated**: 2026-10-09
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
 
@@ -37,12 +37,15 @@ Arise is a browser-based action RPG inspired by the manga/anime **Solo Leveling*
 - **Pause menu** — volume slider, fullscreen toggle
 - **Dev mode** — backtick = +5 levels, shift+backtick = -5 levels (hidden, not in UI)
 
+### V17 "Monarch Update" (Session 3, branch `v17-monarch` until merged)
+Full script rewrite. Adds: frame-rate-independent engine, 3-hit combo + dodge, six enemy archetypes with telegraphed attacks, pattern bosses with an enrage phase, remnant extraction (E), army cap and grades, skill tree, run boons, Monarch's Awakening ultimate (R), gold + armory, S-rank gate, endless Demon Castle, adaptive music. Controls: WASD move, mouse aim/attack, Space dodge, 1–5 skills, R ultimate, E arise, F potion, Esc pause. See SESSION_LOG Session 3 for the full list. `#debug` in the URL exposes `window.__arise`.
+
 ### Origin
 Kevin proposed building an MMO RPG that simulates the Solo Leveling experience. For V1, we scoped it to a single-player browser game capturing the core loop: enter gates, fight enemies, level up, extract shadows, repeat with harder content. By Session 1's end, the game was publicly deployed and mobile-ready.
 
 ## Architecture
 - **Stack**: Pure HTML5 Canvas + vanilla JavaScript
-- **Structure**: Single self-contained `index.html` file (~2000+ lines)
+- **Structure**: Single self-contained `index.html` file (2,828 lines as of V17)
 - **No dependencies**: No npm, no build tools, no frameworks
 - **Audio**: Web Audio API — all music and SFX synthesized at runtime (no external audio files)
 - **Rendering**: Canvas 2D with particles, screen shake, glow effects, floating damage numbers

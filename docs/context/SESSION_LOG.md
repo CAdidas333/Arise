@@ -1,5 +1,38 @@
 # Arise — Session Log
 
+## Session 3 — 2026-10-09 — V17 "Monarch Update" (full rewrite, on branch `v17-monarch`)
+
+### Focus
+Chris gave total creative freedom for a one-shot upgrade. The game script was rewritten from scratch; the V16 CSS was kept and extended. Still one `index.html`, zero dependencies (2,828 lines).
+
+### What Changed
+- **Engine**: everything is now in seconds, so 60Hz and 120Hz displays play the same (V16 moved per frame and ran double speed on ProMotion). Retina-sharp canvas, hit-stop, slow-motion, additive glow rendering, pre-painted floor tile per gate, HUD that only touches the DOM on change.
+- **Combat**: 3-hit slash combo with a cleaving finisher, dodge with cooldown + afterimages + perfect-dodge slow-mo, knockback, telegraphed enemy attacks you can interrupt.
+- **Enemies**: six archetypes (melee, ranged, charger, bomber, brute, caster) plus elites. Bosses run attack patterns (burst, spiral, slam, nova, charge, summon) and enrage at half health, with a letterboxed intro.
+- **Shadows**: slain enemies can leave a remnant — press E to "Arise" it into the army. Boss extraction gets three attempts. Army cap (6, up to 16), grades (Soldier / Elite / Marshal), shadows scale with player level. Kevin's engagement rule and Legion are unchanged.
+- **New systems**: skill tree (3 branches, 12 nodes, free respec), run boons between waves (12), Monarch's Awakening ultimate (R, level 15), gold + armory (6 weapons, potions), S-rank gate (Cartenon Temple / Statue of God), endless Demon Castle (level 15), clear grades.
+- **Audio**: compressor + generated reverb, lookahead sequencer, three moods (hub, battle, boss) with layers that follow combat intensity, about 25 SFX.
+- **Fixes**: daily quests really reset daily; bonus quests persist (V16 re-awarded them every session); XP curve replaced (V16's ×1.4 per level made level 25+ unreachable without dev mode); defense is now a percentage cut; V16 saves load and are upgraded (skill points granted for existing levels).
+
+### Decisions Made
+- **Rewrite over patch**: frame-rate independence touches every system, so patching V16 would have cost more than a clean build.
+- **Kept from V16 without change**: shadow engagement rule, boss-hunt arena expansion, stationary damage penalty, dev keys, single file, zero dependencies.
+- **Balance** was set from scripted bot runs of every gate at entry level (no dodging). Numbers are in `GATE_DEFS`.
+- **Not deployed**: `main` is untouched, so the live site is still V16 until the branch is merged.
+
+### Verification
+Scripted bot cleared all six gates and 17 endless floors with no errors; death, extraction, V16 save migration, menu purchases, touch controls (emulated) and a heavy-scene frame-time check (median 16.7 ms) all passed in the browser pane. Not yet tested: real phone, real audio by ear, a human play-through.
+
+### Debug hook
+Open with `#debug` to get `window.__arise` (player, dungeon, enemies, `startDungeon`, `step`, ...).
+
+### What's Next
+- Chris and Kevin play-test; tune feel and balance from that
+- Merge `v17-monarch` to `main` to deploy
+- Listen to the music and iterate
+- Still open from before: shared leaderboard, multi-room dungeons, equipment beyond weapons
+
+---
 ## Session 2 — 2026-04-09 — Orientation & Architecture Review (No Code Changes)
 
 ### Focus
