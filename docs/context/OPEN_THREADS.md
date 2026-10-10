@@ -56,7 +56,8 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | I1 | Blender install: only needed if real 3D characters are made | OPEN | min | The 3D experiment continuing to real characters; ask Chris before downloading | Not needed for shapes-only 3D |
 | I2 | parallax-threejs plugin (three.js debugging help) | OPEN | min | The 3D experiment continuing | Only worth adding if the experiment goes on |
 | G1 | Repeatable balance bot in `tools/`: the bot that plays each gate through the `#debug` hook exists only in the session transcript | OPEN | session | Nothing | Not saved when it was written; worth a worker job when balance work resumes |
-| G2 | Local preview drops a connection: the simple Python server once dropped a connection while loading the 13 scripts | OPEN | min | A repeat of it | Seen once; the live site has not shown it |
+| G2 | Local preview drops a connection: the simple Python server once dropped a connection while loading the 13 scripts | OPEN | min | Nothing | Seen again 2026-10-09 (six scripts reset on one reload; a second reload fixed it). Local preview only; the live site has not shown it |
+| G3 | ElevenLabs key cannot list voices: it lacks the "voices read" permission, so `el_voice.py --list` fails | OPEN | min | Chris adding that permission to the key on the ElevenLabs site (optional) | Worked around: voice ids are read from the ElevenLabs connector instead |
 
 ### Docs
 

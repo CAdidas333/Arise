@@ -1,4 +1,16 @@
 # Next Session Handoff
+_Updated: 2026-10-09 21:50 (Session 4, in progress)_
+
+## Session 4 so far
+- Shadow fighting styles reviewed, tested in the browser and merged; V18 step 3 is live on main (f465a46).
+- `tools/stamp.sh` now stamps to the second (two stamps in one minute used to collide and the browser kept old scripts).
+- Voice trial recorded: `assets/voice/trial/system_trial_{alice,river,brian}.mp3` (three lines each). Waiting for Chris to pick. Voice ids: Alice `Xb7hH8MSUJpSbSDYk0k2`, River `SAz9YHcvj6GT2YYXdXww`, Brian `nPczCjzI2devNBz1zQrb`. Delete the trial folder before the next merge to main.
+- The ElevenLabs key cannot list voices; get ids from the ElevenLabs connector (`creative_list_voices`), never from memory.
+- Houston (21:38): the app restart is still pending. No new worker and nothing longer than a couple of minutes until Houston says so. The 3D experiment review waits.
+
+---
+_Below: the Session 3 handoff. Items 1 and the voice-trial part of 3 are done._
+
 _Written: 2026-10-09 20:55 by Chris Whitney_
 
 ## Where we left off

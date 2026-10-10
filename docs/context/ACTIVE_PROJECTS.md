@@ -1,10 +1,10 @@
 # Arise — Active Projects
 
-## Current Phase: Phase 3 — V17 live; V18 under way (step 1 live, step 3 half built)
+## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 and 3 live, step 2 voice trial with Chris)
 **Priority**: MEDIUM (fun/showcase project)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
-**Status**: Parked 2026-10-09 by Houston for a Claude app restart. No worker, image job or browser run until Houston says resume.
+**Status**: Light work only (Houston, 2026-10-09 21:38): the Claude app restart is still pending, so no new worker and no job longer than a couple of minutes until Houston says the restart is done or called off. Review, short browser runs and the voice trial are allowed.
 
 ### Completed (Session 0-1)
 - [x] Core game engine (canvas, game loop, input handling)
@@ -47,8 +47,8 @@
 
 ### V18 plan (approved by Chris 2026-10-09; built on branch `v18-world`, one step at a time; new steps ship when he says)
 - [x] Step 1 — Painted world: a painted floor per gate and a backdrop for the title and hub. **Live** (shipped to main 2026-10-09)
-- [ ] Step 2 — The System speaks: voiced lines for the big moments, ElevenLabs signature sound effects. **Unblocked**: Chris approved the credit spend and the key rule is in; the voice and sound-effect scripts and a list of 34 System lines are ready; nothing generated yet. ElevenLabs music stays blocked until Chris has heard the voice and effects
-- [ ] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows keep one old attack. **Half built**: the look is merged on `v18-world`; the fighting styles are finished on branch `worker/v18-shadow-roles` (commit 6bbab81) and await review. Ships whole, not in halves
+- [ ] Step 2 — The System speaks: voiced lines for the big moments, ElevenLabs signature sound effects. **Voice trial recorded 2026-10-09**: three lines in three voices (Alice, River, Brian) in `assets/voice/trial/`, waiting for Chris to pick. Then all 34 lines, then 8 sound effects with two takes each. The trial folder must be deleted before the chosen voice ships. ElevenLabs music stays blocked until Chris has heard the voice and effects
+- [x] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows fire a ring of shots on a timer. **Live** (shipped to main 2026-10-09, commit f465a46)
 - [ ] Step 4 — A hunter with a real body (jointed parts on the existing skeleton) and a look for each boss
 - [ ] Step 5 — Real dungeons: generated rooms and corridors; the arena stays for boss fights and endless mode
 - [ ] Step 6 — Loot and gear
@@ -62,10 +62,9 @@
 - [ ] 3D experiment (Chris asked for it): a third-person 3D view of the same game rules with simple shapes, fixed camera, on branch `worker/v18-3d-spike` (commit 915ea83). Built, awaiting review and a local browser test. Not live and not to be deployed without Chris's word
 
 ### Next Up (ranked)
-1. When Houston says resume: review, browser-test and merge the shadow fighting-styles job, run `tools/stamp.sh`, then ship V18 step 3 whole to main
-2. Review and browser-test the 3D experiment locally; show Chris a screenshot
-3. ElevenLabs voice trial: list voices, three lines in two or three voices for Chris to choose, then all 34 lines, then the 8 signature sound effects with two takes each
-4. V18 step 4 (hunter with a real body, boss looks)
+1. Chris picks a System voice from the three trial files; then record all 34 lines, then the 8 signature sound effects with two takes each
+2. When Houston says the restart is done: review and browser-test the 3D experiment locally; show Chris a screenshot
+3. V18 step 4 (hunter with a real body, boss looks)
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`
 
 ### Backlog / Future Vision
