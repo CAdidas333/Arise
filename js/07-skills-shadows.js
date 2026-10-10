@@ -4,7 +4,7 @@
 //  SKILLS
 // ================================================================
 const canAct = () => gameState === 'DUNGEON' && !paused && dungeon && dungeon.state === 'fight' && player.hp > 0;
-const mouseWorld = () => ({ x:(mouse.x-W/2)/camera.zoom + camera.x, y:(mouse.y-H/2)/camera.zoom + camera.y });
+const mouseWorld = () => window.mouseWorld3D ? window.mouseWorld3D() : ({ x:(mouse.x-W/2)/camera.zoom + camera.x, y:(mouse.y-H/2)/camera.zoom + camera.y });
 // Aim mode — 'keys': face where you move. 'mouse': face the pointer. 'auto': keys, unless the pointer was moved in the last few seconds
 const AIM_MODES = ['auto','keys','mouse'];
 const mouseAiming = () => !isMobile && (settings.aim === 'mouse' || (settings.aim === 'auto' && clock - mouse.lastMove < 4));
