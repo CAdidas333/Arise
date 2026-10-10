@@ -1,0 +1,27 @@
+# Next Session Handoff
+_Written: 2026-10-09 20:55 by Chris Whitney_
+
+## Where we left off
+The public game (main) is V17 plus the first V18 step: painted floors and a painted title backdrop. The V18 work branch `v18-world` is clean and pushed. Two worker jobs finished and are committed on their own branches but have NOT been reviewed, tested or merged: the shadow fighting styles (`worker/v18-shadow-roles`, 6bbab81) and the 3D experiment (`worker/v18-3d-spike`, 915ea83). Houston parked every session for a Claude app restart; nothing may start until Houston says resume.
+
+## Ranked next actions (author's ranking at wrap time)
+1. **Shadow fighting styles: review, test, merge, ship.** `worker diff Arise v18-shadow-roles`, check it line by line against `docs/briefs/v18-step3b-shadow-roles.md`, re-run its checks, merge, run `tools/stamp.sh`, play a gate in the browser with an army of mixed shadow types, then merge `v18-world` to main. Chris said to ship step 3 whole, and this is the second half.
+2. **3D experiment: review and show Chris.** `worker diff Arise v18-3d-spike` against `docs/briefs/v18-3d-spike.md`, merge to `v18-world`, open http://localhost:8765/3d/ in the browser pane, play a gate, send Chris a screenshot. Do not deploy it without his word.
+3. **ElevenLabs voice trial.** `keyguard run ELEVENLABS_API_KEY -- python3 tools/el_voice.py --list`, pick two or three candidate voices, record three lines in each (`--only=boss_detected,level_up,extract_success --suffix=_<voice>`), send them to Chris to choose. Then all 34 lines in `tools/system_lines.tsv`, then the 8 signature sound effects with two takes each (`tools/el_sfx.py`). Then a worker brief to play them in the game.
+4. **V18 step 4:** a hunter with a real body (jointed parts on the existing skeleton in `drawHunter`) and a look for each boss. Make one approved style reference image first, then derive the parts from it.
+
+## Watch-outs / state of mind
+- **You orchestrate; you do not build.** Briefs, review, testing and decisions only. Code goes to `worker run Arise <slug> <brief.md> --engine auto --timeout 25m` (run it in the background and end the turn); images go through `keyguard run HF_TOKEN -- ~/LocalModels/hfspace/bin/python ~/LocalModels/zimage_gen.py ...`. Briefs must name exact files, functions and line numbers and say what not to commit. Weekly Claude usage was 74 percent at 8:04 PM on 2026-10-09; it resets Sunday 10 PM.
+- **Music is not approved.** `tools/el_music.py` is blocked by the key broker until Chris has heard the voice and sound effects and says so. Do not write around it.
+- **No star symbols, runes or occult imagery** in any art or drawn shape. Look at every generated image at full size before using it. A regenerated asset gets a new file name.
+- Run `tools/stamp.sh` before committing any change in `js/`, or browsers will mix old and new script files.
+- Chris plays on a laptop with arrow keys and `X` to attack. Test keyboard-only play, not just mouse.
+- Fixes Chris asks for while playing go straight to main. New V18 steps are shown to him first and shipped when he says.
+- Say things to Chris in plain words first; codes only in brackets. Keep `docs/context/GLOSSARY.md` current.
+- The local preview server once dropped a connection while loading the 13 scripts; if `window.__arise` is missing on a `#debug` load, just reload.
+
+## What DID NOT get done
+- The shadow fighting styles and the 3D experiment were not reviewed or merged (parked before I could).
+- No ElevenLabs audio has been generated yet.
+- No printable status report was made at this wrap (skipped to save usage while parked).
+- Not tested by anyone: the game on a real phone.
