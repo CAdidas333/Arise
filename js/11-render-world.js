@@ -262,20 +262,20 @@ function drawBoss(name, r, t, fx, fy, pal) {
     for (let i = 0; i < 4; i++) {
       for (let side of [-1, 1]) {
         const sway = Math.sin(t * 3 + i) * 0.1;
-        const kneeX = side * (0.8 + i * 0.1) * r;
-        const kneeY = (-0.2 + i * 0.15 + sway) * r;
-        const footX = side * 1.4 * r;
-        const footY = (0.1 + i * 0.3 + sway) * r;
+        const kneeX = side * (0.8 + i * 0.05) * r;
+        const kneeY = (-0.5 + i * 0.35 + sway) * r;
+        const footX = side * (1.35 + i * 0.03) * r;
+        const footY = (-0.1 + i * 0.4 + sway) * r;
         const startX = side * 0.7 * r;
         const startY = 0.15 * r;
         ctx.beginPath();
         ctx.moveTo(startX, startY);
         ctx.lineTo(kneeX, kneeY);
         ctx.lineTo(footX, footY);
-        ctx.lineWidth = 0.09 * r + Math.max(1.5, r * 0.05) * 2;
+        ctx.lineWidth = 0.1 * r + Math.max(1.5, r * 0.05) * 2;
         ctx.strokeStyle = pal.light;
         ctx.stroke();
-        ctx.lineWidth = 0.09 * r;
+        ctx.lineWidth = 0.1 * r;
         ctx.strokeStyle = pal.body;
         ctx.stroke();
       }
@@ -306,35 +306,49 @@ function drawBoss(name, r, t, fx, fy, pal) {
     }
   } else if (bossName === 'Orc Chieftain') {
     ctx.fillStyle = pal.body;
+    for (let side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * 0.8 * r, -0.4 * r);
+      ctx.lineTo(side * 1.3 * r, 0.1 * r);
+      ctx.lineTo(side * 1.1 * r, 0.4 * r);
+      ctx.lineTo(side * 0.6 * r, 0.1 * r);
+      ctx.closePath();
+      fillOutline();
+      ctx.beginPath(); ctx.arc(side * 1.1 * r, 0.45 * r, 0.3 * r, 0, TAU); fillOutline();
+    }
     ctx.beginPath();
     ctx.moveTo(-0.6 * r, 0.95 * r);
     ctx.lineTo(0.6 * r, 0.95 * r);
-    ctx.lineTo(1.25 * r, -0.2 * r);
-    ctx.quadraticCurveTo(1.25 * r, -0.55 * r, 0.8 * r, -0.55 * r);
-    ctx.lineTo(-0.8 * r, -0.55 * r);
-    ctx.quadraticCurveTo(-1.25 * r, -0.55 * r, -1.25 * r, -0.2 * r);
+    ctx.lineTo(0.9 * r, -0.5 * r);
+    ctx.lineTo(-0.9 * r, -0.5 * r);
     ctx.closePath();
+    fillOutline();
+    ctx.beginPath();
+    ctx.rect(-0.3 * r, -0.7 * r, 0.6 * r, 0.3 * r);
     fillOutline();
     ctx.beginPath(); ctx.arc(0, -0.5 * r, 0.36 * r, 0, TAU); fillOutline();
     ctx.fillStyle = pal.dark;
-    ctx.fillRect(-0.65 * r, 0.7 * r, 1.3 * r, 0.25 * r);
+    ctx.fillRect(-0.65 * r, 0.65 * r, 1.3 * r, 0.3 * r);
     ctx.fillStyle = pal.light;
     for (let side of [-1, 1]) {
       ctx.beginPath();
-      ctx.arc(side * 1.05 * r, -0.55 * r, 0.25 * r, 0, Math.PI);
+      ctx.arc(side * 0.9 * r, -0.5 * r, 0.42 * r, Math.PI, 0, side < 0);
+      ctx.closePath();
       ctx.fill();
       ctx.fillStyle = pal.dark;
-      disc(side * 0.95 * r, -0.6 * r, 0.05 * r);
-      disc(side * 1.15 * r, -0.6 * r, 0.05 * r);
+      disc(side * 0.7 * r, -0.6 * r, 0.05 * r);
+      disc(side * 1.1 * r, -0.6 * r, 0.05 * r);
       ctx.fillStyle = pal.light;
     }
-    ctx.strokeStyle = pal.light;
-    ctx.lineWidth = 0.08 * r;
-    ctx.beginPath();
-    ctx.moveTo(-0.15 * r, -0.25 * r); ctx.quadraticCurveTo(-0.3 * r, -0.25 * r, -0.4 * r, -0.5 * r);
-    ctx.moveTo(0.15 * r, -0.25 * r); ctx.quadraticCurveTo(0.3 * r, -0.25 * r, 0.4 * r, -0.5 * r);
-    ctx.stroke();
-    ctx.lineWidth = Math.max(1.5, r * 0.05);
+    ctx.fillStyle = pal.light;
+    for (let side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * 0.15 * r, -0.25 * r);
+      ctx.quadraticCurveTo(side * 0.4 * r, -0.25 * r, side * 0.45 * r, -0.55 * r);
+      ctx.quadraticCurveTo(side * 0.25 * r, -0.25 * r, side * 0.05 * r, -0.25 * r);
+      ctx.closePath();
+      ctx.fill();
+    }
     ctx.fillStyle = pal.eye;
     disc(-0.15 * r + ox, -0.5 * r + oy, 0.06 * r);
     disc(0.15 * r + ox, -0.5 * r + oy, 0.06 * r);
@@ -389,54 +403,90 @@ function drawBoss(name, r, t, fx, fy, pal) {
     ctx.strokeStyle = pal.dark;
     ctx.beginPath(); ctx.moveTo(0, -0.1 * r); ctx.lineTo(0, 1.4 * r); ctx.stroke();
   } else if (bossName === 'Demon Lord') {
-    ctx.fillStyle = pal.eye;
     for (let side of [-1, 1]) {
-      for (let i = 0; i < 3; i++) {
-        const flicker = Math.sin(t * 7 + i) * 0.1;
-        ctx.beginPath();
-        ctx.moveTo(side * 0.8 * r, -0.3 * r);
-        ctx.quadraticCurveTo(side * (1.1 + flicker) * r, -0.7 * r - i * 0.2 * r, side * (1.3 + flicker) * r, -0.5 * r + flicker * r);
-        ctx.quadraticCurveTo(side * 1.0 * r, -0.1 * r, side * 0.8 * r, 0);
-        ctx.fill();
+      for (let pass = 0; pass < 2; pass++) {
+        ctx.fillStyle = pass === 0 ? pal.light : pal.body;
+        const scale = pass === 0 ? 1 : 0.6;
+        for (let i = 0; i < 3; i++) {
+          const sway = Math.sin(t * 7 + i) * 0.15 * r;
+          const h = (i === 1 ? 0.6 : 0.4) * r * scale;
+          const w = 0.15 * r * scale;
+          const bx = side * (0.8 + (i - 1) * 0.25) * r;
+          const by = -0.5 * r;
+          ctx.beginPath();
+          ctx.moveTo(bx - w, by);
+          ctx.quadraticCurveTo(bx + sway, by - h, bx + sway, by - h);
+          ctx.quadraticCurveTo(bx + w, by - h * 0.5, bx + w, by);
+          ctx.fill();
+        }
       }
     }
     ctx.fillStyle = pal.body;
+    for (let side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * 0.8 * r, -0.4 * r);
+      ctx.lineTo(side * 1.2 * r, 0.2 * r);
+      ctx.lineTo(side * 0.9 * r, 0.3 * r);
+      ctx.lineTo(side * 0.6 * r, -0.1 * r);
+      ctx.closePath();
+      fillOutline();
+      ctx.beginPath(); ctx.arc(side * 1.1 * r, 0.4 * r, 0.25 * r, 0, TAU); fillOutline();
+    }
     ctx.beginPath();
-    ctx.moveTo(-0.9 * r, -0.3 * r);
-    ctx.lineTo(-0.6 * r, 1.1 * r);
-    ctx.lineTo(0.6 * r, 1.1 * r);
-    ctx.lineTo(0.9 * r, -0.3 * r);
+    ctx.moveTo(-0.5 * r, 0.6 * r);
+    ctx.lineTo(-0.8 * r, 1.2 * r);
+    ctx.lineTo(0.8 * r, 1.2 * r);
+    ctx.lineTo(0.5 * r, 0.6 * r);
     ctx.closePath();
     fillOutline();
     ctx.beginPath();
-    ctx.moveTo(-0.9 * r, -0.3 * r);
-    ctx.lineTo(-0.6 * r, -0.8 * r);
-    ctx.lineTo(0, -0.4 * r);
-    ctx.lineTo(0.6 * r, -0.8 * r);
-    ctx.lineTo(0.9 * r, -0.3 * r);
+    ctx.moveTo(-0.9 * r, -0.4 * r);
+    ctx.lineTo(0.9 * r, -0.4 * r);
+    ctx.lineTo(0.5 * r, 0.5 * r);
+    ctx.lineTo(-0.5 * r, 0.5 * r);
     ctx.closePath();
     fillOutline();
+    ctx.fillStyle = pal.light;
+    for (let side of [-1, 1]) {
+      for (let layer = 0; layer < 3; layer++) {
+        ctx.beginPath();
+        ctx.moveTo(side * (0.5 + layer * 0.15) * r, -0.5 * r + layer * 0.1 * r);
+        ctx.lineTo(side * (1.1 + layer * 0.1) * r, -0.3 * r + layer * 0.1 * r);
+        ctx.lineTo(side * (0.9 + layer * 0.1) * r, 0.1 * r + layer * 0.1 * r);
+        ctx.lineTo(side * (0.4 + layer * 0.15) * r, -0.1 * r + layer * 0.1 * r);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = pal.dark;
+        ctx.stroke();
+      }
+    }
+    ctx.fillStyle = pal.dark;
+    ctx.fillRect(-0.55 * r, 0.45 * r, 1.1 * r, 0.2 * r);
+    ctx.fillStyle = pal.body;
     ctx.beginPath(); ctx.arc(0, -0.5 * r, 0.35 * r, 0, TAU); fillOutline();
     ctx.fillStyle = pal.light;
     ctx.beginPath();
     ctx.moveTo(-0.35 * r, -0.6 * r);
     for(let i = 0; i < 5; i++) {
       const tx = -0.35 * r + (0.7 * r) * (i + 0.5) / 5;
-      const ty = -0.9 * r + (i % 2 === 0 ? 0 : 0.1 * r);
-      ctx.lineTo(tx, ty);
+      const th = i === 2 ? 0.35 * r : (i % 2 === 0 ? 0.15 * r : 0.25 * r);
+      ctx.lineTo(tx, -0.6 * r - th);
       ctx.lineTo(-0.35 * r + (0.7 * r) * (i + 1) / 5, -0.6 * r);
     }
     ctx.fill();
     ctx.strokeStyle = pal.light;
-    ctx.lineWidth = 0.04 * r;
-    for(let i = 0; i < 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(-0.4 * r, (0.1 + i * 0.3) * r);
-      ctx.lineTo(-0.1 * r, (0.2 + i * 0.3) * r);
-      ctx.lineTo(0.2 * r, (0.05 + i * 0.3) * r);
-      ctx.lineTo(0.5 * r, (0.15 + i * 0.3) * r);
-      ctx.stroke();
-    }
+    ctx.lineWidth = 0.05 * r;
+    ctx.beginPath();
+    ctx.moveTo(-0.3 * r, -0.4 * r);
+    ctx.lineTo(-0.1 * r, -0.2 * r);
+    ctx.lineTo(-0.2 * r, 0.1 * r);
+    ctx.lineTo(0, 0.3 * r);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0.2 * r, 0.45 * r);
+    ctx.lineTo(0.3 * r, 0.2 * r);
+    ctx.lineTo(0.1 * r, -0.1 * r);
+    ctx.stroke();
     ctx.lineWidth = Math.max(1.5, r * 0.05);
     ctx.fillStyle = pal.dark;
     ctx.beginPath();
@@ -452,12 +502,12 @@ function drawBoss(name, r, t, fx, fy, pal) {
     }
     ctx.fillStyle = pal.eye;
     ctx.beginPath();
-    ctx.moveTo(-0.2 * r + ox, -0.5 * r + oy);
+    ctx.moveTo(-0.25 * r + ox, -0.55 * r + oy);
     ctx.lineTo(-0.05 * r + ox, -0.45 * r + oy);
     ctx.lineTo(-0.15 * r + ox, -0.4 * r + oy);
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(0.2 * r + ox, -0.5 * r + oy);
+    ctx.moveTo(0.25 * r + ox, -0.55 * r + oy);
     ctx.lineTo(0.05 * r + ox, -0.45 * r + oy);
     ctx.lineTo(0.15 * r + ox, -0.4 * r + oy);
     ctx.fill();
@@ -527,44 +577,75 @@ function drawBoss(name, r, t, fx, fy, pal) {
     disc(0.08 * r, 0.4 * r, 0.04 * r);
   } else if (bossName === 'Statue of God') {
     ctx.fillStyle = pal.body;
-    for (let i = 0; i < 4; i++) {
-      const side = i % 2 === 0 ? -1 : 1;
-      const bob = Math.sin(t * 1.5 + i) * 0.15 * r;
-      const fpx = side * (1.1 + Math.floor(i / 2) * 0.1) * r;
-      const fy = -0.2 * r + bob;
+    ctx.beginPath();
+    ctx.rect(-1.1 * r, 1.2 * r, 2.2 * r, 0.3 * r);
+    fillOutline();
+    ctx.beginPath();
+    ctx.moveTo(-0.7 * r, -0.3 * r);
+    ctx.lineTo(0.7 * r, -0.3 * r);
+    ctx.lineTo(0.55 * r, 1.2 * r);
+    ctx.lineTo(-0.55 * r, 1.2 * r);
+    ctx.closePath();
+    fillOutline();
+    for (let side of [-1, 1]) {
       ctx.beginPath();
-      ctx.rect(fpx, fy, 0.15 * r, 0.15 * r);
+      ctx.rect(side * 0.78 * r - (side < 0 ? 0.25 * r : 0), -0.3 * r, 0.25 * r, 1.2 * r);
       fillOutline();
     }
-    ctx.fillStyle = pal.body;
     ctx.beginPath();
-    ctx.rect(-0.95 * r, -0.35 * r, 1.9 * r, 1.5 * r);
+    ctx.rect(-0.2 * r, -0.45 * r, 0.4 * r, 0.15 * r);
+    fillOutline();
+    ctx.beginPath();
+    ctx.moveTo(-0.35 * r, -0.45 * r);
+    ctx.lineTo(0.35 * r, -0.45 * r);
+    ctx.lineTo(0.35 * r, -0.9 * r);
+    ctx.lineTo(0.5 * r, -1.4 * r);
+    ctx.lineTo(-0.5 * r, -1.4 * r);
+    ctx.lineTo(-0.35 * r, -0.9 * r);
+    ctx.closePath();
     fillOutline();
     ctx.strokeStyle = pal.light;
-    ctx.lineWidth = 0.05 * r;
-    for (let i = 1; i <= 5; i++) {
-      const gx = -0.95 * r + (1.9 * r) * (i / 6);
-      ctx.beginPath(); ctx.moveTo(gx, -0.35 * r); ctx.lineTo(gx, 1.15 * r); ctx.stroke();
-    }
-    ctx.lineWidth = Math.max(1.5, r * 0.05);
-    ctx.fillStyle = pal.body;
-    ctx.beginPath();
-    ctx.rect(-0.4 * r, -1.4 * r, 0.8 * r, 1.05 * r);
-    fillOutline();
-    ctx.strokeStyle = pal.dark;
     ctx.lineWidth = 0.04 * r;
-    ctx.beginPath(); ctx.moveTo(0, -0.8 * r); ctx.lineTo(0, -0.5 * r); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-0.15 * r, -0.4 * r); ctx.lineTo(0.15 * r, -0.4 * r); ctx.stroke();
-    ctx.lineWidth = Math.max(1.5, r * 0.05);
+    for (let i = 1; i <= 4; i++) {
+      const tx = -0.5 * r + (1.0 * r) * (i / 5);
+      ctx.beginPath();
+      ctx.moveTo(tx, -0.2 * r);
+      ctx.lineTo(tx * 0.8, 1.0 * r);
+      ctx.stroke();
+    }
+    ctx.fillStyle = pal.dark;
+    ctx.fillRect(-0.25 * r, -0.7 * r, 0.5 * r, 0.08 * r);
     ctx.fillStyle = pal.eye;
-    ctx.fillRect(-0.25 * r + ox, -0.7 * r + oy, 0.15 * r, 0.04 * r);
-    ctx.fillRect(0.1 * r + ox, -0.7 * r + oy, 0.15 * r, 0.04 * r);
+    ctx.fillRect(-0.25 * r + ox, -0.6 * r + oy, 0.15 * r, 0.04 * r);
+    ctx.fillRect(0.1 * r + ox, -0.6 * r + oy, 0.15 * r, 0.04 * r);
     ctx.strokeStyle = pal.dark;
-    ctx.lineWidth = 0.05 * r;
+    ctx.lineWidth = 0.03 * r;
     ctx.beginPath();
-    ctx.moveTo(-0.6 * r, 0); ctx.lineTo(-0.4 * r, 0.2 * r); ctx.lineTo(-0.7 * r, 0.3 * r);
-    ctx.moveTo(0.5 * r, 0.5 * r); ctx.lineTo(0.2 * r, 0.6 * r); ctx.lineTo(0.4 * r, 0.8 * r);
-    ctx.moveTo(0.1 * r, 0.1 * r); ctx.lineTo(-0.1 * r, 0.3 * r); ctx.lineTo(0.2 * r, 0.4 * r);
+    ctx.moveTo(-0.15 * r, -0.5 * r);
+    ctx.lineTo(0.15 * r, -0.5 * r);
+    ctx.stroke();
+    ctx.lineWidth = 0.04 * r;
+    ctx.beginPath();
+    ctx.moveTo(0.2 * r, -1.4 * r);
+    ctx.lineTo(0.1 * r, -1.2 * r);
+    ctx.lineTo(0.15 * r, -1.0 * r);
+    ctx.lineTo(0, -0.8 * r);
+    ctx.lineTo(-0.1 * r, -0.8 * r);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-0.6 * r, -0.3 * r);
+    ctx.lineTo(-0.4 * r, -0.1 * r);
+    ctx.lineTo(-0.5 * r, 0.2 * r);
+    ctx.lineTo(-0.3 * r, 0.4 * r);
+    ctx.lineTo(-0.2 * r, 0.3 * r);
+    ctx.lineTo(0.1 * r, 0.5 * r);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0.64 * r, 0.3 * r);
+    ctx.lineTo(0.4 * r, 0.4 * r);
+    ctx.lineTo(0.45 * r, 0.6 * r);
+    ctx.lineTo(0.2 * r, 0.8 * r);
+    ctx.lineTo(0.2 * r, 0.9 * r);
     ctx.stroke();
     ctx.lineWidth = Math.max(1.5, r * 0.05);
   }
