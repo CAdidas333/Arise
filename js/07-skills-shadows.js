@@ -102,7 +102,7 @@ function useSkill(sd) {
     case 'legion': {
       legionTimer = LEGION_DURATION + 3*tr('march');
       player.cds.legion = (sd.cooldown - 3*tr('march')) * cdMult();
-      playSfx('legion'); toast('ARISE — SHADOW LEGION UNLEASHED', 'purple', 3000, true);
+      playSfx('legion'); toast('ARISE — SHADOW LEGION UNLEASHED', 'purple', 3000, true); say('legion', true, 0.4);
       flash('#8844ff', 0.5); shake(15); arisePillar(player.x, player.y, true);
       player.shadows.forEach(s => { if (s.active) arisePillar(s.x, s.y); });
       break;
@@ -168,7 +168,7 @@ function tryArise() {
   remnants.splice(remnants.indexOf(r), 1);
   arisePillar(r.x, r.y); playSfx('arise'); flash('#8844ff', 0.2); shake(6);
   addShadow({ name:r.name, kind:r.kind, damage:Math.max(3, Math.floor(r.damage*(r.elite ? 0.35 : 0.25))), level:player.level, color:r.color, size:Math.min(r.size*0.6, 18), grade:r.elite ? 'Elite' : 'Soldier', x:r.x, y:r.y });
-  toast(`ARISE — ${r.name.toUpperCase()} JOINS YOUR ARMY`, 'purple', 2000);
+  toast(`ARISE — ${r.name.toUpperCase()} JOINS YOUR ARMY`, 'purple', 2000); say('army_grows');
 }
 
 function updateShadows(dt) {

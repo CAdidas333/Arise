@@ -40,7 +40,7 @@ function buyWeapon() {
   const w = WEAPONS[player.weapon+1];
   if (!w || player.gold < w.cost) { playSfx('deny'); return; }
   player.gold -= w.cost; player.weapon++;
-  playSfx('buy'); flash(w.color, 0.25); toast(`ACQUIRED: ${w.name.toUpperCase()}`, 'gold', 2500); saveGame();
+  playSfx('buy'); flash(w.color, 0.25); toast(`ACQUIRED: ${w.name.toUpperCase()}`, 'gold', 2500); say('new_weapon'); saveGame();
 }
 function buyPotion() {
   const c = potionCost();
@@ -116,7 +116,7 @@ function enterHub() { gameState = 'HUB'; show('system-menu'); applySettings(); s
 function beginFromTitle() {
   if (gameState !== 'TITLE') return;
   initAudio(); hide('title-screen');
-  if (loadGame()) { enterHub(); saveGame(); } // saving here locks in a V16 → V17 upgrade
+  if (loadGame()) { enterHub(); saveGame(); say('welcome_back'); } // saving here locks in a V16 → V17 upgrade
   else { show('name-screen', 'flex'); $('name-input').focus(); gameState = 'CREATE'; }
 }
 function confirmName() {
@@ -124,7 +124,7 @@ function confirmName() {
   if (!name || gameState !== 'CREATE') return;
   player = createPlayer(name); questDate = today();
   hide('name-screen'); enterHub(); saveGame();
-  toast('[SYSTEM] YOU HAVE BEEN CHOSEN AS A PLAYER.', 'blue', 3500);
+  toast('[SYSTEM] YOU HAVE BEEN CHOSEN AS A PLAYER.', 'blue', 3500); say('chosen');
 }
 
 function onKey(key, e) {
@@ -203,14 +203,14 @@ setInterval(() => {
     if (questProgress[q.stat] >= q.target && !q.completed) {
       q.completed = true;
       const xp = q.reward*player.level;
-      playerGainXp(xp); toast(`QUEST COMPLETE: ${q.name} (+${fmtNum(xp)} XP)`, 'green', 3000);
+      playerGainXp(xp); toast(`QUEST COMPLETE: ${q.name} (+${fmtNum(xp)} XP)`, 'green', 3000); say('quest_complete');
     }
     if (!q.completed) allDailyDone = false;
   });
   // Unlock bonus quests when all dailies are done
   if (allDailyDone && !bonusQuestsUnlocked) {
     bonusQuestsUnlocked = true;
-    toast('ALL DAILY QUESTS COMPLETE', 'green', 2500, true);
+    toast('ALL DAILY QUESTS COMPLETE', 'green', 2500, true); say('quests_all', true);
     toast('BONUS QUESTS UNLOCKED — STAT POINT REWARDS', 'purple', 3500, true);
     confetti(['#ffcc00','#ff4444','#44ff66','#4488ff','#ff44ff','#00d4ff'], 60); flash('#44ff66', 0.3); saveGame();
   }
