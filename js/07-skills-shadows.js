@@ -146,6 +146,11 @@ function deployShadows() {
     s.active = on;
   });
 }
+function shadowKindFor(name) {
+  for (const g of GATE_DEFS) if (g.boss && g.boss.name === name) return 'boss';
+  for (const g of GATE_DEFS) for (const e of g.enemies || []) if (e.name === name) return e.kind;
+  return 'melee';
+}
 function addShadow(s) {
   const ns = { ...s, active:false, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 } };
   player.shadows.push(ns);
@@ -162,7 +167,7 @@ function tryArise() {
   const r = nearRemnant(); if (!r) return;
   remnants.splice(remnants.indexOf(r), 1);
   arisePillar(r.x, r.y); playSfx('arise'); flash('#8844ff', 0.2); shake(6);
-  addShadow({ name:r.name, damage:Math.max(3, Math.floor(r.damage*(r.elite ? 0.35 : 0.25))), level:player.level, color:r.color, size:Math.min(r.size*0.6, 18), grade:r.elite ? 'Elite' : 'Soldier', x:r.x, y:r.y });
+  addShadow({ name:r.name, kind:r.kind, damage:Math.max(3, Math.floor(r.damage*(r.elite ? 0.35 : 0.25))), level:player.level, color:r.color, size:Math.min(r.size*0.6, 18), grade:r.elite ? 'Elite' : 'Soldier', x:r.x, y:r.y });
   toast(`ARISE — ${r.name.toUpperCase()} JOINS YOUR ARMY`, 'purple', 2000);
 }
 

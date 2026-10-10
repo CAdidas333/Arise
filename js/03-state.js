@@ -50,7 +50,7 @@ function saveGame() {
     v:VERSION, spv:2, name:player.name, level:player.level, xp:player.xp, rank:player.rank,
     stats:{...player.stats}, statPoints:player.statPoints, skillPoints:player.skillPoints, tree:{...player.tree},
     weapon:player.weapon, gold:player.gold, potions:player.potions, cleared:{...player.cleared},
-    shadows:player.shadows.map(s => ({ name:s.name, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })),
+    shadows:player.shadows.map(s => ({ name:s.name, kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })),
     questProgress:{...questProgress}, questDate, highScores:{...highScores},
     questsCompleted:DAILY_QUESTS.filter(q => q.completed).map(q => q.id),
     bonusCompleted:BONUS_QUESTS.filter(q => q.completed).map(q => q.id), bonusQuestsUnlocked,
@@ -72,7 +72,9 @@ function loadGame() {
   player.statPoints = d.statPoints|0; player.gold = Math.floor(d.gold || 0);
   player.xpToNext = xpNeed(player.level);
   const bossNames = GATE_DEFS.map(g => g.boss.name);
-  player.shadows = (d.shadows || []).map(s => ({ name:String(s.name).slice(0, 40), damage:+s.damage || 5, level:s.level|0 || 1, color:okColor(s.color), size:+s.size || 14,
+  player.shadows = (d.shadows || []).map(s => ({ name:String(s.name).slice(0, 40),
+    kind:['melee','ranged','charger','bomber','brute','caster','boss'].includes(s.kind) ? s.kind : shadowKindFor(s.name),
+    damage:+s.damage || 5, level:s.level|0 || 1, color:okColor(s.color), size:+s.size || 14,
     grade:GRADE_COLOR[s.grade] ? s.grade : (bossNames.includes(s.name) ? 'Marshal' : 'Soldier'), x:0, y:0, active:false, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 } }));
   if (d.v >= 17) {
     player.xp = d.xp|0; player.skillPoints = d.skillPoints|0;

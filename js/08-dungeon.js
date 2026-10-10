@@ -132,7 +132,7 @@ function doExtract() {
   extractTries--; arisePillar(p.x, p.y, true); shake(10);
   if (Math.random() < extractChance()) {
     playSfx('extract'); flash('#8844ff', 0.6);
-    addShadow({ name:p.def.name, damage:Math.floor(p.def.damage*0.4), level:player.level, color:p.def.color, size:Math.min(p.def.size*0.4, 18), grade:'Marshal', x:p.x, y:p.y });
+    addShadow({ name:p.def.name, kind:'boss', damage:Math.floor(p.def.damage*0.4), level:player.level, color:p.def.color, size:Math.min(p.def.size*0.4, 18), grade:'Marshal', x:p.x, y:p.y });
     toast(`SHADOW EXTRACTED: ${p.def.name}`, 'purple', 3000);
     // second beat, timed to the second hit in the sound
     after(1.1, () => { arisePillar(p.x, p.y, true); ring(p.x, p.y, '#ffffff', 20, 420, 0.7, 10); flash('#bb66ff', 0.55); shake(18); }, true);
