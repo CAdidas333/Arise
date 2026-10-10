@@ -1,7 +1,7 @@
 """ElevenLabs voice lines for the System: one mp3 per line of tools/system_lines.tsv.
 
   el_voice.py --list                         list the voices on the account (name, id, labels)
-  el_voice.py VOICE_ID OUT_DIR [--only=id,id] [--suffix=_a] [--speed=0.96] [--lines=other.tsv] [--model=eleven_multilingual_v2]
+  el_voice.py VOICE_ID OUT_DIR [--only=id,id] [--suffix=_a] [--speed=0.96] [--stability=0.62] [--style=0.08] [--lines=other.tsv] [--model=eleven_multilingual_v2]
 
 Lines file: one line per clip, `id<TAB>text`; lines starting with # are ignored.
 Existing files are skipped, so a re-run only fills gaps. New takes get a new --suffix, never an overwrite.
@@ -39,8 +39,9 @@ opt = {a[2:].split("=")[0]: a.split("=", 1)[1] for a in sys.argv[1:] if a.starts
 voice, out_dir = args[0], Path(args[1])
 only = set(opt["only"].split(",")) if "only" in opt else None
 suffix, model = opt.get("suffix", ""), opt.get("model", "eleven_multilingual_v2")
-if "speed" in opt:
-    SETTINGS["speed"] = float(opt["speed"])
+for k in ("speed", "stability", "style"):
+    if k in opt:
+        SETTINGS[k] = float(opt[k])
 out_dir.mkdir(parents=True, exist_ok=True)
 
 lines = [l.split("\t", 1) for l in Path(opt.get("lines", Path(__file__).parent / "system_lines.tsv")).read_text().splitlines()
