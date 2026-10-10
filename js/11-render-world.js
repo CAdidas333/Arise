@@ -259,3 +259,39 @@ function drawPickups() {
   }
   ctx.globalAlpha = 1;
 }
+
+// The old stick-figure hunter, kept so the player can switch back to it (Controls tab, "Hunter look")
+function drawHunterClassic(x, y, o) {
+  const s = o.scale || 1, t = o.t, ga = ctx.globalAlpha, S = Math.sin, C = Math.cos;
+  let lA = 0.2, rA = -0.3, lL = 0, rL = 0, lean = 0, bob = 0, sw = -0.5;
+  if (o.anim === 'idle') { bob = S(t*2)*1.5*s; lA = S(t*1.5)*0.08 + 0.2; rA = -S(t*1.5)*0.08 - 0.3; sw = -0.5 + S(t*1.5)*0.05; }
+  else if (o.anim === 'run') { const sp = 13; lA = S(t*sp)*0.7; rA = -S(t*sp)*0.6; lL = -S(t*sp)*0.65; rL = S(t*sp)*0.65; lean = 0.14; sw = rA - 0.3; bob = -Math.abs(S(t*sp))*3*s; }
+  else if (o.anim === 'attack') { const k = o.atkDir < 0 ? 1-o.atkP : o.atkP; rA = -1.5 + k*3.0; sw = rA + 0.4; lA = 0.5 - k*0.4; lean = 0.18*(1-o.atkP); lL = -0.35; rL = 0.4; }
+  else if (o.anim === 'dash') { lean = 0.45; lA = -0.9; rA = 0.7; lL = -0.7; rL = 0.35; sw = -1.1; }
+  ctx.save();
+  ctx.translate(x, y + bob); ctx.scale(o.face < 0 ? -1 : 1, 1); ctx.rotate(lean);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const headR = 7*s, headY = -29*s, shY = -19*s, hipY = -3*s, arm = 13*s, leg = 16*s;
+  if (o.cape) {
+    const fast = o.anim === 'run' || o.anim === 'dash', wv = S(t*(fast ? 14 : 3))*3*s, ln = (fast ? 21 : 12)*s;
+    ctx.fillStyle = o.cape; ctx.beginPath();
+    ctx.moveTo(-1*s, shY - 1*s); ctx.quadraticCurveTo(-ln*0.9, shY + 6*s + wv, -ln, hipY + 8*s + wv);
+    ctx.lineTo(-ln*0.35, hipY + 10*s - wv); ctx.lineTo(2*s, hipY); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = o.color; ctx.lineWidth = s; ctx.globalAlpha = ga*0.35; ctx.stroke(); ctx.globalAlpha = ga;
+  }
+  ctx.strokeStyle = o.color; ctx.lineWidth = 2.6*s;
+  line(0, hipY, S(lL)*leg, hipY + C(lL)*leg); line(0, hipY, S(rL)*leg, hipY + C(rL)*leg);
+  ctx.fillStyle = o.body || '#0b1020';
+  ctx.beginPath(); ctx.moveTo(-4.5*s, shY); ctx.lineTo(4.5*s, shY); ctx.lineTo(3*s, hipY + 2*s); ctx.lineTo(-3*s, hipY + 2*s); ctx.closePath(); ctx.fill(); ctx.stroke();
+  line(0, shY, S(lA)*arm, shY + C(lA)*arm);
+  ctx.beginPath(); ctx.arc(0, headY, headR, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = o.eye || o.color; ctx.fillRect(2*s, headY - 2*s, 3.4*s, 2*s);
+  const rax = S(rA)*arm, ray = shY + C(rA)*arm;
+  line(0, shY, rax, ray);
+  if (o.blade) {
+    const bl = 19*s, bx = rax + S(sw)*bl, by = ray - C(sw)*bl;
+    ctx.strokeStyle = o.blade; ctx.lineWidth = 7*s; ctx.globalAlpha = ga*0.35; line(rax, ray, bx, by);
+    ctx.globalAlpha = ga; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2*s; line(rax, ray, bx, by);
+  }
+  ctx.restore();
+}
