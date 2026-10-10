@@ -17,6 +17,60 @@ const dirLight = new THREE.DirectionalLight(0xffffff, 0.8); dirLight.position.se
 const hunterLight = new THREE.PointLight((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff, 1.8, 650); scene.add(hunterLight);
 const camera3D = new THREE.PerspectiveCamera(50, 1, 10, 6000); scene.add(camera3D);
 
+// Orbit camera. The defaults reproduce the old fixed view exactly: 500 units away, 36.87 degrees up, looking along -z.
+const view3D = window.view3D = { yaw: 0, pitch: Math.atan2(300, 400), dist: 500, drag: null };
+const VIEW_DEFAULT = { yaw: 0, pitch: Math.atan2(300, 400), dist: 500 };
+
+function canControlCamera() {
+  return typeof gameState !== 'undefined' && gameState === 'DUNGEON' && (typeof paused === 'undefined' || !paused);
+}
+
+window.addEventListener('keydown', e => {
+  if (e.key && e.key.toLowerCase() === 'v' && canControlCamera()) {
+    view3D.yaw = VIEW_DEFAULT.yaw;
+    view3D.pitch = VIEW_DEFAULT.pitch;
+    view3D.dist = VIEW_DEFAULT.dist;
+  }
+});
+
+window.addEventListener('mousedown', e => {
+  if (e.button === 2 && canControlCamera()) {
+    view3D.drag = { x: e.clientX, y: e.clientY, moved: 0 };
+  }
+});
+
+window.addEventListener('mousemove', e => {
+  if (view3D.drag) {
+    if (!canControlCamera()) { view3D.drag = null; return; }
+    const dx = e.clientX - view3D.drag.x, dy = e.clientY - view3D.drag.y;
+    view3D.drag.x = e.clientX;
+    view3D.drag.y = e.clientY;
+    view3D.drag.moved += Math.hypot(dx, dy);
+    view3D.yaw += dx * 0.006;
+    view3D.pitch = Math.max(0.35, Math.min(1.25, view3D.pitch - dy * 0.004));
+  }
+});
+
+window.addEventListener('mouseup', e => {
+  if (e.button === 2 && view3D.drag) {
+    const wasDodge = view3D.drag.moved < 6;
+    view3D.drag = null;
+    if (wasDodge && canControlCamera() && typeof dodge === 'function') dodge();
+  }
+});
+
+window.addEventListener('wheel', e => {
+  if (e.target === renderer.domElement || e.target === _gameCanvas) e.preventDefault();
+  if (canControlCamera()) {
+    view3D.dist *= Math.exp(e.deltaY * 0.0012);
+    view3D.dist = Math.max(260, Math.min(900, view3D.dist));
+  }
+}, { passive: false });
+
+const hintEl = document.querySelector('.hud-hint');
+if (hintEl) hintEl.innerHTML += ' &nbsp;·&nbsp; Z / C TURN CAMERA &nbsp;·&nbsp; V RESET';
+
+
 // Floor and walls
 let currentGate = null, floorTexture = null, floorMesh = null;
 const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x111118, roughness: 0.85 });
@@ -145,9 +199,13 @@ window.mouseWorld3D = function() {
   return { x: (typeof player !== 'undefined' && player) ? player.x : 0, y: (typeof player !== 'undefined' && player) ? player.y : 0 };
 };
 
-let lastW = 0, lastH = 0;
+let lastW = 0, lastH = 0, lastDrawTime = 0;
 
 function draw() {
+  const now = performance.now();
+  const dt = lastDrawTime ? Math.min((now - lastDrawTime) / 1000, 0.05) : 0;
+  lastDrawTime = now;
+
   const curW = typeof W !== 'undefined' ? W : window.innerWidth;
   const curH = typeof H !== 'undefined' ? H : window.innerHeight;
   const curDPR = typeof DPR !== 'undefined' ? DPR : (window.devicePixelRatio || 1);
@@ -158,6 +216,7 @@ function draw() {
   }
 
   if (typeof gameState === 'undefined' || gameState !== 'DUNGEON' || typeof dungeon === 'undefined' || !dungeon) {
+    view3D.yaw = 0; viewYaw = 0;
     hunterGroup.visible = false;
     const emptySet = new Set();
     [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, telegraphMeshes].forEach(m => pruneMap(m, emptySet));
@@ -165,13 +224,20 @@ function draw() {
     return;
   }
 
+  if ((typeof paused === 'undefined' || !paused) && typeof keys !== 'undefined') {
+    if (keys['z']) view3D.yaw -= 1.8 * dt;
+    if (keys['c']) view3D.yaw += 1.8 * dt;
+  }
+
   // Camera
   const camX = (typeof camera !== 'undefined' && camera) ? camera.x : 0;
   const camY = (typeof camera !== 'undefined' && camera) ? camera.y : 0;
   const sh = (typeof camera !== 'undefined' && camera && camera.shake) ? camera.shake : 0;
   const sx = sh ? (Math.random() * 2 - 1) * sh : 0, sy = sh ? (Math.random() * 2 - 1) * sh : 0;
-  camera3D.position.set(camX + sx, 20 + 300 + sy, camY + 400);
+  const cp = Math.cos(view3D.pitch), hd = view3D.dist * cp;
+  camera3D.position.set(camX + Math.sin(view3D.yaw)*hd + sx, 20 + Math.sin(view3D.pitch)*view3D.dist + sy, camY + Math.cos(view3D.yaw)*hd);
   camera3D.lookAt(camX, 20, camY);
+  viewYaw = view3D.yaw;
 
   // Floor & walls rebuild if arena dimensions change
   const curArenaW = typeof arenaW !== 'undefined' ? arenaW : 1400;
