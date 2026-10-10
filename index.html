@@ -353,6 +353,9 @@
   #title-screen { background: radial-gradient(ellipse at center, rgba(6,6,12,0.2) 0%, rgba(6,6,12,0.9) 78%); text-align:center; }
   #name-screen { background: rgba(6,6,12,0.84); }
   .title-ver { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:6px; color:rgba(187,136,255,0.75); margin:-24px 0 34px; text-shadow:0 0 12px rgba(136,68,255,0.6); }
+  .view-switch { display:inline-block; margin-top:22px; padding:8px 18px; font-family:'Orbitron',monospace; font-size:10px; letter-spacing:4px; color:rgba(187,136,255,0.85); border:1px solid rgba(136,68,255,0.4); text-decoration:none; pointer-events:auto; }
+  .view-switch:hover { background:rgba(136,68,255,0.18); box-shadow:0 0 20px rgba(136,68,255,0.3); }
+  .view-switch-btn { display:inline-block; text-decoration:none; border-color:rgba(136,68,255,0.4); color:#bb88ff; }
   .hud-row { display:flex; gap:14px; align-items:center; margin-top:6px; font-family:'Orbitron',monospace; font-size:11px; letter-spacing:2px; }
   .hud-gold { color:#ffd866; } .hud-pot { color:#ff7788; }
   .hud-bar.ult { height:8px; border-color:rgba(136,68,255,0.3); }
@@ -470,6 +473,7 @@
   <div class="prompt" id="title-prompt">TAP OR PRESS ENTER TO BEGIN</div>
   <div class="title-continue" id="title-continue" style="display:none">SAVED HUNTER DETECTED — PRESS ENTER TO CONTINUE</div>
   <div class="title-high-scores" id="title-hs"></div>
+  <a class="view-switch" href="3d/" onclick="event.stopPropagation()">SWITCH TO 3D VIEW</a>
 </div>
 
 <div id="name-screen">
@@ -521,6 +525,7 @@
   <button class="continue-btn" id="pause-resume">RESUME</button>
   <button class="continue-btn" id="pause-fullscreen" style="margin-top:12px">FULLSCREEN</button>
   <button class="continue-btn" id="pause-aim" style="margin-top:12px">AIM: AUTO</button>
+  <a class="continue-btn view-switch-btn" href="3d/" style="margin-top:12px">SWITCH TO 3D VIEW</a>
   <button class="continue-btn" id="pause-quit" style="margin-top:12px;border-color:rgba(255,68,68,0.3);color:#ff6644">QUIT TO HUB</button>
 </div>
 

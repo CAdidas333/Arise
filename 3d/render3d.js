@@ -48,7 +48,7 @@ function rebuildFloorAndWalls(w, h, line) {
 function buildFloor(g) {
   currentGate = g;
   floorMaterial.map = null; floorMaterial.color.set(0x111118); floorMaterial.needsUpdate = true;
-  const url = '../assets/floors/' + (g.floor || g.id) + '.webp';
+  const url = 'assets/floors/' + (g.floor || g.id) + '.webp';
   new THREE.TextureLoader().load(url, (tex) => {
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     floorTexture = tex;
