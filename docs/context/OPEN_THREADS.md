@@ -39,14 +39,12 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 |---|---|---|---|---|---|
 | F1 | Shared leaderboard and co-op play | OPEN | multi-session | Chris's word to start | Chris parked it ("maybe we do that later") when he picked the nine-step V18 plan |
 | F3 | ElevenLabs music for the game | BLOCKED | session | Chris saying yes to music (he has now heard the voice and effects in the game and shipped them, 2026-10-09, but has not been asked about music) | The key broker blocks the music script until he says so |
-| F4 | 3D view draws only bodies, shots and warning areas: no hit sparks, damage numbers, rings, afterimages, light pillars or hub backdrop | OPEN | session | Nothing | Registered 2026-10-09 when the 3D view shipped as a second lane; the free camera comes first |
 | F5 | 3D camera on phones: turning and zooming work with keys, right-drag and the wheel only; there is no touch control | OPEN | min | Nothing | Left out of the free-camera job (2026-10-10) to keep it small; desktop first |
 
 ### UX
 
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
-| U2 | Boss bodies are a spiky many-pointed shape (`enemyPath`, case `boss`); when boss looks are made, give each a body that cannot be read as a star symbol | OPEN | session | Nothing | Noticed 2026-10-10 during the floor-mark check; it is a spiky blob today, not a star symbol, and boss looks (V18 step 4) replace it |
 
 ### Engine
 
@@ -66,6 +64,7 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | G2 | Local preview drops connections: the simple Python server resets some requests when many files load at once (seen with the 13 scripts, and with the 43 sound files on 2026-10-09; again on 2026-10-10, when a dropped script looked like a broken game until the page was reloaded) | OPEN | min | Nothing | Local preview only; the game falls back to audio elements and the public site has not shown it. A threaded local server would fix it |
 | G3 | ElevenLabs key cannot list voices: it lacks the "voices read" permission, so `el_voice.py --list` fails | OPEN | min | Chris adding that permission to the key on the ElevenLabs site (optional) | Worked around: voice ids are read from the ElevenLabs connector instead |
 | G4 | `docs/previews/` (review frames and audio demos) is served on the public site | OPEN | min | Nothing | Harmless; left in place at the Session 4 wrap to keep the links in the docs working |
+| F6 | 3D view: bosses, enemies and the hunter are still plain solids; afterimages, light pillars and the hub backdrop are not drawn | OPEN | multi-session | Nothing | The 2D bodies are canvas drawings and do not carry over; real 3D figures are the next 3D job |
 | G5 | 3D view shows a plain dark floor for the first seconds of a gate, until the painted floor image has loaded | OPEN | min | Nothing | Seen in the 2026-10-10 camera frames; it was there before the camera job |
 
 ### Docs
@@ -80,6 +79,8 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 
 | # | Title | Shipped | Notes |
 |---|---|---|---|
+| F4 | 3D view fight effects: damage numbers, slash crescents, rings, lightning, sparks and the screen flash | ✅ DONE 2026-10-10 | Drawn on a transparent overlay by `drawFx3D`. Still not drawn in 3D: afterimages, light pillars, the hub backdrop |
+| U2 | A body for each boss that cannot be read as a star symbol | ✅ DONE 2026-10-10 | `drawBoss`; the spiky shape is gone. The statue's first pass had face lines that read as a cross and was sent back |
 | F2 | 3D lane: a camera the player can turn (Z and C keys, right-drag, wheel to zoom, V resets), with movement relative to the camera | ✅ DONE 2026-10-10 | Live at `/3d/`. Touch control is thread F5 |
 | U1 | Hunter body touch-ups (boots, far blade while running) | ✅ DONE 2026-10-10 | Folded into hunter pass 3: real boots with a toe and heel, far blade steady in a run |
 | — | The first-pass 3D experiment was reviewed and shown to Chris (the old blocker on F2) | ✅ DONE 2026-10-09 | He chose to keep both lanes; the 3D view is live at `/3d/` |

@@ -1,6 +1,6 @@
 # Arise — Active Projects
 
-## Current Phase: Phase 3 — V17 live; V18 under way (steps 1, 2 and 3 live, the hunter body from step 4 live; a 3D lane runs beside the 2D game)
+## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 to 4 live; a 3D lane with a free camera and fight effects runs beside the 2D game)
 **Priority**: MEDIUM (fun/showcase project)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
@@ -49,7 +49,7 @@
 - [x] Step 1 — Painted world: a painted floor per gate and a backdrop for the title and hub. **Live** (shipped to main 2026-10-09)
 - [x] Step 2 — The System speaks: 35 voice lines in the River voice and 8 sound effects, all chosen by Chris by ear, play in the game; the extraction line is "Shadow extraction.", a 2-second wait with a charge effect, then "Successful." or "Failed.". **Live** (shipped to main 2026-10-09 on Chris's word, commit 18b896a; he will say if anything needs changing). Recipe in `assets/CREDITS.md`. ElevenLabs music is still blocked: Chris has now heard the voice and effects but has not said yes to music
 - [x] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows fire a ring of shots on a timer. **Live** (shipped to main 2026-10-09, commit f465a46)
-- [ ] Step 4 — A hunter with a real body and a look for each boss. **Hunter body live**, pass 3 shipped 2026-10-10: closer to the picture Chris picked (smaller head, open vest with the glowing zip and a high collar, baggy trousers tucked into boots, wrapped forearms, steel short swords, almost no outline glow, drawn at 1.35 size). The old stick figure is one switch away: System menu, Controls tab, "Hunter look" (saved; `settings.hunter`, `drawHunterClassic`). **Boss looks not started**
+- [x] Step 4 — A hunter with a real body and a look for each boss. **Live.** Hunter: pass 3 (2026-10-10), closer to the picture Chris picked, drawn at 1.35 size; the old stick figure is one switch away (System menu, Controls tab, "Hunter look"; `settings.hunter`, `drawHunterClassic`). Bosses (2026-10-10): each of the six has its own body drawn by `drawBoss` in `js/11-render-world.js` (spider, hulking orc, cloaked knight with a greatsword, burning armoured king, dragon with spread wings, cracked stone colossus); boss shadow soldiers use the same bodies in shadow colours
 - [ ] Step 5 — Real dungeons: generated rooms and corridors; the arena stays for boss fights and endless mode
 - [ ] Step 6 — Loot and gear
 - [ ] Step 7 — Story thread: scripted opening, chapter card per gate
@@ -59,13 +59,13 @@
 - Done alongside: script split into `js/` (13 files, behaviour unchanged) so workers can take one small file per job
 
 ### Side item
-- [ ] 3D lane (Chris, 2026-10-09: "develop both lanes simultaneously", with a button to flip between 2D and 3D): the same game rules in a third-person 3D view at `/3d/`, **live** with a switch link on both pages; the save is shared. `3d/index.html` is generated from `index.html` by `tools/sync3d.py` (run by `tools/stamp.sh`; never edit it by hand). **Free camera live since 2026-10-10**: Z and C turn it, V resets, right-drag orbits, the wheel zooms, and movement is relative to the camera (`view3D` in `3d/render3d.js`, shared `viewYaw`). State: simple shapes, no hub backdrop. Next: (1) hit effects and damage numbers, which the 3D view does not draw yet (thread F4); (2) the hunter and enemies as real 3D figures; (3) touch control for the camera (thread F5)
+- [ ] 3D lane (Chris, 2026-10-09: "develop both lanes simultaneously", with a button to flip between 2D and 3D): the same game rules in a third-person 3D view at `/3d/`, **live** with a switch link on both pages; the save is shared. `3d/index.html` is generated from `index.html` by `tools/sync3d.py` (run by `tools/stamp.sh`; never edit it by hand). **Free camera live since 2026-10-10**: Z and C turn it, V resets, right-drag orbits, the wheel zooms, and movement is relative to the camera (`view3D` in `3d/render3d.js`, shared `viewYaw`). **Fight effects live since 2026-10-10**: damage numbers, slash crescents, rings, lightning, sparks and the screen flash are drawn on a transparent overlay (`drawFx3D`), and left-click attack now works there. State: simple shapes, no hub backdrop. Next: (1) the hunter and enemies as real 3D figures (bosses are still a plain solid in 3D); (2) touch control for the camera (thread F5)
 
 ### Next Up (ranked)
-1. 3D lane: draw what a fight needs to be readable (hit sparks, damage numbers, rings; open thread F4)
-2. 2D lane: a look for each boss (rest of V18 step 4; see open thread U2)
-3. V18 step 5: generated dungeons
-4. ElevenLabs music: Chris's condition (hear the voice and effects first) is met; write `tools/el_music.py` and file one card with Houston for the key rule
+1. V18 step 5: generated dungeons (rooms and corridors; the arena stays for boss fights and endless mode). Plan it first as several small worker jobs
+2. ElevenLabs music: write `tools/el_music.py` and file one card with Houston for the key rule
+3. 3D lane: real 3D figures for the hunter, enemies and bosses; touch control for the camera (F5)
+4. V18 step 6: loot and gear
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`
 
 ### Backlog / Future Vision
@@ -89,4 +89,4 @@ V17 "Monarch Update" was built, merged and deployed. Chris's play-testing produc
 V18 steps 3 and 2 went live: shadow soldiers now fight the way their enemies did, and the System speaks (River voice, 35 clips and 8 sound effects, chosen and directed by Chris by ear). The first half of step 4 is live too: the hunter has a real jointed body in the look Chris picked (candidate C); boss looks are not started. The 3D view is now live at `/3d/` beside the 2D game with a switch link on both pages, generated from `index.html` by `tools/sync3d.py`. `tools/stamp.sh` now stamps to the second. Chris gave free rein on Arise (decision card D-0085) and asked for both lanes side by side. Not done: ElevenLabs music (needs Chris's yes), a real-phone test, boss looks, a free camera for 3D, and the printable status report (skipped to save weekly Claude usage).
 
 ## Session 5 Summary — 2026-10-10 (overnight)
-Houston's asks were done and shipped: the mark in the middle of each gate floor is now plain rings (it could be read as a magic circle before); the old stick-figure hunter is one switch away in the Controls tab; hunter pass 3 brings the body closer to the picture Chris picked; the public page was checked by captured frame. The 3D view got a camera the player can turn, with movement relative to the camera. One fault reached the public page for about nine minutes (dodging threw an error after the hunter switch) and was fixed. Not done: boss looks, 3D hit effects, generated dungeons, music, a real-phone test, the printable status report.
+Houston's asks were done and shipped: the mark in the middle of each gate floor is now plain rings (it could be read as a magic circle before); the old stick-figure hunter is one switch away in the Controls tab; hunter pass 3 brings the body closer to the picture Chris picked; the public page was checked by captured frame. The 3D view got a camera the player can turn, with movement relative to the camera. One fault reached the public page for about nine minutes (dodging threw an error after the hunter switch) and was fixed. Later the same night, on Chris's "keep going": the 3D view got its fight effects (damage numbers, slashes, rings, sparks) and each of the six bosses got its own body, which finishes V18 step 4. Not done: generated dungeons, music, a real-phone test, the printable status report.

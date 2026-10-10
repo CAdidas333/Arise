@@ -332,7 +332,7 @@ function drawBoss(name, r, t, fx, fy, pal) {
     ctx.fillStyle = pal.light;
     for (let side of [-1, 1]) {
       ctx.beginPath();
-      ctx.arc(side * 0.9 * r, -0.5 * r, 0.42 * r, Math.PI, 0, side < 0);
+      ctx.arc(side * 0.9 * r, -0.5 * r, 0.42 * r, Math.PI, 0); // a dome over the top of each shoulder
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = pal.dark;
@@ -343,9 +343,10 @@ function drawBoss(name, r, t, fx, fy, pal) {
     ctx.fillStyle = pal.light;
     for (let side of [-1, 1]) {
       ctx.beginPath();
-      ctx.moveTo(side * 0.15 * r, -0.25 * r);
-      ctx.quadraticCurveTo(side * 0.4 * r, -0.25 * r, side * 0.45 * r, -0.55 * r);
-      ctx.quadraticCurveTo(side * 0.25 * r, -0.25 * r, side * 0.05 * r, -0.25 * r);
+      // a tusk curving up from the corner of the mouth to beside the eye
+      ctx.moveTo(side * 0.08 * r, -0.24 * r);
+      ctx.quadraticCurveTo(side * 0.44 * r, -0.2 * r, side * 0.46 * r, -0.66 * r);
+      ctx.quadraticCurveTo(side * 0.3 * r, -0.38 * r, side * 0.08 * r, -0.36 * r);
       ctx.closePath();
       ctx.fill();
     }
@@ -615,14 +616,14 @@ function drawBoss(name, r, t, fx, fy, pal) {
     }
     ctx.fillStyle = pal.dark;
     ctx.fillRect(-0.25 * r, -0.7 * r, 0.5 * r, 0.08 * r);
-    ctx.fillStyle = pal.eye;
-    ctx.fillRect(-0.25 * r + ox, -0.6 * r + oy, 0.15 * r, 0.04 * r);
-    ctx.fillRect(0.1 * r + ox, -0.6 * r + oy, 0.15 * r, 0.04 * r);
+    ctx.fillStyle = pal.eye; // the eye slits barely move up or down, so they always stay between the brow and the mouth
+    ctx.fillRect(-0.25 * r + ox, -0.6 * r + oy * 0.25, 0.15 * r, 0.04 * r);
+    ctx.fillRect(0.1 * r + ox, -0.6 * r + oy * 0.25, 0.15 * r, 0.04 * r);
     ctx.strokeStyle = pal.dark;
     ctx.lineWidth = 0.03 * r;
     ctx.beginPath();
-    ctx.moveTo(-0.15 * r, -0.5 * r);
-    ctx.lineTo(0.15 * r, -0.5 * r);
+    ctx.moveTo(-0.15 * r, -0.44 * r);
+    ctx.lineTo(0.15 * r, -0.44 * r);
     ctx.stroke();
     ctx.lineWidth = 0.04 * r;
     ctx.beginPath();

@@ -3,7 +3,7 @@
 ## Session 5 — 2026-10-10 (overnight) — Plain-ring floor mark, the old hunter one switch away, hunter pass 3, and a 3D camera you can turn
 
 ### Focus
-Chris was asleep; Houston had the con and Arise had free rein. Do Houston's asks from the Session 4 handoff, then the 3D free camera. Claude wrote briefs, reviewed and tested; free workers built. Four worker runs: the old-hunter switch (one pass), hunter pass 3 (two passes), the 3D camera (one pass).
+Chris was asleep; Houston had the con and Arise had free rein. Do Houston's asks from the Session 4 handoff, then the 3D free camera. Claude wrote briefs, reviewed and tested; free workers built. Seven worker runs: the old-hunter switch (one pass), hunter pass 3 (two passes), the 3D camera (one pass), 3D fight effects (one pass), boss looks (two passes).
 
 ### What Changed
 - **The floor mark is plain rings.** The mark in the middle of every gate floor was nested rings with a turning polygon, spokes, a tick dial and four orbiting circles, and it could be read as a magic circle. `drawArena` (`js/11-render-world.js`) now draws four plain rings with a slow pulse and nothing else. Checked on all six gates, shipped, then confirmed on the public page by captured frame.
@@ -11,6 +11,9 @@ Chris was asleep; Houston had the con and Arise had free rein. Do Houston's asks
 - **Hunter pass 3.** Closer to the picture Chris picked: smaller head, an open vest with the glowing zip and a high collar, baggy trousers tucked into boots with a toe and heel, wrapped forearms, steel short swords with a guard and pommel, almost no outline glow, the far blade steady in a run, and drawn at 1.35 size (was 1.15). The first pass was sent back once for four small faults (heavy blade glow, eye outside the face, belt overhang, bright sole line).
 - **3D view: a camera you can turn.** Z and C turn it, V resets, right-drag orbits (a plain right click still dodges), the wheel zooms. "Up" on the keys or stick always means away from the camera: `updatePlayer` turns the input by the shared `viewYaw`. Measured in the browser: with the camera turned 1.2 radians, W and D moved the hunter exactly along the expected directions.
 - **A fault that reached the public page for about nine minutes.** After the hunter switch shipped, dodging in the 2D game threw an error, because the two hunter draw calls are in different functions and the brief said they were in one. Found by a later test that happened to dodge; fixed with `hunterLook()` and shipped (commit "Fix: dodge afterimages...").
+
+- **Later the same night, after Chris said "keep going": 3D fight effects.** The 3D view now draws damage numbers, slash crescents, rings, lightning, sparks and the screen flash by projecting the game's effect data onto a transparent canvas over the 3D picture (`drawFx3D` in `3d/render3d.js`). The game canvas is that overlay, so left-click attack works in 3D as well. One worker pass, accepted from frames at three camera angles.
+- **A body for each boss (finishes V18 step 4).** `drawBoss(name, r, t, fx, fy, pal)` in `js/11-render-world.js` draws six different bodies; the old spiky shape and the six orbiting dots are gone. Boss shadow soldiers use the same bodies in shadow colours. Two worker passes on the stronger Gemini model: the first pass's statue had face lines that read as a cross and cracks that read as carved symbols (sent back under the art rule), and its orc and burning king were shapeless. After the second pass the orchestrator fixed three small things by hand (an upside-down shoulder plate, invisible tusks, the statue's eyes sitting below its mouth).
 
 ### Decisions Made
 - The floor mark fails the art rule as "could be read as occult", so it went to the plainest thing that still marks the centre.
@@ -21,10 +24,10 @@ Chris was asleep; Houston had the con and Arise had free rein. Do Houston's asks
 Floor mark: captured frames of all six gates in the work copy and five on the public page. Hunter: pose sheets before and after, and a real fight in both looks. Dodge fix: a dodge with afterimages in both looks, no errors. 3D camera: default view unchanged, movement directions measured, keys, right-drag, right-click dodge, wheel and reset all exercised, no errors. Not tested: a real phone; the 3D camera by a human hand.
 
 ### What's Next (ranked)
-1. 3D lane: hit sparks, damage numbers and rings so a 3D fight is readable (open thread F4).
-2. 2D lane: a look for each boss (rest of V18 step 4; note open thread U2).
-3. V18 step 5: generated dungeons.
-4. ElevenLabs music: write `tools/el_music.py` and file one card with Houston for the key rule.
+1. V18 step 5: generated dungeons.
+2. ElevenLabs music: write `tools/el_music.py` and file one card with Houston for the key rule.
+3. 3D lane: real 3D figures (open thread F6); touch control for the camera (F5).
+4. V18 step 6: loot and gear.
 - Open items and deferred ideas are tracked in `docs/context/OPEN_THREADS.md`; the hand-off is `docs/context/NEXT_SESSION.md`.
 
 ---
