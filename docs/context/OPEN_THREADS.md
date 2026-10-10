@@ -40,6 +40,13 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | F1 | Shared leaderboard and co-op play | OPEN | multi-session | Chris's word to start | Chris parked it ("maybe we do that later") when he picked the nine-step V18 plan |
 | F2 | 3D lane: free mouse-look camera, movement relative to the camera | OPEN | session | Nothing (Chris said continue, 2026-10-09). Comes after the 2D/3D switch | Second job of the 3D lane |
 | F3 | ElevenLabs music for the game | BLOCKED | session | Chris saying yes to music (he has now heard the voice and effects in the game and shipped them, 2026-10-09, but has not been asked about music) | The key broker blocks the music script until he says so |
+| F4 | 3D view draws only bodies, shots and warning areas: no hit sparks, damage numbers, rings, afterimages, light pillars or hub backdrop | OPEN | session | Nothing | Registered 2026-10-09 when the 3D view shipped as a second lane; the free camera comes first |
+
+### UX
+
+| # | Title | Status | Effort | Blocker | Why deferred |
+|---|---|---|---|---|---|
+| U1 | Hunter body touch-ups: blobby boots, and the far blade sticks out at an odd angle while running | OPEN | min | Nothing | Shipped 2026-10-09 because it reads well at game size; these only show when enlarged |
 
 ### Engine
 
@@ -58,12 +65,13 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | G1 | Repeatable balance bot in `tools/`: the bot that plays each gate through the `#debug` hook exists only in the session transcript | OPEN | session | Nothing | Not saved when it was written; worth a worker job when balance work resumes |
 | G2 | Local preview drops connections: the simple Python server resets some requests when many files load at once (seen with the 13 scripts, and with the 43 sound files on 2026-10-09) | OPEN | min | Nothing | Local preview only; the game falls back to audio elements and the public site has not shown it. A threaded local server would fix it |
 | G3 | ElevenLabs key cannot list voices: it lacks the "voices read" permission, so `el_voice.py --list` fails | OPEN | min | Chris adding that permission to the key on the ElevenLabs site (optional) | Worked around: voice ids are read from the ElevenLabs connector instead |
+| G4 | `docs/previews/` (review frames and audio demos) is served on the public site | OPEN | min | Nothing | Harmless; left in place at the Session 4 wrap to keep the links in the docs working |
 
 ### Docs
 
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
-| C1 | Printable status report for the Session 3 wrap | OPEN | min | Houston saying resume | Skipped at the wrap to save usage while sessions are parked |
+| C1 | Printable status report (skipped at the Session 3 and Session 4 wraps) | OPEN | min | Weekly Claude usage having room | Skipped twice to save usage (76 percent on 2026-10-09 with two days to the reset) |
 
 ---
 
@@ -71,7 +79,7 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 
 | # | Title | Shipped | Notes |
 |---|---|---|---|
-| _none yet_ | | | |
+| — | The first-pass 3D experiment was reviewed and shown to Chris (the old blocker on F2) | ✅ DONE 2026-10-09 | He chose to keep both lanes; the 3D view is live at `/3d/` |
 
 ---
 
