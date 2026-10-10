@@ -6,7 +6,9 @@ _Updated: 2026-10-09 21:50 (Session 4, in progress)_
 - `tools/stamp.sh` now stamps to the second (two stamps in one minute used to collide and the browser kept old scripts).
 - The System voice is recorded: 35 clips in `assets/voice/` (River; recipe and settings in `assets/CREDITS.md`; the trial folder is gone). Sound effects: 8 with two takes each in `assets/sfx/` (prompts in `assets/sfx/prompts.tsv`); Chris is choosing takes from the demos in `docs/previews/`. Next: brief a worker to play them in the game (`js/02-audio.js` and the places that toast those moments), with "Shadow extraction." at the attempt, the charge effect during the wait, and the result word plus result effect landing with the on-screen result. Delete the unused takes and `docs/previews/` before shipping.
 - The ElevenLabs key cannot list voices; get ids from the ElevenLabs connector (`creative_list_voices`), never from memory.
-- Houston (21:38): the app restart is still pending. No new worker and nothing longer than a couple of minutes until Houston says so. The 3D experiment review waits.
+- Voice and effects are wired into the game on `v18-world` (worker job `v18-voice-wiring`, merge 0b236b4; brief `docs/briefs/v18-step2-voice-wiring.md`). `say(id, force, delay)` and `playClip(key, vol, delay)` are in `js/02-audio.js`. Tested in the browser; NOT shipped: Chris plays it first.
+- 3D experiment: pass 1 reviewed and tested from its own worktree with the preview entry `arise-3d` in `.claude/launch.json` (port 8766; an uncommitted local edit, remove it when the experiment is settled). Do not merge it into `v18-world`. When the browser pane is hidden, screenshots come back stale: capture the WebGL canvas with `toDataURL` and POST it to a small local receiver instead.
+- Houston (22:25): the app restart is done. While Chris is away, report to Houston, and keep to the battery limits in ACTIVE_PROJECTS.
 
 ---
 _Below: the Session 3 handoff. Items 1 and the voice-trial part of 3 are done._

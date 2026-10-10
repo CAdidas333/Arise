@@ -1,10 +1,10 @@
 # Arise — Active Projects
 
-## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 and 3 live, step 2 recorded and waiting to be wired in)
+## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 and 3 live; step 2 built and waiting for Chris to play it)
 **Priority**: MEDIUM (fun/showcase project)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
-**Status**: Light work only (Houston, 2026-10-09 21:38): the Claude app restart is still pending, so no new worker and no job longer than a couple of minutes until Houston says the restart is done or called off. Review, short browser runs and the voice trial are allowed.
+**Status**: Working. The Claude app restart is done (Houston, 2026-10-09 22:25). While Chris is away the Mac is on battery: no job over about 15 minutes, nothing heavy below 50 percent battery, one heavy job at a time.
 
 ### Completed (Session 0-1)
 - [x] Core game engine (canvas, game loop, input handling)
@@ -47,7 +47,7 @@
 
 ### V18 plan (approved by Chris 2026-10-09; built on branch `v18-world`, one step at a time; new steps ship when he says)
 - [x] Step 1 — Painted world: a painted floor per gate and a backdrop for the title and hub. **Live** (shipped to main 2026-10-09)
-- [ ] Step 2 — The System speaks. **Recorded 2026-10-09, not yet in the game**: 35 voice clips in the River voice in `assets/voice/` (Chris approved the voice, the slow calm read, the anxious boss warning and the extraction line split into "Shadow extraction." and the result word), and 8 sound effects with two takes each in `assets/sfx/` (Chris is choosing between set A and set B; demos in `docs/previews/`). Next: a worker brief to play them in the game, timed so the result word lands with the on-screen result. Recipe in `assets/CREDITS.md`. ElevenLabs music stays blocked until Chris says so
+- [ ] Step 2 — The System speaks. **Built on `v18-world`, not live** (merge 0b236b4, 2026-10-09): 35 voice clips in the River voice and 8 sound effects, all chosen by Chris by ear, now play in the game. The extraction line is spoken as "Shadow extraction.", a 2-second wait with a charge effect, then "Successful." or "Failed." with its own hit. Tested in the browser (all 43 clips load, sound measured on the effects channel, both extraction outcomes, no errors). Waiting for Chris to play it and say ship. Recipe in `assets/CREDITS.md`. ElevenLabs music stays blocked until Chris says so
 - [x] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows fire a ring of shots on a timer. **Live** (shipped to main 2026-10-09, commit f465a46)
 - [ ] Step 4 — A hunter with a real body (jointed parts on the existing skeleton) and a look for each boss
 - [ ] Step 5 — Real dungeons: generated rooms and corridors; the arena stays for boss fights and endless mode
@@ -59,11 +59,11 @@
 - Done alongside: script split into `js/` (13 files, behaviour unchanged) so workers can take one small file per job
 
 ### Side item
-- [ ] 3D experiment (Chris asked for it): a third-person 3D view of the same game rules with simple shapes, fixed camera, on branch `worker/v18-3d-spike` (commit 915ea83). Built, awaiting review and a local browser test. Not live and not to be deployed without Chris's word
+- [ ] 3D experiment (Chris asked for it): a third-person 3D view of the same game rules with simple shapes, fixed camera, on branch `worker/v18-3d-spike`. First pass reviewed and tested 2026-10-09: a whole gate ran through to the boss with no errors, but the hunter is too small to find (frames in `docs/previews/3d_experiment_*.jpg`). A second pass is with the worker. Not live and not to be deployed without Chris's word
 
 ### Next Up (ranked)
-1. Chris picks sound-effect takes (set A or B, per effect); then write the brief that plays the voice and effects in the game and run it when Houston allows a worker
-2. When Houston says the restart is done: review and browser-test the 3D experiment locally; show Chris a screenshot
+1. Chris plays V18 step 2 (the System voice and effects) on the work branch at http://localhost:8765 and says ship or what to change; delete `docs/previews/` before shipping
+2. 3D experiment: review the second pass (bigger hunter, closer camera; feedback in `docs/briefs/v18-3d-spike-redo1.md`), then show Chris the frames. It is tested from its own worktree and must not be merged into `v18-world` until Chris says, because that branch ships to the public site
 3. V18 step 4 (hunter with a real body, boss looks)
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`
 
