@@ -6,7 +6,7 @@ renderer.domElement.style.cssText = 'position:fixed; top:0; left:0; z-index:1; d
 document.body.appendChild(renderer.domElement);
 
 const _gameCanvas = document.getElementById('gameCanvas');
-if (_gameCanvas) _gameCanvas.style.display = 'none';
+if (_gameCanvas) { _gameCanvas.style.display = 'block'; _gameCanvas.style.background = 'transparent'; _gameCanvas.style.zIndex = '2'; }
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x06060c);
@@ -221,6 +221,7 @@ function draw() {
     const emptySet = new Set();
     [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, telegraphMeshes].forEach(m => pruneMap(m, emptySet));
     renderer.render(scene, camera3D);
+    drawFx3D();
     return;
   }
 
@@ -392,4 +393,223 @@ function draw() {
   pruneMap(telegraphMeshes, activeTele);
 
   renderer.render(scene, camera3D);
+  drawFx3D();
+}
+
+const _pv = new THREE.Vector3();
+// World (x, y) at height h -> overlay pixels, or null when behind the camera
+function toScreen(x, y, h) {
+  _pv.set(x, h || 0, y).project(camera3D);
+  if (_pv.z > 1 || _pv.z < -1) return null;
+  return [(_pv.x + 1) / 2 * W, (1 - _pv.y) / 2 * H];
+}
+
+function drawFx3D() {
+  if (typeof ctx === 'undefined' || !ctx) return;
+  const dpr = typeof DPR !== 'undefined' ? DPR : (window.devicePixelRatio || 1);
+  const w = typeof W !== 'undefined' ? W : window.innerWidth;
+  const h = typeof H !== 'undefined' ? H : window.innerHeight;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  if (typeof gameState === 'undefined' || gameState !== 'DUNGEON' || typeof dungeon === 'undefined' || !dungeon) {
+    return;
+  }
+
+  try {
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    function pxPer(x, y) {
+      const p0 = toScreen(x, y, 0);
+      const p1 = toScreen(x, y, 10);
+      if (!p0 || !p1) return 1;
+      return Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / 10;
+    }
+
+    // 3. Rings
+    if (typeof rings !== 'undefined' && rings) {
+      for (const r of rings) {
+        const p = r.t / r.dur;
+        const rad = r.r0 + (r.r1 - r.r0) * (1 - (1 - p) * (1 - p));
+        ctx.globalAlpha = 1 - p;
+        ctx.strokeStyle = r.color;
+        ctx.lineWidth = r.w * (1 - p) + 1;
+
+        let ok = true;
+        const pts = [];
+        for (let i = 0; i < 40; i++) {
+          const ang = (i / 40) * Math.PI * 2;
+          const pt = toScreen(r.x + Math.cos(ang) * rad, r.y + Math.sin(ang) * rad, 2);
+          if (!pt) { ok = false; break; }
+          pts.push(pt);
+        }
+        if (ok && pts.length > 0) {
+          ctx.beginPath();
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          for (let i = 1; i < pts.length; i++) {
+            ctx.lineTo(pts[i][0], pts[i][1]);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+      }
+    }
+
+    // 4. Slash arcs
+    if (typeof arcs !== 'undefined' && arcs) {
+      for (const a of arcs) {
+        const p = a.t / a.dur;
+        const sweep = a.span * Math.min(1, p * 2.4);
+        const s0 = a.a - a.dir * a.span / 2;
+        const s1 = s0 + a.dir * sweep;
+        const lo = Math.min(s0, s1);
+        const hi = Math.max(s0, s1);
+        const al = 1 - p;
+
+        const passes = [
+          { r: a.r * 0.76, color: a.color, alpha: al * 0.35, w: a.w * 1.7 },
+          { r: a.r * 0.86, color: a.color, alpha: al * 0.9, w: a.w * (1 - p) + 1 },
+          { r: a.r * 0.92, color: '#ffffff', alpha: al, w: a.w * (1 - p) * 0.35 + 1 }
+        ];
+
+        for (const pass of passes) {
+          ctx.strokeStyle = pass.color;
+          ctx.globalAlpha = pass.alpha;
+          ctx.lineWidth = pass.w;
+
+          let ok = true;
+          const pts = [];
+          for (let i = 0; i < 16; i++) {
+            const ang = lo + (i / 15) * (hi - lo);
+            const pt = toScreen(a.x + Math.cos(ang) * pass.r, a.y + Math.sin(ang) * pass.r, 16);
+            if (!pt) { ok = false; break; }
+            pts.push(pt);
+          }
+          if (ok && pts.length > 0) {
+            ctx.beginPath();
+            ctx.moveTo(pts[0][0], pts[0][1]);
+            for (let i = 1; i < pts.length; i++) {
+              ctx.lineTo(pts[i][0], pts[i][1]);
+            }
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    // 5. Bolts
+    if (typeof bolts !== 'undefined' && bolts) {
+      for (const b of bolts) {
+        const al = 1 - b.t / b.dur;
+        const scrPts = [];
+        let ok = true;
+        for (const q of b.pts) {
+          const pt = toScreen(q[0], q[1], 18);
+          if (!pt) { ok = false; break; }
+          scrPts.push(pt);
+        }
+        if (ok && scrPts.length > 0) {
+          ctx.beginPath();
+          scrPts.forEach((pt, i) => i ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1]));
+          ctx.strokeStyle = b.color;
+          ctx.globalAlpha = al * 0.6;
+          ctx.lineWidth = 5;
+          ctx.stroke();
+
+          ctx.strokeStyle = '#ffffff';
+          ctx.globalAlpha = al;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // 6. Particles
+    if (typeof particles !== 'undefined' && particles) {
+      const step = particles.length > 600 ? 2 : 1;
+      for (let i = 0; i < particles.length; i += step) {
+        const p = particles[i];
+        const pt = toScreen(p.x, p.y, 12);
+        if (!pt) continue;
+
+        const k = p.life / p.max;
+        const pxp = pxPer(p.x, p.y);
+
+        if (p.type === 'spark') {
+          const pt2 = toScreen(p.x - p.vx * 0.045, p.y - p.vy * 0.045, 12);
+          if (!pt2) continue;
+          ctx.globalAlpha = p.alpha * k;
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = Math.max(1, p.size * 0.7 * pxp);
+          ctx.beginPath();
+          ctx.moveTo(pt[0], pt[1]);
+          ctx.lineTo(pt2[0], pt2[1]);
+          ctx.stroke();
+        } else if (p.type === 'glow') {
+          const rGlow = Math.max(1, p.size * (0.4 + 0.6 * k) * pxp);
+          ctx.globalAlpha = p.alpha * k;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(pt[0], pt[1], rGlow, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.globalAlpha = p.alpha * k * 0.28;
+          ctx.beginPath();
+          ctx.arc(pt[0], pt[1], p.size * 2.6 * pxp, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.type === 'smoke') {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = p.alpha * k;
+          ctx.fillStyle = p.color;
+          const rSmoke = p.size * (1.7 - k * 0.7) * pxp;
+          ctx.beginPath();
+          ctx.arc(pt[0], pt[1], Math.max(0.1, rSmoke), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalCompositeOperation = 'lighter';
+        }
+      }
+    }
+
+    // 7. Reset to source-over
+    ctx.globalCompositeOperation = 'source-over';
+
+    // 8. Texts
+    if (typeof texts !== 'undefined' && texts) {
+      ctx.textAlign = 'center';
+      ctx.lineJoin = 'round';
+      for (const t of texts) {
+        const pt = toScreen(t.x, t.y, 36);
+        if (!pt) continue;
+
+        const pop = 1 + 0.6 * Math.max(0, 1 - t.t / 0.12);
+        ctx.globalAlpha = Math.min(1, (t.dur - t.t) / 0.3);
+        ctx.font = `bold ${Math.round(t.size * pop)}px Orbitron, monospace`;
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.lineWidth = 3;
+        ctx.strokeText(t.text, pt[0], pt[1]);
+        ctx.fillStyle = t.color;
+        ctx.fillText(t.text, pt[0], pt[1]);
+      }
+      ctx.textAlign = 'left';
+    }
+
+    // 9. Screen flash
+    if (typeof screenFlash !== 'undefined' && screenFlash && screenFlash.alpha > 0) {
+      ctx.globalAlpha = Math.min(1, screenFlash.alpha);
+      ctx.fillStyle = screenFlash.color;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // 10. End with ctx.globalAlpha = 1
+    ctx.globalAlpha = 1;
+  } catch (err) {
+    if (!drawFx3D.warned) {
+      drawFx3D.warned = true;
+      console.error('[ARISE 3D fx]', err);
+    }
+  }
 }
