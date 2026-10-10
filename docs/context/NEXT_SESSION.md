@@ -9,7 +9,8 @@ _Updated: 2026-10-09 21:50 (Session 4, in progress)_
 - Voice and effects are wired into the game on `v18-world` (worker job `v18-voice-wiring`, merge 0b236b4; brief `docs/briefs/v18-step2-voice-wiring.md`). `say(id, force, delay)` and `playClip(key, vol, delay)` are in `js/02-audio.js`. Tested in the browser; NOT shipped: Chris plays it first.
 - 3D experiment: pass 1 reviewed and tested from its own worktree with the preview entry `arise-3d` in `.claude/launch.json` (port 8766; an uncommitted local edit, remove it when the experiment is settled). Do not merge it into `v18-world`. When the browser pane is hidden, screenshots come back stale: capture the WebGL canvas with `toDataURL` and POST it to a small local receiver instead.
 - Houston (22:25): the app restart is done. While Chris is away, report to Houston, and keep to the battery limits in ACTIVE_PROJECTS.
-- Waiting on Chris (cards with Houston): play the voice build and say ship (task D-0084); 3D continue or stop (D-0085); pick the hunter style A, B or C (D-0086). V18 step 4 starts from his pick: derive the jointed parts (head, torso, upper arm, forearm, thigh, shin, weapon) from the chosen image with the free image-edit models, then a worker brief for `drawHunter`.
+- V18 step 2 (the System voice) shipped 2026-10-09 on Chris's word: `main` is at 18b896a, the last commit before the hunter body. Do NOT fast-forward `main` to `v18-world` until Chris approves the hunter body (step 4); ship anything else by cherry-pick or by building from `main`.
+- Chris picked hunter look C (`docs/art-direction/hunter-style/hunter_style_c_v1.png`). Pass 1 of the body (drawn with canvas shapes in `drawHunter`, `js/11-render-world.js`) is merged on `v18-world` but read as an outline doll; pass 2 is with the worker (`docs/briefs/v18-step4a-hunter-body-redo1.md`). Still waiting on Chris: 3D continue or stop (D-0085).
 
 ---
 _Below: the Session 3 handoff. Items 1 and the voice-trial part of 3 are done._
