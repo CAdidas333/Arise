@@ -1,7 +1,7 @@
 """ElevenLabs voice lines for the System: one mp3 per line of tools/system_lines.tsv.
 
   el_voice.py --list                         list the voices on the account (name, id, labels)
-  el_voice.py VOICE_ID OUT_DIR [--only=id,id] [--suffix=_a] [--speed=0.96] [--stability=0.62] [--style=0.08] [--lines=other.tsv] [--model=eleven_multilingual_v2]
+  el_voice.py VOICE_ID OUT_DIR [--only=id,id] [--suffix=_a] [--speed=0.96] [--stability=0.62] [--style=0.08] [--lines=other.tsv] [--prev="unspoken lead-in"] [--next="unspoken follow-on"] [--model=eleven_multilingual_v2]
 
 Lines file: one line per clip, `id<TAB>text`; lines starting with # are ignored.
 Existing files are skipped, so a re-run only fills gaps. New takes get a new --suffix, never an overwrite.
@@ -43,6 +43,8 @@ for k in ("speed", "stability", "style"):
     if k in opt:
         SETTINGS[k] = float(opt[k])
 out_dir.mkdir(parents=True, exist_ok=True)
+# Unspoken text before and after the line; it steers the mood of the read
+CONTEXT = {k: opt[o] for o, k in (("prev", "previous_text"), ("next", "next_text")) if o in opt}
 
 lines = [l.split("\t", 1) for l in Path(opt.get("lines", Path(__file__).parent / "system_lines.tsv")).read_text().splitlines()
          if l.strip() and not l.startswith("#")]
@@ -51,6 +53,6 @@ for lid, text in lines:
     if (only and lid not in only) or dst.exists():
         continue
     audio = call(f"{API}/text-to-speech/{voice}?output_format=mp3_44100_128",
-                 {"text": text.strip(), "model_id": model, "voice_settings": SETTINGS})
+                 {"text": text.strip(), "model_id": model, "voice_settings": SETTINGS, **CONTEXT})
     dst.write_bytes(audio)
     print(dst, len(audio), "bytes")
