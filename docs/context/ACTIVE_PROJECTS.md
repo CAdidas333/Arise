@@ -59,11 +59,11 @@
 - Done alongside: script split into `js/` (13 files, behaviour unchanged) so workers can take one small file per job
 
 ### Side item
-- [ ] 3D experiment (Chris asked for it): a third-person 3D view of the same game rules with simple shapes, fixed camera, on branch `worker/v18-3d-spike`. First pass reviewed and tested 2026-10-09: a whole gate ran through to the boss with no errors, but the hunter is too small to find (frames in `docs/previews/3d_experiment_*.jpg`). A second pass is with the worker. Not live and not to be deployed without Chris's word
+- [ ] 3D experiment (Chris asked for it): a third-person 3D view of the same game rules with simple shapes, fixed camera, on branch `worker/v18-3d-spike` (90769db). Two passes reviewed and tested 2026-10-09: a whole gate runs through to the boss with no errors; pass 2 made the hunter bigger and the camera closer (frames in `docs/previews/3d_experiment_*_v2.jpg`). Waiting for Chris to look and say continue or stop. Not merged, not live, and not to be deployed without his word
 
 ### Next Up (ranked)
 1. Chris plays V18 step 2 (the System voice and effects) on the work branch at http://localhost:8765 and says ship or what to change; delete `docs/previews/` before shipping
-2. 3D experiment: review the second pass (bigger hunter, closer camera; feedback in `docs/briefs/v18-3d-spike-redo1.md`), then show Chris the frames. It is tested from its own worktree and must not be merged into `v18-world` until Chris says, because that branch ships to the public site
+2. 3D experiment: show Chris the second-pass frames (`docs/previews/3d_experiment_*_v2.jpg`); he says continue or stop. It is tested from its own worktree and must not be merged into `v18-world` until he says, because that branch ships to the public site
 3. V18 step 4 (hunter with a real body, boss looks)
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`
 

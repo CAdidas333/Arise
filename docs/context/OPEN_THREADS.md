@@ -38,7 +38,7 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
 | F1 | Shared leaderboard and co-op play | OPEN | multi-session | Chris's word to start | Chris parked it ("maybe we do that later") when he picked the nine-step V18 plan |
-| F2 | 3D second pass: free mouse-look camera, movement relative to the camera | BLOCKED | session | Chris seeing the first pass of the 3D experiment (branch `worker/v18-3d-spike`, not yet reviewed) | The first pass has a fixed camera and is still unreviewed |
+| F2 | 3D second pass: free mouse-look camera, movement relative to the camera | BLOCKED | session | Chris looking at the frames of the fixed-camera version (`docs/previews/3d_experiment_*_v2.jpg`, branch `worker/v18-3d-spike`) and saying continue | The fixed-camera version is reviewed and tested (2026-10-09); a free camera is only worth building if he wants 3D to go on |
 | F3 | ElevenLabs music for the game | BLOCKED | session | Chris hearing the System voice and sound effects and saying so | The key broker blocks the music script until then; voice and effects come first |
 
 ### Engine
