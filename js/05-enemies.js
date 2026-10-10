@@ -167,7 +167,9 @@ function updateTelegraphs(dt) {
     if (g.type === 'circle') {
       ring(g.x, g.y, g.color, g.r*0.3, g.r*1.15, 0.3, 6); spawnBurst(g.x, g.y, g.color, 14, g.r*2.4);
       shake(g.r > 120 ? 10 : 5); playSfx('explode');
-      if (dist(g.x, g.y, player.x, player.y) < g.r+8) hurtPlayer(g.dmg);
+      if (g.friendly) {
+        for (const en of enemies) if (en.alive && en.spawnT <= 0 && dist(g.x, g.y, en.x, en.y) < g.r+en.size) damageEnemy(en, g.dmg, { shadow:true, crit:false, kb:200, ox:g.x, oy:g.y });
+      } else if (dist(g.x, g.y, player.x, player.y) < g.r+8) hurtPlayer(g.dmg);
     }
   }
   telegraphs = live;
