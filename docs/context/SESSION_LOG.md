@@ -1,9 +1,11 @@
 # Arise — Session Log
 
-## Session 3 — 2026-10-09 — V17 "Monarch Update" (full rewrite, merged to `main` and deployed)
+## Session 3 — 2026-10-09 — V17 "Monarch Update" built and shipped, then the start of V18 (painted world, shadow looks, the System's voice)
+
+One long session. Part 1 is the V17 build. Part 2 (below "Debug hook") is what happened after V17 went live: fixes from Chris's play-testing, the V18 plan, and the first V18 steps.
 
 ### Focus
-Chris gave total creative freedom for a one-shot upgrade. The game script was rewritten from scratch; the V16 CSS was kept and extended. Still one `index.html`, zero dependencies (2,828 lines).
+Chris gave total creative freedom for a one-shot upgrade. The game script was rewritten from scratch; the V16 CSS was kept and extended. At that point it was still one `index.html`, zero dependencies (2,828 lines). Later the same day Chris lifted the one-file rule (see Part 2).
 
 ### What Changed
 - **Engine**: everything is now in seconds, so 60Hz and 120Hz displays play the same (V16 moved per frame and ran double speed on ProMotion). Retina-sharp canvas, hit-stop, slow-motion, additive glow rendering, pre-painted floor tile per gate, HUD that only touches the DOM on change.
@@ -26,10 +28,54 @@ Scripted bot cleared all six gates and 17 endless floors with no errors; death, 
 ### Debug hook
 Open with `#debug` to get `window.__arise` (player, dungeon, enemies, `startDungeon`, `step`, ...).
 
-### What's Next
-- Chris and Kevin play-test; tune feel and balance from that
-- Listen to the music and iterate
-- Still open from before: shared leaderboard, multi-room dungeons, equipment beyond weapons
+### Part 2 — After the V17 build (all 2026-10-09)
+
+**V17 went live.** Merged to `main` and deployed on Chris's word (GitHub Pages).
+
+**Fixes shipped straight to `main` from Chris's play-testing**
+- **Art rule.** Chris objected to a star-in-a-circle mark in the arena centre ("pentagram"). It was replaced with a star-free circle (nested rings, a tick dial, four small orbiting circles, and a slowly turning hexagon or octagon). Floor rune tiles became plain diamonds. A standing rule is now in `CLAUDE.md` and `assets/CREDITS.md`: no star symbols, runes or occult imagery in any art.
+- **Aim modes.** Auto (face where you move; the mouse takes over only while it is deliberately moved), Keys, Mouse. `M` cycles them; they are also in the pause menu and the hub. `X` or `J` attacks (hold). Chris plays on a laptop with arrow keys.
+- **Extraction sound rebuilt.** A big impact, a rising minor chord, then a second, brighter hit; the screen fires a second light pillar on the second hit. Chris said the general audio "sounds okay for now".
+- **Controls tab.** A sixth tab in the System menu listing every key and touch button, with the aim mode and volume sliders. The pause menu also shows the key list.
+- **Skill points slowed** to one every 2 levels (the tree now fills around level 94). Existing saves are refunded at the new rate when they load.
+
+**Direction for what comes next**
+- Chris asked what a 10x upgrade would look like. An independent advisor (a separate Fable run) was asked the same question. Kevin is out; Chris is the only designer.
+- Chris lifted the one-file rule ("use as many folders and whatever you need"). The no-build-step rule stays.
+- He picked the merged **V18 plan, nine steps**: painted world; the System's voice and ElevenLabs sounds; shadows that look and fight like what they were; a hunter with a real body and boss looks; real generated dungeons (rooms and corridors, with the arena kept for boss fights and endless mode); loot and gear; a story thread; hand-designed boss fights; a shareable result card. Shared leaderboard and co-op are parked for later.
+- The advisor's view was adopted on art (painted floors, a hunter built from jointed parts, no sprite sheets). Chris kept generated dungeons and loot against the advisor's advice.
+
+**Working mode changed (Chris's instruction).** Claude orchestrates: plans, writes briefs, reviews and tests. Free image models and the worker (a free helper model run with `worker run Arise <name> <brief>`, Gemini first) do the generating and coding. Briefs live in `docs/briefs/`. Houston's rundown for briefs: free workers need exact function names and line numbers, everything must be inside the repo, and they must be told what not to commit.
+
+**V18 step 1 (painted world) built and shipped to `main`.** Six painted floor tiles (`assets/floors/`; the S-rank one is `s_gate_v2.webp`) and a backdrop for the title and hub (`assets/bg/hub.webp`), made with the Z-Image-Turbo model (Apache-2.0 licence) and `tools/process_art.py`. Provenance is in `assets/CREDITS.md`. Two generated images were rejected and redone: a lava floor drawn as a framed sample, and a portal shaped like a question mark.
+
+**Script split, shipped with step 1.** The inline script became 13 classic script files in `js/` that share one global scope (no modules, no build). `tools/stamp.sh` refreshes the `?v=` tag on each script line so browsers do not serve old copies; run it before committing any change in `js/`.
+
+**V18 step 3, first half (shadow look) merged on branch `v18-world`, not live.** Each shadow is drawn as a dark purple version of the enemy it was. Shadow records now carry the enemy kind; old saves are matched by name.
+
+**Two worker jobs finished on their own branches, NOT yet reviewed or merged**
+- `worker/v18-shadow-roles` (commit 6bbab81): shadow fighting styles. Archers shoot, casters drop blasts, chargers rush, brutes slam, sappers burst, and boss shadows fire a ring on a timer. Brief: `docs/briefs/v18-step3b-shadow-roles.md`.
+- `worker/v18-3d-spike` (commit 915ea83): a 3D experiment page (`3d/index.html` and `3d/render3d.js`) that runs the same game rules in a third-person 3D view with simple shapes, using three.js r149 (a 3D library, MIT licence) kept as a local copy at `3d/vendor/three.min.js`. Fixed camera angle in this first pass. Brief: `docs/briefs/v18-3d-spike.md`. Chris asked for this experiment; it must not be deployed without his word.
+
+**ElevenLabs.** Chris approved Arise spending ElevenLabs credits (decision card D-0077, "Approved as recommended"). The key broker now allows `tools/el_voice.py` (spoken lines) and `tools/el_sfx.py` (sound effects). `tools/el_music.py` stays blocked until Chris has heard the voice and effects and says so. Ready: both scripts and `tools/system_lines.tsv` (34 original System lines). Nothing has been generated yet.
+
+**Parked.** Houston has all sessions parked for a Claude app restart because the Mac was lagging. No worker, image job or browser run until Houston says resume. A printable status report was not generated at this wrap (skipped to save usage while parked).
+
+### Decisions Made in Part 2
+- **One-file rule lifted** by Chris, 2026-10-09. "No build step" stays.
+- **Kevin is no longer involved.** Chris alone decides design.
+- **Art direction:** advisor's view adopted (painted floors, jointed-parts hunter, no sprite sheets). Chris kept generated dungeons and loot.
+- **3D:** possible as a new view over the same rules; third-person only; being tried as a side experiment, not a commitment. Unreal is ruled out (it cannot publish to a web link). Blender would be installed later only if real 3D characters are made.
+- **Ship rule Chris has been using:** fixes he asks for go straight to `main`; new V18 steps are shown to him first and shipped when he says. Step 1 shipped. Step 3 ships whole, not in halves.
+- **No star symbols, runes or occult imagery in any art.**
+- **Skill points** come one per 2 levels.
+
+### What's Next (ranked)
+1. When Houston says resume: review, browser-test and merge the shadow fighting-styles job, run `tools/stamp.sh`, then ship V18 step 3 whole to `main`.
+2. Review and browser-test the 3D experiment locally; show Chris a screenshot. Do not deploy without his word.
+3. ElevenLabs voice trial: list voices, record three lines in two or three voices for Chris to choose, then all 34 lines, then the 8 signature sound effects with two takes each.
+4. V18 step 4 (hunter with a real body, boss looks).
+- Open items and deferred ideas are tracked in `docs/context/OPEN_THREADS.md`.
 
 ---
 ## Session 2 — 2026-04-09 — Orientation & Architecture Review (No Code Changes)
