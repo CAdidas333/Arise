@@ -147,3 +147,19 @@
 **Outcome**: Only `worker run` takes `--timeout`. The redo exited without doing anything and still returned 0, so it looked as if it had worked.
 
 **Next time**: Do not pass `--timeout` to `worker redo`. After any redo, check that a new commit was made on the worker branch before reviewing.
+
+## 2026-10-10 — A brief that says "both calls are in the same function" must be checked before it is sent
+
+**Tried**: The old-hunter switch brief told the worker to add one `const` above the first `drawHunter` call and use it in both calls, stating that both calls were in one function. The review compared the diff with the brief by script, and the browser test ran a fight without dodging.
+
+**Outcome**: The two calls are in different functions (`drawPlayer` and `drawWorld`). The second call only runs while dodge afterimages exist, so every dodge threw an error. It was on the public site for about nine minutes (01:11 to 01:20) before a later test that happened to dodge caught it.
+
+**Next time**: Before writing "same function" or "same scope" in a brief, look at the enclosing function of every line named. A browser test of anything that touches the hunter must include a dodge, an attack, the Awakening and a hit, not only a plain fight. A diff that matches the brief exactly proves the worker followed it, not that the brief was right.
+
+## 2026-10-10 — Getting a frame out of the public page: carry it in window.name
+
+**Tried**: Posting a captured canvas from the public https page to the local receiver on `127.0.0.1`.
+
+**Outcome**: The browser pane blocks requests from a public page to a local address ("Failed to fetch"), whatever headers the receiver sends.
+
+**Next time**: On the public page, draw the frames into one canvas and store the data URL in `window.name`. Navigate the same tab to the local preview page, read `window.name` there, and post it to the receiver. It survives the navigation.

@@ -1,5 +1,33 @@
 # Arise — Session Log
 
+## Session 5 — 2026-10-10 (overnight) — Plain-ring floor mark, the old hunter one switch away, hunter pass 3, and a 3D camera you can turn
+
+### Focus
+Chris was asleep; Houston had the con and Arise had free rein. Do Houston's asks from the Session 4 handoff, then the 3D free camera. Claude wrote briefs, reviewed and tested; free workers built. Four worker runs: the old-hunter switch (one pass), hunter pass 3 (two passes), the 3D camera (one pass).
+
+### What Changed
+- **The floor mark is plain rings.** The mark in the middle of every gate floor was nested rings with a turning polygon, spokes, a tick dial and four orbiting circles, and it could be read as a magic circle. `drawArena` (`js/11-render-world.js`) now draws four plain rings with a slow pulse and nothing else. Checked on all six gates, shipped, then confirmed on the public page by captured frame.
+- **The old stick-figure hunter is one switch away.** System menu, Controls tab, "Hunter look": NEW (default) or CLASSIC. Saved with the other settings (`settings.hunter`). The old drawing is `drawHunterClassic` at the end of `js/11-render-world.js`, copied unchanged from before commit 471328d; `hunterLook()` in `js/12-render-fx.js` picks the drawing and its size. The row is hidden on the 3D page, where it has no effect.
+- **Hunter pass 3.** Closer to the picture Chris picked: smaller head, an open vest with the glowing zip and a high collar, baggy trousers tucked into boots with a toe and heel, wrapped forearms, steel short swords with a guard and pommel, almost no outline glow, the far blade steady in a run, and drawn at 1.35 size (was 1.15). The first pass was sent back once for four small faults (heavy blade glow, eye outside the face, belt overhang, bright sole line).
+- **3D view: a camera you can turn.** Z and C turn it, V resets, right-drag orbits (a plain right click still dodges), the wheel zooms. "Up" on the keys or stick always means away from the camera: `updatePlayer` turns the input by the shared `viewYaw`. Measured in the browser: with the camera turned 1.2 radians, W and D moved the hunter exactly along the expected directions.
+- **A fault that reached the public page for about nine minutes.** After the hunter switch shipped, dodging in the 2D game threw an error, because the two hunter draw calls are in different functions and the brief said they were in one. Found by a later test that happened to dodge; fixed with `hunterLook()` and shipped (commit "Fix: dodge afterimages...").
+
+### Decisions Made
+- The floor mark fails the art rule as "could be read as occult", so it went to the plainest thing that still marks the centre.
+- The hunter is drawn larger (1.35) because it was small on the floor; hit sizes are unchanged.
+- Camera turning uses Z, C and V because every nearer key is taken; touch control is left for later (thread F5).
+
+### Verification
+Floor mark: captured frames of all six gates in the work copy and five on the public page. Hunter: pose sheets before and after, and a real fight in both looks. Dodge fix: a dodge with afterimages in both looks, no errors. 3D camera: default view unchanged, movement directions measured, keys, right-drag, right-click dodge, wheel and reset all exercised, no errors. Not tested: a real phone; the 3D camera by a human hand.
+
+### What's Next (ranked)
+1. 3D lane: hit sparks, damage numbers and rings so a 3D fight is readable (open thread F4).
+2. 2D lane: a look for each boss (rest of V18 step 4; note open thread U2).
+3. V18 step 5: generated dungeons.
+4. ElevenLabs music: write `tools/el_music.py` and file one card with Houston for the key rule.
+- Open items and deferred ideas are tracked in `docs/context/OPEN_THREADS.md`; the hand-off is `docs/context/NEXT_SESSION.md`.
+
+---
 ## Session 4 — 2026-10-09 (evening) — Shadows fight like their enemies, the System speaks, the hunter gets a body, and the 3D view goes live beside the 2D game
 
 ### Focus
