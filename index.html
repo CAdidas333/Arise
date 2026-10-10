@@ -2395,9 +2395,25 @@ let floorPat = null, floorTheme = GATE_DEFS[0].theme, floorSides = 6;
 const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
 const disc = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); };
 
+const ART = {};
+function loadArt(key, src) {
+  const img = new Image();
+  img.onload = () => {
+    ART[key] = img;
+    if (dungeon && dungeon.gate.id === key) buildFloor(dungeon.gate);
+  };
+  img.src = src;
+}
+GATE_DEFS.forEach(g => loadArt(g.id, 'assets/floors/' + g.id + '.webp'));
+loadArt('hub', 'assets/bg/hub.webp');
+
 // Each gate gets its own floor, painted once into a repeating tile
 function buildFloor(g) {
-  const th = g.theme, oc = document.createElement('canvas'), ts = 60, n = 8;
+  const th = g.theme;
+  if (ART[g.id]) {
+    floorPat = ctx.createPattern(ART[g.id], 'repeat');
+  } else {
+    const oc = document.createElement('canvas'), ts = 60, n = 8;
   oc.width = oc.height = ts*n;
   const c = oc.getContext('2d');
   for (let x = 0; x < n; x++) for (let y = 0; y < n; y++) {
@@ -2416,7 +2432,9 @@ function buildFloor(g) {
     const x = randInt(0, n-1)*ts + ts/2, y = randInt(0, n-1)*ts + ts/2;
     c.globalAlpha = 0.16; c.beginPath(); c.moveTo(x, y-18); c.lineTo(x+18, y); c.lineTo(x, y+18); c.lineTo(x-18, y); c.closePath(); c.stroke();
   }
-  floorPat = ctx.createPattern(oc, 'repeat'); floorTheme = th; floorSides = GATE_DEFS.indexOf(g) % 2 ? 8 : 6;
+    floorPat = ctx.createPattern(oc, 'repeat');
+  }
+  floorTheme = th; floorSides = GATE_DEFS.indexOf(g) % 2 ? 8 : 6;
 }
 
 function drawArena(vx0, vy0, vx1, vy1) {
@@ -2611,6 +2629,12 @@ function drawMotes(c1, c2, par) {
 
 // Title + hub backdrop: a gate, breathing
 function drawPortal() {
+  if (ART.hub) {
+    const img = ART.hub, s = Math.max(W/img.width, H/img.height), w = img.width*s, h = img.height*s;
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(img, (W - w)/2, (H - h)/2, w, h);
+    ctx.globalAlpha = 1;
+  }
   const cx = W/2, cy = H*0.5, R = Math.min(W, H)*0.36;
   const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R*1.7);
   g.addColorStop(0, 'rgba(70,24,160,0.6)'); g.addColorStop(0.45, 'rgba(0,90,160,0.18)'); g.addColorStop(1, 'rgba(0,0,0,0)');
