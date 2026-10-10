@@ -1,5 +1,37 @@
 # Arise — Session Log
 
+## Session 4 — 2026-10-09 (evening) — Shadows fight like their enemies, the System speaks, the hunter gets a body, and the 3D view goes live beside the 2D game
+
+### Focus
+Pick up the V18 plan from Session 3 once the Claude app restart was done. Houston (the coordinating session) first allowed light work only, then lifted the limit at 22:25 after Chris restarted the app. The Mac stayed on battery and a phone hotspot for the rest of the session. Claude only planned, wrote briefs, reviewed, tested and shipped; free worker models and free image models did the building. Six worker jobs ran (shadow roles review, voice wiring, 3D second pass, hunter body pass 1 and pass 2, the 3D switch).
+
+### What Changed
+- **V18 step 3 is live: each shadow soldier fights the way its enemy fought.** Archers shoot, casters drop blasts, chargers rush, brutes slam, sappers burst, and boss shadows fire a ring of shots. The worker job (branch `worker/v18-shadow-roles`) was read line by line against its brief, then tested in the browser with one shadow of each kind for 45 seconds with no errors, merged, and shipped to the public site (commit f465a46).
+- **The version stamp now goes to the second.** `tools/stamp.sh` used to stamp to the minute, so two stamps inside one minute came out identical, the browser kept the old scripts, and a test silently ran the old code. The stamp is now `date +%Y%m%d%H%M%S`.
+- **V18 step 2 is live: the System speaks.** Chris chose the ElevenLabs voice "River" from a three-voice trial, then directed the reads by ear: a slow pace for calm lines; an anxious, clipped read for warnings (exclamation marks made it sound like a cheerleader, and an unspoken lead-in sentence fixed it); and the extraction line as an announcement with a nervous pause, "Shadow extraction." then "Successful." or "Failed.". There are 35 voice clips in `assets/voice/` and 8 sound effects in `assets/sfx/`, two takes each. Chris picked the second take for the three extraction effects and the first for the rest. The extraction-success hit was turned down 3.5 dB because it clipped. A worker job wired them in (`say()` and `playClip()` in `js/02-audio.js`; the extraction now waits 2 seconds between the announcement and the result). Tested in the browser (all 43 clips load, sound measured, both extraction outcomes). Chris played it and said ship. It went live at commit 18b896a, deliberately without the hunter body that was already on the work branch.
+- **V18 step 4, first half, is live: a hunter with a real body.** Three candidate looks were made with the free image model. Chris picked C ("the third one, without question"): a combat vest with a glowing zip, wrapped forearms and twin blades. The body is drawn with canvas shapes in `drawHunter` (`js/11-render-world.js`): two-piece arms and legs, vest, spiky hair, twin steel blades, no cape. Pass 1 read as a glowing outline doll and the orchestrator rejected it (the fault was in the brief's numbers, not the worker). Pass 2 was accepted. Boss looks are not started. Still to tune: blobby boots, and the far blade's angle while running.
+- **The 3D view is live beside the 2D game, with a switch.** The experiment (branch `worker/v18-3d-spike`) was reviewed and tested from its own worktree, a whole gate through to the boss with no errors. A second pass made the hunter bigger and the camera closer. Chris then decided to keep both lanes. The 3D view is at `/3d/`, with a "switch to 3D view / 2D view" link on the title screen and the pause menu of both pages. `3d/index.html` is generated from `index.html` by `tools/sync3d.py` (run by `tools/stamp.sh`; never edit it by hand) and uses `<base href="../">`, so scripts, sounds and images resolve from the repo root. Shipped at commit c488a35.
+
+### Decisions Made
+- **Free rein on Arise** (Chris, decision card D-0085): "complete free rein between yourself and Houston. Decisions can be made without me... I just want something that I can show off." This replaces the earlier rule that new V18 steps are shown to him before they ship. Decide, ship, then tell him.
+- **Two lanes, 2D and 3D, developed side by side**, with a button to flip between them.
+- **Still Chris's call:** no star symbols, runes or occult imagery in any art; a yes before any ElevenLabs music (`tools/el_music.py` stays blocked); anything that costs money.
+- **Ship one step at a time from the work branch.** Step 2 was shipped without the hunter body by moving the public branch to the commit before the unapproved work (not the branch tip).
+- **Voice direction:** River, slow pace for calm lines, anxious full-stop read for warnings, extraction cut at the pause into separate clips so the game controls the wait.
+- **Hunter look:** candidate C. Pass 2 of the body accepted; boots and the far blade still to tune.
+
+### Verification
+Shadow roles: one shadow of each kind for 45 seconds, no errors. Voice and effects: all 43 clips load, sound level measured, both extraction outcomes played; Chris listened and approved. 3D: a whole gate through to the boss from its own worktree with no errors, again after the second pass. Hunter body: judged from captured frames, not the diff. Not tested: anything on a real phone.
+
+### What's Next (ranked)
+1. 3D lane: a free camera with movement relative to the camera (open thread F2), then real 3D figures, then hit effects and damage numbers (the 3D view does not draw them yet).
+2. Boss looks (the rest of V18 step 4), then V18 step 5 (generated dungeons). Free rein: decide and ship, then tell Chris.
+3. Tune the hunter's boots and the far blade while running.
+4. Ask Chris for a yes before any ElevenLabs music.
+5. Test on a real phone. Make the printable status report (skipped again to save weekly Claude usage, which stood at 76 percent with two days to the reset).
+- Open items and deferred ideas are tracked in `docs/context/OPEN_THREADS.md`; the hand-off is `docs/context/NEXT_SESSION.md`.
+
+---
 ## Session 3 — 2026-10-09 — V17 "Monarch Update" built and shipped, then the start of V18 (painted world, shadow looks, the System's voice)
 
 One long session. Part 1 is the V17 build. Part 2 (below "Debug hook") is what happened after V17 went live: fixes from Chris's play-testing, the V18 plan, and the first V18 steps.
