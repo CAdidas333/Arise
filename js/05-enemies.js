@@ -9,7 +9,7 @@ function makeEnemy(def, x, y, o = {}) {
     hp:Math.floor(def.hp*s), damage:Math.floor(def.damage*(1+(s-1)*0.6)), speed:def.speed, size:def.size, xp:Math.floor(def.xp*(1+(s-1)*0.5)),
     isBoss:!!o.boss, elite:!!o.elite, alive:true, spawnT:o.boss?0:0.55, hitFlash:0, stun:0, kx:0, ky:0,
     facing:{ x:1, y:0 }, animT:rand(0,10), cd:rand(0.5,1.5), mcd:0, state:'chase', st:0, tx:0, ty:0, strafe:Math.random()<0.5?1:-1 };
-  if (e.elite) { e.hp *= 3; e.damage = Math.floor(e.damage*1.4); e.size *= 1.3; e.xp *= 3; e.name = 'Elite ' + e.name; }
+  if (e.elite) { e.hp *= 3; e.damage = Math.floor(e.damage*1.4); e.size *= 1.3; e.xp *= 3; e.name = 'Elite ' + e.name; say('elite'); }
   if (e.isBoss) { e.patterns = def.patterns; e.title = def.title; e.phase = 1; e.cd = 2.2; }
   e.maxHp = e.hp;
   return e;
@@ -71,7 +71,7 @@ function bossAI(e, dt, d, ux, uy) {
   const P2 = e.phase === 2;
   if (!P2 && e.hp < e.maxHp*0.5) {
     e.phase = 2; e.speed *= 1.25; e.state = 'cast'; e.st = 1.0; e.cd = 0.6;
-    toast(`${e.name.toUpperCase()} IS ENRAGED`, 'red', 2600, true); playSfx('boss');
+    toast(`${e.name.toUpperCase()} IS ENRAGED`, 'red', 2600, true); say('boss_enraged', true); playSfx('boss');
     ring(e.x, e.y, COLORS.danger, e.size, 520, 0.7, 10); shake(20); flash('#ff2222', 0.35); slowmo(0.35, 0.5);
     projectiles = projectiles.filter(p => !p.fromEnemy);
     return;

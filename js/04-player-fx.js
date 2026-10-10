@@ -34,7 +34,7 @@ const healPlayer = n => { player.hp = Math.min(player.maxHp, player.hp + n); };
 function gainUlt(n) {
   if (player.level < SKILL.ult.unlockLevel || player.ultT > 0 || player.ult >= 100) return;
   player.ult = Math.min(100, player.ult + n * (1 + 0.15*tr('sovereign')) * (1 + 0.4*bn('surge')));
-  if (player.ult >= 100) { toast(isMobile ? 'AWAKENING READY' : 'AWAKENING READY — PRESS R', 'purple', 2200); playSfx('boon'); }
+  if (player.ult >= 100) { toast(isMobile ? 'AWAKENING READY' : 'AWAKENING READY — PRESS R', 'purple', 2200); say('awakening_ready'); playSfx('boon'); }
 }
 
 function playerGainXp(amount) {
@@ -49,15 +49,15 @@ function playerGainXp(amount) {
     leveled = true;
     const r = rankFor(player.level);
     if (r !== player.rank) {
-      toast(`RANK UP: ${player.rank} → ${r}`, 'purple', 3000);
+      toast(`RANK UP: ${player.rank} → ${r}`, 'purple', 3000); say('rank_'+r.toLowerCase(), true);
       player.rank = r; flash('#8844ff', 0.6); spawnBurst(player.x, player.y, COLORS.accent, 50, 420);
     }
-    SKILL_DEFS.forEach(s => { if (player.level === s.unlockLevel && s.unlockLevel > 1) toast(`NEW SKILL: ${s.name} [${s.key}]`, 'blue', 3200); });
-    if (player.level === ENDLESS.reqLevel) toast('NEW GATE: DEMON CASTLE — ENDLESS', 'purple', 3500);
+    SKILL_DEFS.forEach(s => { if (player.level === s.unlockLevel && s.unlockLevel > 1) { toast(`NEW SKILL: ${s.name} [${s.key}]`, 'blue', 3200); say('skill_unlocked'); } });
+    if (player.level === ENDLESS.reqLevel) { toast('NEW GATE: DEMON CASTLE — ENDLESS', 'purple', 3500); say('new_gate'); }
   }
   if (leveled) {
     recalcPlayer(player); healPlayer(player.maxHp*0.35); player.mp = player.maxMp; // a second wind, not a full reset
-    toast(`LEVEL UP — LV.${player.level}  (+5 stat${gotSp ? ` · +${gotSp} skill point${gotSp > 1 ? 's' : ''}` : ''})`, 'gold', 2500); playSfx('levelup');
+    toast(`LEVEL UP — LV.${player.level}  (+5 stat${gotSp ? ` · +${gotSp} skill point${gotSp > 1 ? 's' : ''}` : ''})`, 'gold', 2500); playSfx('levelup'); say('level_up');
     spawnBurst(player.x, player.y, COLORS.xp, 30, 360); spawnBurst(player.x, player.y, COLORS.primary, 20, 260);
     ring(player.x, player.y, COLORS.xp, 10, 180, 0.5, 5);
     flash('#ffcc00', 0.3); shake(10);

@@ -77,6 +77,7 @@ function hurtPlayer(dmg) {
   const mitigated = dmg * 100/(100 + pDefense()*1.5); // defense is a percentage cut, so enemies stay dangerous at every rank
   const fd = Math.max(1, Math.floor(mitigated * stationaryMulti * (1 - 0.15*bn('ward')) * (player.ultT > 0 ? 0.5 : 1)));
   player.hp -= fd; player.hitFlash = 0.2; player.inv = 0.4;
+  if (player.hp > 0 && player.hp < player.maxHp*0.25) say('low_hp'); else if (st > 3) say('keep_moving');
   questProgress.damageTaken += fd; highScores.damageTaken += fd; run.dmgTaken += fd;
   playSfx('hurt');
   floatText(player.x, player.y-46, `-${fmtNum(fd)}`, COLORS.danger, 18);
@@ -151,7 +152,7 @@ function updateSpawns(dt) {
 
 function usePotion() {
   if (!dungeon || dungeon.state !== 'fight' || player.hp <= 0) return;
-  if (player.potions <= 0) { toast('NO POTIONS — BUY MORE IN THE ARMORY', 'red', 1500); playSfx('deny'); return; }
+  if (player.potions <= 0) { toast('NO POTIONS — BUY MORE IN THE ARMORY', 'red', 1500); say('no_potions'); playSfx('deny'); return; }
   if (player.hp >= player.maxHp) return;
   player.potions--; healPlayer(player.maxHp*0.4);
   floatText(player.x, player.y-50, `+${fmtNum(player.maxHp*0.4)}`, COLORS.health, 20);

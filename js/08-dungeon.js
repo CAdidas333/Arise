@@ -24,7 +24,7 @@ function startDungeon(gateDef, endless = false) {
   gameState = 'DUNGEON';
   hide('system-menu'); show('hud'); hide('boss-bar-wrap');
   $('hud-gate-name').textContent = endless ? 'DEMON CASTLE — ENDLESS' : `${gateDef.rank}-RANK: ${gateDef.name.toUpperCase()}`;
-  toast(endless ? 'ENTERING THE DEMON CASTLE' : `ENTERING ${gateDef.rank}-RANK GATE: ${gateDef.name.toUpperCase()}`, 'blue', 2000);
+  toast(endless ? 'ENTERING THE DEMON CASTLE' : `ENTERING ${gateDef.rank}-RANK GATE: ${gateDef.name.toUpperCase()}`, 'blue', 2000); say('gate_enter');
   initAudio(); setMusic('battle'); renderBoons(); buildSkillBar();
   spawnWave();
 }
@@ -55,10 +55,10 @@ function nextWave() {
   if (dungeon.endless) {
     highScores.bestFloor = Math.max(highScores.bestFloor, dungeon.wave-1);
     const g = endlessGate(dungeon.wave);
-    if (g !== dungeon.gate) { dungeon.gate = g; buildFloor(g); toast(`THE CASTLE SHIFTS — ${g.name.toUpperCase()}`, 'purple', 2500); }
+    if (g !== dungeon.gate) { dungeon.gate = g; buildFloor(g); toast(`THE CASTLE SHIFTS — ${g.name.toUpperCase()}`, 'purple', 2500); say('castle_shifts', true); }
   }
   // A System reward every second wave, and always right before the boss
-  if ((dungeon.wave-1) % 2 === 0 || isBossWave()) showBoons(); else dungeon.wait = 1.2;
+  if ((dungeon.wave-1) % 2 === 0 || isBossWave()) showBoons(); else { dungeon.wait = 1.2; say('wave_clear'); }
 }
 
 function startBoss() {
@@ -82,12 +82,12 @@ function updateIntro(dt) {
   if (dungeon.introT <= 0) {
     dungeon.state = 'fight'; hide('cine'); show('boss-bar-wrap');
     $('boss-bar-name').textContent = dungeon.bossRef.name; $('boss-bar-title').textContent = dungeon.bossRef.title;
-    toast('⚠ BOSS DETECTED — HUNT IT DOWN ⚠', 'red', 3000, true);
+    toast('⚠ BOSS DETECTED — HUNT IT DOWN ⚠', 'red', 3000, true); say('boss_detected', true);
   }
 }
 
 function onBossDeath(b) {
-  dungeon.bossRef = null; dungeon.state = 'dying';
+  dungeon.bossRef = null; dungeon.state = 'dying'; say('boss_defeated', true, 0.6);
   hide('boss-bar-wrap');
   enemies.forEach(e => { if (e.alive) { e.alive = false; spawnBurst(e.x, e.y, e.color, 10, 260); } });
   spawnQueue = []; projectiles = []; telegraphs = [];
@@ -101,7 +101,7 @@ function endlessBossCleared() {
   camera.focus = null; arenaW = 1400; arenaH = 1000;
   movePlayerTo(player.x, player.y);
   dungeon.state = 'fight'; setMusic('battle');
-  toast(`FLOOR ${dungeon.wave} CONQUERED`, 'gold', 2500, true); playSfx('victory');
+  toast(`FLOOR ${dungeon.wave} CONQUERED`, 'gold', 2500, true); say('floor_cleared'); playSfx('victory');
   healPlayer(player.maxHp*0.3);
   nextWave();
 }
@@ -122,26 +122,38 @@ function clearGate(b) {
 const extractChance = () => player.shadows.length ? clamp(0.62 + (player.level - dungeon.gate.reqLevel)*0.015 + player.stats.INT*0.003, 0.45, 0.95) : 1;
 function updateExtractInfo() { $('extract-info').textContent = `SUCCESS ${Math.round(extractChance()*100)}%  ·  ${extractTries} ATTEMPT${extractTries === 1 ? '' : 'S'} REMAIN`; }
 function showExtraction() {
+  extractBusy = false; say('extract_prompt', false, 0.3);
   $('extract-name').textContent = pendingExtraction.def.name;
   updateExtractInfo(); show('extraction-overlay', 'flex');
   camera.focus = { x:pendingExtraction.x, y:pendingExtraction.y }; camera.targetZoom = baseZoom()*1.4;
 }
+let extractBusy = false;
 function doExtract() {
-  if (!pendingExtraction) return;
+  if (!pendingExtraction || extractBusy) return;
   const p = pendingExtraction;
-  extractTries--; arisePillar(p.x, p.y, true); shake(10);
-  if (Math.random() < extractChance()) {
-    playSfx('extract'); flash('#8844ff', 0.6);
-    addShadow({ name:p.def.name, kind:'boss', damage:Math.floor(p.def.damage*0.4), level:player.level, color:p.def.color, size:Math.min(p.def.size*0.4, 18), grade:'Marshal', x:p.x, y:p.y });
-    toast(`SHADOW EXTRACTED: ${p.def.name}`, 'purple', 3000);
-    // second beat, timed to the second hit in the sound
-    after(1.1, () => { arisePillar(p.x, p.y, true); ring(p.x, p.y, '#ffffff', 20, 420, 0.7, 10); flash('#bb66ff', 0.55); shake(18); }, true);
-    endExtraction(2600);
-  } else {
-    playSfx('fail'); flash('#330000', 0.3);
-    if (extractTries <= 0) { toast('EXTRACTION FAILED — THE SHADOW IS LOST', 'red', 2500); endExtraction(900); }
-    else { toast('EXTRACTION FAILED', 'red', 1500); updateExtractInfo(); }
-  }
+  extractBusy = true; extractTries--; updateExtractInfo();
+  arisePillar(p.x, p.y, true); shake(6);
+  // The System announces the attempt, then the wait: the result word lands with the result on screen
+  playClip('s_extract_charge', 0.5); say('extract_start', true);
+  after(clips.v_extract_start ? 2.0 : 0.05, () => {
+    extractBusy = false;
+    if (pendingExtraction !== p) return;
+    shake(10);
+    if (Math.random() < extractChance()) {
+      if (!playClip('s_extract_success', 0.7)) playSfx('extract');
+      say('extract_success', true, 0.1); flash('#8844ff', 0.6);
+      addShadow({ name:p.def.name, kind:'boss', damage:Math.floor(p.def.damage*0.4), level:player.level, color:p.def.color, size:Math.min(p.def.size*0.4, 18), grade:'Marshal', x:p.x, y:p.y });
+      toast(`SHADOW EXTRACTED: ${p.def.name}`, 'purple', 3000);
+      // second beat, timed to the second hit in the sound
+      after(1.1, () => { arisePillar(p.x, p.y, true); ring(p.x, p.y, '#ffffff', 20, 420, 0.7, 10); flash('#bb66ff', 0.55); shake(18); }, true);
+      endExtraction(2600);
+    } else {
+      if (!playClip('s_extract_fail', 0.8)) playSfx('fail');
+      say('extract_fail', true, 0.1); flash('#330000', 0.3);
+      if (extractTries <= 0) { toast('EXTRACTION FAILED — THE SHADOW IS LOST', 'red', 2500); say('extract_lost', false, 1.3); endExtraction(900); }
+      else { toast('EXTRACTION FAILED', 'red', 1500); updateExtractInfo(); }
+    }
+  }, true);
 }
 function endExtraction(delay) {
   pendingExtraction = null; hide('extraction-overlay');
@@ -149,6 +161,7 @@ function endExtraction(delay) {
 }
 
 function showVictory() {
+  say('gate_cleared');
   const g = dungeon.gate, par = g.waves*26;
   const score = 100 - Math.min(60, run.dmgTaken/player.maxHp*30) - Math.min(30, Math.max(0, (run.time-par)/par*30));
   const grade = score >= 90 ? 'S' : score >= 75 ? 'A' : score >= 55 ? 'B' : 'C';
@@ -166,7 +179,7 @@ function showVictory() {
 
 function showDeath() {
   dungeon.state = 'dead'; hide('cine'); hide('boss-bar-wrap');
-  setMusic('off'); playSfx('death'); slowmo(0.25, 1.2); flash('#ff0000', 0.4); shake(20);
+  setMusic('off'); playSfx('death'); say('death', true, 0.8); slowmo(0.25, 1.2); flash('#ff0000', 0.4); shake(20);
   spawnBurst(player.x, player.y-12, COLORS.primary, 40, 420); smoke(player.x, player.y, '#000', 10, 20);
   if (dungeon.endless) highScores.bestFloor = Math.max(highScores.bestFloor, dungeon.wave-1);
   $('death-stats').innerHTML = dungeon.endless
@@ -195,7 +208,7 @@ function showBoons() {
   while (picks.length < 3 && pool.length) picks.push(pool.splice(randInt(0, pool.length-1), 1)[0]);
   dungeon.picks = picks;
   $('boon-cards').innerHTML = picks.map((b, i) => `<div class="boon-card" data-boon="${i}"><div class="b-ico">${b.icon}</div><div class="b-name">${b.name}</div><div class="b-desc">${b.desc}</div><div class="b-key">${run.boons[b.id] ? `OWNED ×${run.boons[b.id]} · ` : ''}[ ${i+1} ]</div></div>`).join('');
-  show('boon-overlay', 'flex'); playSfx('boon'); mouse.down = false; touchAttack = false;
+  show('boon-overlay', 'flex'); playSfx('boon'); say('reward'); mouse.down = false; touchAttack = false;
 }
 function chooseBoon(i) {
   if (!dungeon || dungeon.state !== 'boon') return;

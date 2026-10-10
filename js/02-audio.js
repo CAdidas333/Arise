@@ -25,6 +25,7 @@ function initAudio() {
   noiseBuf = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
   const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random()*2-1;
   setInterval(musicTick, 25);
+  loadClips();
 }
 
 // o: { type, f, f2, dur, vol, t, a, lp, lp2, q, rev, dest }
@@ -61,12 +62,56 @@ function noise(o) {
   src.start(t, Math.random()*0.9); src.stop(t+dur+0.03);
 }
 
+// --- RECORDED CLIPS: the System's voice and the signature effects (mp3 files in assets/) ---
+const VOICE_IDS = ['chosen','welcome_back','gate_enter','wave_clear','reward','elite','boss_detected','boss_enraged','boss_defeated','gate_cleared','level_up','rank_d','rank_c','rank_b','rank_a','rank_s','skill_unlocked','awakening_ready','extract_prompt','extract_start','extract_success','extract_fail','extract_lost','army_grows','legion','low_hp','keep_moving','death','quest_complete','quests_all','new_gate','new_weapon','no_potions','floor_cleared','castle_shifts'];
+const SFX_IDS = ['extract_charge','extract_success','extract_fail','boss_appear','level_up','awakening','legion','death'];
+// Recorded replacements for synthesized effects: playSfx type -> [clip id, gain]. Two of the clips peak over full level, hence 0.6
+const SFX_CLIP = { levelup:['level_up',0.7], boss:['boss_appear',0.6], ult:['awakening',0.6], legion:['legion',0.7], death:['death',0.7] };
+// Seconds before the same voice line may repeat (default 10)
+const VOICE_GAP = { low_hp:25, keep_moving:25, army_grows:30, elite:20 };
+const clips = {}, voiceLast = {};
+let voiceNode = null, voiceUntil = 0;
+
+function loadClips() {
+  // fetch() is blocked when the game is opened straight from disk (file://); an <audio> element still works there
+  const add = (key, url) => fetch(url).then(r => r.arrayBuffer()).then(b => AC.decodeAudioData(b)).then(buf => { clips[key] = buf; })
+    .catch(() => { const a = new Audio(url); a.preload = 'auto'; clips[key] = a; });
+  VOICE_IDS.forEach(id => add('v_'+id, `assets/voice/${id}.mp3`));
+  SFX_IDS.forEach(id => add('s_'+id, `assets/sfx/${id}.mp3`));
+}
+// Returns the playing node (truthy) or null when the clip is not loaded, so callers can fall back
+function playClip(key, vol = 1, delay = 0) {
+  const c = clips[key];
+  if (!c || !AC || AC.state !== 'running') return null;
+  if (c instanceof AudioBuffer) {
+    const src = AC.createBufferSource(), g = AC.createGain();
+    src.buffer = c; g.gain.value = vol; src.connect(g); g.connect(sfxGain); src.start(AC.currentTime + delay);
+    return src;
+  }
+  c.volume = clamp(vol*settings.sfx, 0, 1);
+  setTimeout(() => { c.currentTime = 0; c.play().catch(() => {}); }, delay*1000);
+  return c;
+}
+// One voice line at a time. A new line is dropped while another is speaking, unless force (which cuts the old one off).
+function say(id, force = false, delay = 0, retried = false) {
+  if (!AC) return;
+  if (!clips['v_'+id]) { if (!retried) setTimeout(() => say(id, force, 0, true), 1200); return; } // clips load after the first click
+  const now = AC.currentTime;
+  if (!force && (now + delay < voiceUntil || (voiceLast[id] && now - voiceLast[id] < (VOICE_GAP[id] ?? 10)))) return;
+  if (force && voiceNode) { try { if (voiceNode.stop) voiceNode.stop(); else voiceNode.pause(); } catch (e) {} }
+  const n = playClip('v_'+id, 1, delay);
+  if (!n) return;
+  voiceNode = n; voiceLast[id] = now; voiceUntil = now + delay + ((n.buffer || n).duration || 1.5);
+}
+
 const sfxLast = {};
 function playSfx(type, p = 1) {
   if (!AC || AC.state !== 'running') return;
   const t = AC.currentTime;
   if (sfxLast[type] && t - sfxLast[type] < 0.035) return; // don't stack 30 identical hits in one frame
   sfxLast[type] = t;
+  const rec = SFX_CLIP[type];
+  if (rec && playClip('s_'+rec[0], rec[1])) return;
   switch (type) {
     case 'slash': noise({ dur:0.09, vol:0.22, type:'bandpass', f:2600*p, f2:700, q:1.2 }); tone({ type:'sawtooth', f:340*p, f2:110, dur:0.08, vol:0.1, lp:1800 }); break;
     case 'slash3': noise({ dur:0.2, vol:0.3, type:'bandpass', f:3800, f2:500, q:0.9, rev:1 }); tone({ type:'sawtooth', f:520, f2:70, dur:0.22, vol:0.18, lp:2400, lp2:300 }); break;
