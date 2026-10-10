@@ -3,7 +3,7 @@
 // ================================================================
 //  RENDERING — world
 // ================================================================
-let floorPat = null, floorTheme = GATE_DEFS[0].theme, floorSides = 6;
+let floorPat = null, floorTheme = GATE_DEFS[0].theme;
 const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
 const disc = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); };
 
@@ -47,33 +47,21 @@ function buildFloor(g) {
   }
     floorPat = ctx.createPattern(oc, 'repeat');
   }
-  floorTheme = th; floorSides = GATE_DEFS.indexOf(g) % 2 ? 8 : 6;
+  floorTheme = th;
 }
 
 function drawArena(vx0, vy0, vx1, vy1) {
   const hw = arenaW/2, hh = arenaH/2, th = floorTheme;
   const x0 = Math.max(vx0, -hw), y0 = Math.max(vy0, -hh), x1 = Math.min(vx1, hw), y1 = Math.min(vy1, hh);
   if (x1 > x0 && y1 > y0 && floorPat) { ctx.fillStyle = floorPat; ctx.fillRect(x0, y0, x1-x0, y1-y0); }
-  // The gate circle at the heart of the arena: nested rings, four orbiting circles and a turning polygon.
-  // Deliberately no star shapes of any kind (no pentagram / hexagram).
+  // The mark at the heart of the arena: plain rings only, with a slow pulse moving outward.
+  // Deliberately nothing else (no polygons, spokes, tick dials or orbiting circles): it must never read as a magic circle.
   ctx.save();
-  ctx.strokeStyle = th.line; ctx.lineWidth = 2; ctx.globalAlpha = 0.12 + 0.04*Math.sin(clock*1.5);
-  const ringAt = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke(); };
-  ringAt(0, 0, 280); ringAt(0, 0, 268); ringAt(0, 0, 130); ringAt(0, 0, 56);
-  ctx.save(); ctx.rotate(clock*0.06);
-  ctx.beginPath();
-  for (let i = 0; i < 48; i++) { const a = i*TAU/48, r0 = i % 4 ? 258 : 246; ctx.moveTo(Math.cos(a)*r0, Math.sin(a)*r0); ctx.lineTo(Math.cos(a)*268, Math.sin(a)*268); }
-  ctx.stroke();
-  for (let i = 0; i < 4; i++) {
-    const a = i*TAU/4, x = Math.cos(a)*205, y = Math.sin(a)*205;
-    ringAt(x, y, 26); ringAt(x, y, 8);
-    ctx.beginPath(); ctx.arc(0, 0, 205, a + 0.2, a + TAU/4 - 0.2); ctx.stroke();
-  }
-  ctx.restore();
-  ctx.rotate(-clock*0.09);
-  const sides = floorSides, ap = 130*Math.cos(Math.PI/sides);
-  ctx.beginPath(); for (let i = 0; i <= sides; i++) { const a = i*TAU/sides; ctx.lineTo(Math.cos(a)*130, Math.sin(a)*130); } ctx.stroke();
-  ctx.beginPath(); for (let i = 0; i < sides; i++) { const a = (i+0.5)*TAU/sides; ctx.moveTo(Math.cos(a)*56, Math.sin(a)*56); ctx.lineTo(Math.cos(a)*ap, Math.sin(a)*ap); } ctx.stroke();
+  ctx.strokeStyle = th.line; ctx.lineWidth = 2;
+  [56, 130, 205, 280].forEach((r, i) => {
+    ctx.globalAlpha = 0.11 + 0.05*Math.sin(clock*1.5 - i*0.9);
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.stroke();
+  });
   ctx.restore();
   // Walls
   ctx.save();
