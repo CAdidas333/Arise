@@ -1,6 +1,6 @@
 # Arise — Active Projects
 
-## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 and 3 live, step 2 voice trial with Chris)
+## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 and 3 live, step 2 recorded and waiting to be wired in)
 **Priority**: MEDIUM (fun/showcase project)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
@@ -47,7 +47,7 @@
 
 ### V18 plan (approved by Chris 2026-10-09; built on branch `v18-world`, one step at a time; new steps ship when he says)
 - [x] Step 1 — Painted world: a painted floor per gate and a backdrop for the title and hub. **Live** (shipped to main 2026-10-09)
-- [ ] Step 2 — The System speaks: voiced lines for the big moments, ElevenLabs signature sound effects. **Voice trial recorded 2026-10-09**: three lines in three voices (Alice, River, Brian) in `assets/voice/trial/`, waiting for Chris to pick. Then all 34 lines, then 8 sound effects with two takes each. The trial folder must be deleted before the chosen voice ships. ElevenLabs music stays blocked until Chris has heard the voice and effects
+- [ ] Step 2 — The System speaks. **Recorded 2026-10-09, not yet in the game**: 35 voice clips in the River voice in `assets/voice/` (Chris approved the voice, the slow calm read, the anxious boss warning and the extraction line split into "Shadow extraction." and the result word), and 8 sound effects with two takes each in `assets/sfx/` (Chris is choosing between set A and set B; demos in `docs/previews/`). Next: a worker brief to play them in the game, timed so the result word lands with the on-screen result. Recipe in `assets/CREDITS.md`. ElevenLabs music stays blocked until Chris says so
 - [x] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows fire a ring of shots on a timer. **Live** (shipped to main 2026-10-09, commit f465a46)
 - [ ] Step 4 — A hunter with a real body (jointed parts on the existing skeleton) and a look for each boss
 - [ ] Step 5 — Real dungeons: generated rooms and corridors; the arena stays for boss fights and endless mode
@@ -62,7 +62,7 @@
 - [ ] 3D experiment (Chris asked for it): a third-person 3D view of the same game rules with simple shapes, fixed camera, on branch `worker/v18-3d-spike` (commit 915ea83). Built, awaiting review and a local browser test. Not live and not to be deployed without Chris's word
 
 ### Next Up (ranked)
-1. Chris picks a System voice from the three trial files; then record all 34 lines, then the 8 signature sound effects with two takes each
+1. Chris picks sound-effect takes (set A or B, per effect); then write the brief that plays the voice and effects in the game and run it when Houston allows a worker
 2. When Houston says the restart is done: review and browser-test the 3D experiment locally; show Chris a screenshot
 3. V18 step 4 (hunter with a real body, boss looks)
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`
