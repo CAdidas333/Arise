@@ -1,0 +1,35 @@
+# id<TAB>text — the lines the System speaks. Original wording for this fan game; nothing is quoted from the source material.
+chosen	Qualification confirmed. Welcome, player.
+welcome_back	Welcome back, hunter.
+gate_enter	Gate entered. Eliminate all hostiles.
+wave_clear	Wave cleared.
+reward	Choose your reward.
+elite	Elite enemy detected.
+boss_detected	Warning. Boss detected. Hunt it down.
+boss_enraged	Warning. The boss is enraged.
+boss_defeated	Boss eliminated.
+gate_cleared	Gate cleared.
+level_up	Level up.
+rank_d	Rank up. You are now a D-rank hunter.
+rank_c	Rank up. You are now a C-rank hunter.
+rank_b	Rank up. You are now a B-rank hunter.
+rank_a	Rank up. You are now an A-rank hunter.
+rank_s	Rank up. You are now an S-rank hunter.
+skill_unlocked	New skill acquired.
+awakening_ready	Awakening is ready.
+extract_prompt	A shadow can be extracted.
+extract_success	Shadow extraction successful.
+extract_fail	Shadow extraction failed.
+extract_lost	The shadow has been lost.
+army_grows	A new soldier joins your army.
+legion	Shadow legion unleashed.
+low_hp	Warning. Health critical.
+keep_moving	Keep moving.
+death	You have died.
+quest_complete	Quest complete.
+quests_all	All daily quests complete. Bonus quests unlocked.
+new_gate	A new gate has opened.
+new_weapon	New weapon acquired.
+no_potions	No potions remaining.
+floor_cleared	Floor cleared.
+castle_shifts	The castle shifts.
