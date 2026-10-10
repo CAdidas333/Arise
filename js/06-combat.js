@@ -102,7 +102,13 @@ function updateProjectiles(dt) {
     } else {
       for (const e of enemies) {
         if (!e.alive || e.spawnT > 0 || p.hit.has(e) || dist(p.x, p.y, e.x, e.y) > e.size+p.size) continue;
-        p.hit.add(e); damageEnemy(e, p.damage, { kb:140, ox:p.x-p.vx, oy:p.y-p.vy });
+        p.hit.add(e);
+        if (p.shadow) {
+          damageEnemy(e, p.damage, { shadow:true, crit:false, kb:100, ox:p.x-p.vx, oy:p.y-p.vy });
+          p.life = 0;
+          break;
+        }
+        damageEnemy(e, p.damage, { kb:140, ox:p.x-p.vx, oy:p.y-p.vy });
       }
     }
     live.push(p);

@@ -187,11 +187,75 @@ function updateShadows(dt) {
       const target = alive[i % alive.length]; // spread the army across the enemy line
       const dx = target.x-s.x, dy = target.y-s.y, d = Math.hypot(dx,dy) || 1;
       s.facing = { x:dx/d, y:dy/d };
-      if (d > target.size+24) { const sp = berserk ? 330 : 190; s.x += dx/d*sp*dt; s.y += dy/d*sp*dt; s.moving = true; }
-      else if (s.attackCd <= 0) {
-        damageEnemy(target, shadowDmg(s)*(berserk ? 1.8 : 1), { shadow:true, crit:false, kb:berserk ? 120 : 0 });
-        s.attackCd = berserk ? 0.5 : 1.2; s.atkT = 0.18;
-        arcs.push({ x:s.x, y:s.y-10, a:Math.atan2(dy,dx), r:34, span:2.2, dir:i%2?1:-1, t:0, dur:0.15, color:berserk ? '#ff66ff' : COLORS.accent, w:10 });
+      const mult = berserk ? 1.8 : 1, dmg = shadowDmg(s)*mult, cdK = berserk ? 0.45 : 1, walk = berserk ? 330 : 190;
+      const so = { shadow:true, crit:false, ox:s.x, oy:s.y };
+      const ux = dx/d, uy = dy/d;
+      switch (s.kind) {
+        case 'ranged':
+          if (d > 300) { s.x += ux*walk*dt; s.y += uy*walk*dt; s.moving = true; }
+          else if (d < 180) { s.x -= ux*walk*0.6*dt; s.y -= uy*walk*0.6*dt; s.moving = true; }
+          if (s.attackCd <= 0 && d < 440) {
+            projectiles.push({ x:s.x, y:s.y, vx:ux*460, vy:uy*460, damage:dmg, size:5, color:'#bb88ff', life:1.4, fromEnemy:false, hit:new Set(), shadow:true });
+            s.attackCd = 1.4*cdK; s.atkT = 0.18; playSfx('shoot');
+          }
+          break;
+        case 'caster':
+          if (d > 340) { s.x += ux*walk*dt; s.y += uy*walk*dt; s.moving = true; }
+          else if (d < 200) { s.x -= ux*walk*0.6*dt; s.y -= uy*walk*0.6*dt; s.moving = true; }
+          if (s.attackCd <= 0 && d < 480) {
+            telegraph({ type:'circle', x:target.x, y:target.y, r:70, dur:0.7, dmg:dmg*1.6, color:'#7744cc', friendly:true });
+            s.attackCd = 3.2*cdK; s.atkT = 0.18;
+          }
+          break;
+        case 'charger':
+          if (d > target.size+24) {
+            const sp = (d > 110 && s.attackCd <= 0) ? 560 : walk;
+            s.x += ux*sp*dt; s.y += uy*sp*dt; s.moving = true;
+          } else if (s.attackCd <= 0) {
+            damageEnemy(target, dmg*1.3, { ...so, kb:260 });
+            s.attackCd = 1.6*cdK; s.atkT = 0.18;
+            arcs.push({ x:s.x, y:s.y-10, a:Math.atan2(dy,dx), r:34, span:2.2, dir:i%2?1:-1, t:0, dur:0.15, color:berserk ? '#ff66ff' : COLORS.accent, w:10 });
+          }
+          break;
+        case 'brute':
+          if (d > target.size+24) { s.x += ux*walk*dt; s.y += uy*walk*dt; s.moving = true; }
+          else if (s.attackCd <= 0) {
+            damageEnemy(target, dmg*1.4, { ...so, kb:320 });
+            for (const en of alive) if (en.alive && en !== target && dist(en.x, en.y, target.x, target.y) <= 70) damageEnemy(en, dmg*0.6, { ...so, kb:200 });
+            ring(target.x, target.y, '#bb66ff', 10, 80, 0.3, 5);
+            s.attackCd = 1.9*cdK; s.atkT = 0.18;
+          }
+          break;
+        case 'bomber':
+          if (d > target.size+24) { s.x += ux*walk*1.3*dt; s.y += uy*walk*1.3*dt; s.moving = true; }
+          else if (s.attackCd <= 0) {
+            for (const en of alive) if (en.alive && dist(en.x, en.y, s.x, s.y) <= 75) damageEnemy(en, dmg*1.2, { ...so, kb:240 });
+            ring(s.x, s.y, '#ff66cc', 10, 90, 0.3, 6);
+            spawnBurst(s.x, s.y, '#ff66cc', 14, 360);
+            playSfx('explode');
+            s.attackCd = 2.4*cdK; s.atkT = 0.18;
+          }
+          break;
+        case 'boss':
+          s.specialCd = (s.specialCd ?? 4) - dt;
+          if (s.specialCd <= 0) {
+            for (let k = 0; k < 10; k++) {
+              const a = k/10*TAU;
+              projectiles.push({ x:s.x, y:s.y, vx:Math.cos(a)*380, vy:Math.sin(a)*380, damage:dmg*0.8, size:6, color:'#bb88ff', life:1.2, fromEnemy:false, hit:new Set(), shadow:true });
+            }
+            ring(s.x, s.y, '#bb66ff', 12, 120, 0.4, 6);
+            playSfx('shoot');
+            s.specialCd = 8*cdK;
+          }
+          // falls through
+        default:
+          if (d > target.size+24) { s.x += ux*walk*dt; s.y += uy*walk*dt; s.moving = true; }
+          else if (s.attackCd <= 0) {
+            damageEnemy(target, shadowDmg(s)*(berserk ? 1.8 : 1), { shadow:true, crit:false, kb:berserk ? 120 : 0 });
+            s.attackCd = berserk ? 0.5 : 1.2; s.atkT = 0.18;
+            arcs.push({ x:s.x, y:s.y-10, a:Math.atan2(dy,dx), r:34, span:2.2, dir:i%2?1:-1, t:0, dur:0.15, color:berserk ? '#ff66ff' : COLORS.accent, w:10 });
+          }
+          break;
       }
     } else {
       // Military formation behind the player
