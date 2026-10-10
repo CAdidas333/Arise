@@ -71,6 +71,8 @@ function drawArena(vx0, vy0, vx1, vy1) {
   ctx.restore();
 }
 
+// The hunter — also used, darker, for every shadow soldier
+// o: { face, anim, t, scale, color, body, blade, eye, cape, atkP, atkDir }
 function drawHunter(x, y, o) {
   const s = o.scale || 1, t = o.t, ga = ctx.globalAlpha, S = Math.sin, C = Math.cos;
   let lA = 0.2, rA = -0.3, lL = 0, rL = 0, lean = 0, bob = 0, sw = -0.5;
@@ -83,7 +85,7 @@ function drawHunter(x, y, o) {
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   // Afterimages pass one colour for everything: draw them as a plain silhouette of the same parts
   const col = o.color, mono = o.body === col;
-  const PAL = { vest:'#2b2a58', trim:'#3d3c78', shirt:'#14132a', pants:'#32325a', far:'#20203c', boot:'#15131f', sole:'#3a3850', skin:'#54407a', skinFar:'#3a2b55', wrap:'#7a72b4', wrapFar:'#544d84', wrapLine:'#3f3a6c', hair:'#0d0915', head:'#2a1b3e', strap:'#0c0a16', steel:'#d4d6ea', steelDark:'#8f92b8', pommel:'#6b4a3a' };
+  const PAL = { vest:'#2b2a58', trim:'#3d3c78', shirt:'#14132a', pants:'#32325a', far:'#20203c', boot:'#15131f', sole:'#262438', skin:'#54407a', skinFar:'#3a2b55', wrap:'#7a72b4', wrapFar:'#544d84', wrapLine:'#3f3a6c', hair:'#0d0915', head:'#2a1b3e', strap:'#0c0a16', steel:'#d4d6ea', steelDark:'#8f92b8', pommel:'#6b4a3a' };
   const pc = n => mono ? col : PAL[n];
   const headR = 4.6*s, headY = -30.5*s, shY = -21*s, hipY = -5*s, uArm = 7*s, fArm = 6.5*s, thigh = 9*s, shin = 9*s;
   const rim = (x1, y1, x2, y2, w) => { if (mono) return; ctx.globalAlpha = ga*0.18; ctx.strokeStyle = col; ctx.lineWidth = w + 0.6*s; line(x1, y1, x2, y2); ctx.globalAlpha = ga; };
@@ -142,8 +144,8 @@ function drawHunter(x, y, o) {
     ctx.fill();
     
     if (!mono) {
-      ctx.strokeStyle = PAL.sole; ctx.lineWidth = 0.6*s; ctx.lineCap = 'butt';
-      line(-1.6*s, 0.8*s, 5.0*s, 0.8*s);
+      ctx.strokeStyle = PAL.sole; ctx.lineWidth = 0.8*s; ctx.lineCap = 'butt';
+      line(-1.6*s, 0.4*s, 5.2*s, 0.4*s);
       ctx.lineCap = 'round';
     }
     ctx.restore();
@@ -153,7 +155,7 @@ function drawHunter(x, y, o) {
     if (!o.blade) return;
     const dx = S(a), dy = -C(a), nx = C(a), ny = S(a), tx = hx + dx*len, ty = hy + dy*len, gx = hx + dx*2.2*s, gy = hy + dy*2.2*s;
     
-    ctx.globalAlpha = ga*0.2*alpha; ctx.strokeStyle = o.blade; ctx.lineWidth = 5*s; line(gx, gy, tx, ty);
+    ctx.globalAlpha = ga*0.12*alpha; ctx.strokeStyle = o.blade; ctx.lineWidth = 3.6*s; line(gx, gy, tx, ty);
     ctx.globalAlpha = ga*alpha;
     
     ctx.fillStyle = mono ? col : PAL.steel;
@@ -204,8 +206,11 @@ function drawHunter(x, y, o) {
     ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(1*s, shY + 4.8*s, 2.5*s, 1);
     ctx.fillStyle = PAL.trim; ctx.fillRect(-2*s, hipY - 5*s, 3*s, 3.5*s);
     ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-2*s, hipY - 4.2*s, 3*s, 1);
-    ctx.fillStyle = PAL.strap; ctx.fillRect(-4.5*s, hipY - 1.5*s, 9*s, 1.8*s);
-    ctx.fillStyle = PAL.steel; ctx.fillRect(3.5*s, hipY - 1.5*s, 1*s, 1.8*s);
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = PAL.strap; ctx.lineWidth = 1.8*s;
+    line(-3.6*s, hipY - 0.6*s, 3.6*s, hipY - 0.6*s);
+    ctx.lineCap = 'round';
+    ctx.fillStyle = PAL.steel; ctx.fillRect(2.6*s, hipY - 1.5*s, 1*s, 1.8*s);
   }
 
   const hx0 = 0.6*s;
@@ -213,7 +218,7 @@ function drawHunter(x, y, o) {
   const hair = [[-1.0,0.4],[-1.2,0.0],[-1.4,-0.6],[-1.0,-0.8],[-1.1,-1.3],[-0.5,-1.1],[-0.2,-1.5],[0.3,-1.1],[0.9,-1.3],[0.8,-0.8],[1.2,-0.5],[0.8,-0.4],[1.1,-0.1],[0.6,-0.2],[0.8,0.2],[0.4,0.0]];
   ctx.beginPath(); hair.forEach(([px, py], i) => { if (i) ctx.lineTo(hx0 + px*headR, headY + py*headR); else ctx.moveTo(hx0 + px*headR, headY + py*headR); }); ctx.closePath();
   ctx.fillStyle = pc('hair'); ctx.fill();
-  if (!mono) { ctx.fillStyle = o.eye || col; ctx.fillRect(hx0 + 1.8*s, headY - 1.1*s, 2.8*s, 1.6*s); }
+  if (!mono) { ctx.fillStyle = o.eye || col; ctx.fillRect(hx0 + 1.1*s, headY - 1.1*s, 2.6*s, 1.5*s); }
 
   { const [, , hx, hy] = arm(2*s, shY + 1.2*s, rA, 4.9*s, 4.3*s, pc('skin'), pc('wrap'), pc('skin'), true); blade(hx, hy, sw, 24*s, 1); }
   ctx.globalAlpha = ga;
