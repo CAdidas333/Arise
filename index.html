@@ -2412,6 +2412,7 @@ function buildFloor(g) {
   const th = g.theme;
   if (ART[g.id]) {
     floorPat = ctx.createPattern(ART[g.id], 'repeat');
+    floorPat.setTransform(new DOMMatrix().scale(0.6)); // draw the tile smaller so the ground detail suits the hunter's size
   } else {
     const oc = document.createElement('canvas'), ts = 60, n = 8;
   oc.width = oc.height = ts*n;
@@ -2631,7 +2632,7 @@ function drawMotes(c1, c2, par) {
 function drawPortal() {
   if (ART.hub) {
     const img = ART.hub, s = Math.max(W/img.width, H/img.height), w = img.width*s, h = img.height*s;
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.65;
     ctx.drawImage(img, (W - w)/2, (H - h)/2, w, h);
     ctx.globalAlpha = 1;
   }
