@@ -66,7 +66,7 @@ Arise/
   js/                 — 13 classic scripts, loaded in order, shared global scope (01-data ... 13-loop)
   assets/             — Painted floors (floors/), hub backdrop (bg/), CREDITS.md (provenance)
   tools/              — process_art.py, stamp.sh, el_voice.py, el_sfx.py, system_lines.tsv
-  3d/                 — 3D experiment (vendored three.js only on v18-world; the page is on worker/v18-3d-spike)
+  3d/                 — The 3D view: render3d.js, vendored three.js, and index.html GENERATED from the root index.html by tools/sync3d.py
   manifest.json       — PWA manifest for mobile home screen install
   CLAUDE.md           — Project instructions for Claude
   .github/

@@ -59,10 +59,10 @@
 - Done alongside: script split into `js/` (13 files, behaviour unchanged) so workers can take one small file per job
 
 ### Side item
-- [ ] 3D lane (Chris, 2026-10-09: "develop both lanes simultaneously", with a button to flip between 2D and 3D): the same game rules in a third-person 3D view. State: shapes-only, fixed camera, on branch `worker/v18-3d-spike` (90769db), tested through a whole gate. Next: (1) bring it onto `v18-world` as a second page built from `index.html` so the two never drift, with a switch link on both pages; (2) free camera with movement relative to the camera; (3) the hunter and enemies as real 3D figures
+- [ ] 3D lane (Chris, 2026-10-09: "develop both lanes simultaneously", with a button to flip between 2D and 3D): the same game rules in a third-person 3D view at `/3d/`. **Live since 2026-10-09 with a switch link** on the title screen and in the pause menu of both pages; the save is shared. `3d/index.html` is generated from `index.html` by `tools/sync3d.py` (run by `tools/stamp.sh`; never edit it by hand) and uses `<base href="../">`. State: simple shapes, fixed camera, no hub backdrop. Next: (1) free camera with movement relative to the camera; (2) the hunter and enemies as real 3D figures; (3) hit effects and damage numbers, which the 3D view does not draw yet
 
 ### Next Up (ranked)
-1. 3D lane, first job: the switch between 2D and 3D (see the 3D lane item below), then ship it
+1. 3D lane: free camera with movement relative to the camera (open thread F2), then real 3D figures
 2. Boss looks (rest of V18 step 4), then V18 step 5 (generated dungeons). Chris gave free rein: decide and ship, then tell him
 3. V18 step 4 (hunter with a real body, boss looks)
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`

@@ -23,6 +23,6 @@
 | V18 step 7 | A story thread: a scripted opening and a chapter card for each gate | open | docs/context/ACTIVE_PROJECTS.md |
 | V18 step 8 | Hand-designed boss fights, each with its own mechanics | open | docs/context/ACTIVE_PROJECTS.md |
 | V18 step 9 | A result card you can save or share after a run | open | docs/context/ACTIVE_PROJECTS.md |
-| 3D lane | The same game shown in 3D from behind the hunter, built beside the 2D game. Chris wants both, with a button to flip between them. Today it is simple shapes with a fixed camera and runs a whole gate without errors; next come the switch button, a free camera, then real 3D figures | in progress | branch worker/v18-3d-spike; docs/previews/3d_experiment_*_v2.jpg |
+| 3D lane | The same game shown in 3D from behind the hunter, built beside the 2D game. It is on the public site: a "switch to 3D view" link on the title screen and in the pause menu flips between the two, and the saved hunter carries over. Today it is simple shapes with a fixed camera; next come a free camera, then real 3D figures | live | main (/3d/, shipped 2026-10-09); tools/sync3d.py |
 | v18-world | The branch where V18 is being built. New steps reach the public link only when Chris says to ship | in progress | git branch v18-world |
 | v17-monarch | The branch V17 was built on. It was merged and deployed on 2026-10-09 and is no longer used | closed | git branch v17-monarch |
