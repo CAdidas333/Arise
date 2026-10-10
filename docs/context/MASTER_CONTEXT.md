@@ -107,6 +107,8 @@ Arise/
 - **Working mode (2026-10-09)**: Claude orchestrates (plans, writes briefs, reviews, tests); free image models and the worker do the generating and coding. Free workers need exact function names and line numbers, everything inside the repo, and a note on what not to commit.
 - **ElevenLabs (2026-10-09)**: Chris approved spending credits for the System's voice and signature effects (card D-0077). Voice and effects scripts are allowed through the key broker; the music script stays blocked until Chris has heard the voice and effects.
 - **Ship rule (2026-10-09)**: fixes Chris asks for go straight to `main`; new V18 steps are shown to him first and shipped when he says. Step 1 shipped; step 3 ships whole, not in halves.
+- **Free rein (2026-10-09, late; decision card D-0085)**: Chris: "complete free rein between yourself and Houston. Decisions can be made without me... Make the best decision that you can for the game... I just want something that I can show off." This replaces the ship rule above: Claude decides and ships V18 work without waiting for him, and tells him afterwards. Still his: the no-stars-or-runes art rule, a yes before any ElevenLabs music, and anything that costs money.
+- **Two lanes (2026-10-09, late)**: Chris wants the 2D game and the 3D view developed side by side, with a button to flip between them. The 3D view is no longer a parked experiment.
 - **Skill points (2026-10-09)**: one every 2 levels; old saves are refunded at the new rate on load.
 
 ## Related Projects

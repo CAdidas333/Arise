@@ -1,6 +1,6 @@
 # Arise — Active Projects
 
-## Current Phase: Phase 3 — V17 live; V18 under way (steps 1, 2 and 3 live; step 4, the hunter body, being built)
+## Current Phase: Phase 3 — V17 live; V18 under way (steps 1, 2 and 3 live, the hunter body from step 4 live; a 3D lane runs beside the 2D game)
 **Priority**: MEDIUM (fun/showcase project)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
@@ -49,7 +49,7 @@
 - [x] Step 1 — Painted world: a painted floor per gate and a backdrop for the title and hub. **Live** (shipped to main 2026-10-09)
 - [x] Step 2 — The System speaks: 35 voice lines in the River voice and 8 sound effects, all chosen by Chris by ear, play in the game; the extraction line is "Shadow extraction.", a 2-second wait with a charge effect, then "Successful." or "Failed.". **Live** (shipped to main 2026-10-09 on Chris's word, commit 18b896a; he will say if anything needs changing). Recipe in `assets/CREDITS.md`. ElevenLabs music is still blocked: Chris has now heard the voice and effects but has not said yes to music
 - [x] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows fire a ring of shots on a timer. **Live** (shipped to main 2026-10-09, commit f465a46)
-- [ ] Step 4 — A hunter with a real body (jointed parts on the existing skeleton) and a look for each boss. **Hunter body built on `v18-world`, not live** (2026-10-09): Chris picked look C (`docs/art-direction/hunter-style/hunter_style_c_v1.png`); the body is drawn with canvas shapes in `drawHunter` (two-piece arms and legs, vest with a glowing zip, wrapped forearms, spiky hair, twin steel blades; no cape). Two worker passes; the second is merged (9cc81c0). Frames in `docs/previews/hunter_body_*_v2.jpg`. Waiting for Chris to look and say ship or change. Boss looks are not started
+- [ ] Step 4 — A hunter with a real body and a look for each boss. **Hunter body live** (shipped 2026-10-09 under the free-rein rule): look C, drawn with canvas shapes in `drawHunter` (two-piece arms and legs, vest with a glowing zip, wrapped forearms, spiky hair, twin steel blades; no cape). To tune later: blobby boots, the far blade angle while running. **Boss looks not started**
 - [ ] Step 5 — Real dungeons: generated rooms and corridors; the arena stays for boss fights and endless mode
 - [ ] Step 6 — Loot and gear
 - [ ] Step 7 — Story thread: scripted opening, chapter card per gate
@@ -59,11 +59,11 @@
 - Done alongside: script split into `js/` (13 files, behaviour unchanged) so workers can take one small file per job
 
 ### Side item
-- [ ] 3D experiment (Chris asked for it): a third-person 3D view of the same game rules with simple shapes, fixed camera, on branch `worker/v18-3d-spike` (90769db). Two passes reviewed and tested 2026-10-09: a whole gate runs through to the boss with no errors; pass 2 made the hunter bigger and the camera closer (frames in `docs/previews/3d_experiment_*_v2.jpg`). Waiting for Chris to look and say continue or stop. Not merged, not live, and not to be deployed without his word
+- [ ] 3D lane (Chris, 2026-10-09: "develop both lanes simultaneously", with a button to flip between 2D and 3D): the same game rules in a third-person 3D view. State: shapes-only, fixed camera, on branch `worker/v18-3d-spike` (90769db), tested through a whole gate. Next: (1) bring it onto `v18-world` as a second page built from `index.html` so the two never drift, with a switch link on both pages; (2) free camera with movement relative to the camera; (3) the hunter and enemies as real 3D figures
 
 ### Next Up (ranked)
-1. V18 step 4: Chris looks at the hunter body frames and says ship or change. `main` is at 18b896a and must not be fast-forwarded to `v18-world` until he approves, because the work branch contains the new body. Then the boss looks
-2. 3D experiment: show Chris the second-pass frames (`docs/previews/3d_experiment_*_v2.jpg`); he says continue or stop. It is tested from its own worktree and must not be merged into `v18-world` until he says, because that branch ships to the public site
+1. 3D lane, first job: the switch between 2D and 3D (see the 3D lane item below), then ship it
+2. Boss looks (rest of V18 step 4), then V18 step 5 (generated dungeons). Chris gave free rein: decide and ship, then tell him
 3. V18 step 4 (hunter with a real body, boss looks)
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`
 
