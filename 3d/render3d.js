@@ -63,6 +63,7 @@ function buildFloor(g) {
 
 // Hunter
 const hunterGroup = new THREE.Group(); scene.add(hunterGroup);
+hunterGroup.scale.set(1.6, 1.6, 1.6);
 const hunterMat = new THREE.MeshStandardMaterial({
   color: (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff,
   emissive: (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff,
@@ -169,7 +170,7 @@ function draw() {
   const camY = (typeof camera !== 'undefined' && camera) ? camera.y : 0;
   const sh = (typeof camera !== 'undefined' && camera && camera.shake) ? camera.shake : 0;
   const sx = sh ? (Math.random() * 2 - 1) * sh : 0, sy = sh ? (Math.random() * 2 - 1) * sh : 0;
-  camera3D.position.set(camX + sx, 20 + 430 + sy, camY + 560);
+  camera3D.position.set(camX + sx, 20 + 300 + sy, camY + 400);
   camera3D.lookAt(camX, 20, camY);
 
   // Floor & walls rebuild if arena dimensions change
