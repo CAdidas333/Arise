@@ -174,12 +174,23 @@ function drawEnemy(e) {
 }
 
 function drawShadowSoldier(s) {
-  const berserk = legionTimer > 0, sc = s.grade === 'Marshal' ? 1.0 : s.grade === 'Elite' ? 0.85 : 0.7;
+  const berserk = legionTimer > 0, boss = s.kind === 'boss';
+  let r = boss ? 28 : s.grade === 'Elite' ? 16 : 12;
+  if (s.atkT > 0) r *= 1.15;
   ctx.globalAlpha = berserk ? 0.35 : 0.2; ctx.fillStyle = berserk ? '#cc44ff' : COLORS.accent;
-  ctx.beginPath(); ctx.ellipse(s.x, s.y + 12*sc, 16*sc, 6*sc, 0, 0, TAU); ctx.fill();
-  ctx.globalAlpha = berserk ? 0.95 : 0.8;
-  drawHunter(s.x, s.y, { face:s.facing.x, anim:s.atkT > 0 ? 'attack' : s.moving ? 'run' : 'idle', t:s.animT, scale:sc, color:berserk ? '#dd77ff' : '#7755cc',
-    body:'#0a0414', blade:s.color, eye:berserk ? '#ff66ff' : '#cc99ff', cape:s.grade === 'Marshal' ? '#12041f' : null, atkP:s.atkT > 0 ? 1 - s.atkT/0.18 : 0, atkDir:1 });
+  ctx.beginPath(); ctx.ellipse(s.x, s.y + r*0.85, r*1.2, r*0.4, 0, 0, TAU); ctx.fill();
+  if (boss) { ctx.globalAlpha = 0.12; disc(s.x, s.y, r*1.9); }
+  const e = { isBoss:boss, kind:boss ? 'melee' : (s.kind || 'melee'), facing:s.facing, animT:s.animT, state:'',
+    def:boss ? (GATE_DEFS.find(g => g.boss && g.boss.name === s.name)?.boss || { patterns:[0,0,0] }) : { patterns:[] } };
+  ctx.save(); ctx.translate(s.x, s.y + Math.sin(s.animT*6)*1.5);
+  ctx.globalAlpha = berserk ? 0.95 : 0.85;
+  ctx.fillStyle = berserk ? '#2a0a3e' : '#1a0a2e'; enemyPath(e, r); ctx.fill();
+  ctx.strokeStyle = berserk ? '#dd77ff' : '#8855dd'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#0a0414'; enemyPath(e, r*0.62); ctx.fill();
+  const ox = s.facing.x*r*0.16, oy = s.facing.y*r*0.16 - r*0.08, er = Math.max(1.6, r*0.11);
+  ctx.fillStyle = berserk ? '#ff66ff' : '#cc99ff';
+  disc(ox - r*0.24, oy, er); disc(ox + r*0.24, oy, er);
+  ctx.restore();
   ctx.globalAlpha = 1;
 }
 

@@ -55,7 +55,7 @@ function killEnemy(e, o = {}) {
   for (let i = 0; i < n; i++) orbs.push({ type:'gold', val:Math.ceil(gold/n), x:e.x, y:e.y, vx:rand(-240,240), vy:rand(-240,240), t:0 });
   if (e.elite || e.isBoss || Math.random() < 0.07) orbs.push({ type:'hp', val:0, x:e.x, y:e.y, vx:rand(-200,200), vy:rand(-200,200), t:0 });
   // A fallen enemy sometimes leaves a shadow behind — walk over and say the word
-  if (!e.isBoss && remnants.length < 4 && (e.elite || Math.random() < 0.05)) remnants.push({ x:e.x, y:e.y, name:e.baseName, damage:e.damage, color:e.color, size:e.size, elite:e.elite, t:0, dur:14 });
+  if (!e.isBoss && remnants.length < 4 && (e.elite || Math.random() < 0.05)) remnants.push({ x:e.x, y:e.y, name:e.baseName, kind:e.kind, damage:e.damage, color:e.color, size:e.size, elite:e.elite, t:0, dur:14 });
   const { x, y } = e;
   if (e.kind === 'bomber' && !e.detonated) { e.detonated = true; const dmg = e.damage*1.6; after(0.06, () => explodeAt(x, y, 95, dmg, false)); }
   if (bn('nova')) after(0.08, () => {
