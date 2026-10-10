@@ -11,6 +11,7 @@ function updatePlayer(dt) {
   if (keys['a'] || keys['arrowleft']) dx -= 1;
   if (keys['d'] || keys['arrowright']) dx += 1;
   if (touchJoystick.active) { dx += touchJoystick.dx; dy += touchJoystick.dy; }
+  if (viewYaw) { const c = Math.cos(viewYaw), s = Math.sin(viewYaw), rx = dx*c + dy*s; dy = -dx*s + dy*c; dx = rx; } // 3D view: "up" means away from the camera
   const mag = Math.hypot(dx, dy);
   if (mag > 0.12) {
     dx /= mag; dy /= mag; moveDir.x = dx; moveDir.y = dy; player.moving = true;

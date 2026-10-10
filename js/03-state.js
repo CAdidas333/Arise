@@ -16,6 +16,7 @@ addEventListener('resize', resize); resize();
 
 let gameState = 'TITLE'; // TITLE | CREATE | HUB | DUNGEON
 let player = null, paused = false;
+let viewYaw = 0; // camera turn in radians, set by the 3D view; 0 in the 2D game
 let enemies = [], projectiles = [], particles = [], texts = [], rings = [], arcs = [], ghosts = [], bolts = [];
 let telegraphs = [], orbs = [], remnants = [], spawnQueue = [], timers = [];
 let camera = { x:0, y:0, shake:0, zoom:1, targetZoom:1, focus:null };
@@ -144,7 +145,7 @@ addEventListener('mousemove', e => {
 addEventListener('mousedown', e => {
   initAudio();
   if (e.target !== canvas || gameState !== 'DUNGEON') return;
-  if (e.button === 2) { dodge(); return; }
+  if (e.button === 2) { if (!window.view3D) dodge(); return; }
   mouse.down = true; useSkill(SKILL.slash);
 });
 addEventListener('mouseup', () => { mouse.down = false; });
