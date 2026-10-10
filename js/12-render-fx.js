@@ -41,6 +41,9 @@ function drawPortal() {
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
 }
 
+// Which hunter drawing to use, and how big: the full body, or the classic stick figure (Controls tab, "Hunter look")
+const hunterLook = () => settings.hunter === 'classic' ? [drawHunterClassic, 1.15] : [drawHunter, 1.35];
+
 function drawPlayer() {
   if (dungeon.state === 'dead') return;
   const ult = player.ultT > 0, wc = WEAPONS[player.weapon].color;
@@ -52,7 +55,7 @@ function drawPlayer() {
   ctx.fillStyle = g; ctx.fillRect(player.x-R, player.y-12-R, R*2, R*2);
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = player.inv > 0 && player.dodgeT <= 0 && player.hitFlash <= 0 ? 0.5 + Math.sin(clock*40)*0.3 : 1;
-  const classicLook = settings.hunter === 'classic', hunterFn = classicLook ? drawHunterClassic : drawHunter, hunterScale = classicLook ? 1.15 : 1.35;
+  const [hunterFn, hunterScale] = hunterLook();
   hunterFn(player.x, player.y, { face:player.facing.x, anim:player.anim, t:player.animT, scale:hunterScale,
     color:player.hitFlash > 0 ? COLORS.danger : ult ? '#cc88ff' : COLORS.primary, body:ult ? '#14062a' : '#0b1020',
     blade:ult ? '#dd88ff' : wc, eye:ult ? '#ff66ff' : '#aaeeff', cape:ult ? '#1a0633' : '#0a0a18',
@@ -79,6 +82,7 @@ function drawWorld() {
   drawPickups();
   for (const p of particles) if (p.type === 'smoke') { const k = p.life/p.max; ctx.globalAlpha = p.alpha*k; ctx.fillStyle = p.color; disc(p.x, p.y, p.size*(1.7 - k*0.7)); }
   const gc = player.ultT > 0 ? '#bb66ff' : COLORS.primary;
+  const [hunterFn, hunterScale] = hunterLook();
   for (const g of ghosts) { ctx.globalAlpha = (1 - g.t/g.dur)*0.45; hunterFn(g.x, g.y, { face:g.fx, anim:g.anim, t:g.animT, scale:hunterScale, color:gc, body:gc, cape:gc }); }
   ctx.globalAlpha = 1;
   player.shadows.forEach(s => { if (s.active && vis(s.x, s.y, 40)) drawShadowSoldier(s); });
