@@ -15,7 +15,7 @@ Floors share a frame: "Seamless tileable texture, straight top-down orthographic
 - `c_gate`: an ancient crypt floor of cracked dark slate flagstones with pale dust and thin grey-violet lichen in the cracks, cold muted violet-grey
 - `b_gate`: cracked black volcanic basalt ground with thin glowing red-orange lava veins running through the cracks (prompt also says "full-frame ... no border, no frame, no background"; the first try drew a framed sample and was rejected)
 - `a_gate`: a scorched cavern floor of dark burnt rock with scattered gold flecks and glowing amber embers in the cracks
-- `s_gate`: an ancient temple floor of large polished pale grey marble tiles with thin blue inlay lines along the joints and fine veins, cool blue-grey
+- `s_gate_v2`: an ancient temple floor of large square white marble slabs with rich blue and grey veining, thin joints inlaid with glowing pale blue stone, a few hairline cracks (processed with LEVEL 46, SATURATION 1.25; the first version came out a flat grey and was replaced before release)
 - `bg/hub`: an empty city street at night after rain, a huge upright oval gate of swirling blue and violet energy in the middle of the street, dark skyscrapers, wet asphalt reflections (first try came out shaped like a question mark and was rejected)
 
 Rule for anything added here: no star symbols, runes or occult imagery. Check each image by eye before it goes in.
