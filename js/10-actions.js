@@ -85,6 +85,7 @@ $('system-menu').addEventListener('click', e => {
     case 'weapon': buyWeapon(); break;
     case 'potion': buyPotion(); break;
     case 'aim': cycleAim(); break;
+    case 'look': cycleLook(); break;
     case 'gate': enterGate(v); return;
     case 'endless': if (player.level >= ENDLESS.reqLevel) startDungeon(ENDLESS, true); return;
   }
@@ -111,6 +112,11 @@ function cycleAim() {
   settings.aim = AIM_MODES[(AIM_MODES.indexOf(settings.aim)+1) % AIM_MODES.length];
   applySettings(); saveGame(); playSfx('ui');
   toast({ auto:'AIM: AUTO — KEYS, UNTIL YOU MOVE THE MOUSE', keys:'AIM: KEYS — FACE WHERE YOU MOVE', mouse:'AIM: MOUSE — FACE THE POINTER' }[settings.aim], 'blue', 2400);
+}
+function cycleLook() {
+  settings.hunter = settings.hunter === 'classic' ? 'new' : 'classic';
+  saveGame(); playSfx('ui');
+  toast(settings.hunter === 'classic' ? 'HUNTER LOOK: CLASSIC' : 'HUNTER LOOK: NEW', 'blue', 2000);
 }
 function enterHub() { gameState = 'HUB'; show('system-menu'); applySettings(); setMusic('hub'); renderSystemMenu(); }
 function beginFromTitle() {

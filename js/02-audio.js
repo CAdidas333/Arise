@@ -5,7 +5,7 @@
 // ================================================================
 let AC = null, master, musicGain, sfxGain, revSend, noiseBuf;
 let musicMode = 'off', musicStep = 0, nextStepT = 0, musicIntensity = 0.5;
-const settings = { music:0.4, sfx:0.6, aim:'auto' };
+const settings = { music:0.4, sfx:0.6, aim:'auto', hunter:'new' };
 
 function initAudio() {
   if (AC) { if (AC.state !== 'running' && !paused) AC.resume(); return; }
