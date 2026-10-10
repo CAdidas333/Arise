@@ -49,7 +49,7 @@
 - [x] Step 1 — Painted world: a painted floor per gate and a backdrop for the title and hub. **Live** (shipped to main 2026-10-09)
 - [ ] Step 2 — The System speaks. **Built on `v18-world`, not live** (merge 0b236b4, 2026-10-09): 35 voice clips in the River voice and 8 sound effects, all chosen by Chris by ear, now play in the game. The extraction line is spoken as "Shadow extraction.", a 2-second wait with a charge effect, then "Successful." or "Failed." with its own hit. Tested in the browser (all 43 clips load, sound measured on the effects channel, both extraction outcomes, no errors). Waiting for Chris to play it and say ship. Recipe in `assets/CREDITS.md`. ElevenLabs music stays blocked until Chris says so
 - [x] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows fire a ring of shots on a timer. **Live** (shipped to main 2026-10-09, commit f465a46)
-- [ ] Step 4 — A hunter with a real body (jointed parts on the existing skeleton) and a look for each boss
+- [ ] Step 4 — A hunter with a real body (jointed parts on the existing skeleton) and a look for each boss. **Started 2026-10-09**: three candidate style images for the hunter are in `docs/art-direction/hunter-style/` (A hooded coat with one dagger, B dark armour with a curved sword, C combat jacket with twin blades; prompts beside them). Waiting for Chris to pick one; the parts are derived from the pick
 - [ ] Step 5 — Real dungeons: generated rooms and corridors; the arena stays for boss fights and endless mode
 - [ ] Step 6 — Loot and gear
 - [ ] Step 7 — Story thread: scripted opening, chapter card per gate

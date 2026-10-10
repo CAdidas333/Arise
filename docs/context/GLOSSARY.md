@@ -17,7 +17,7 @@
 | V18 step 1 | Painted floors for all six gates and a painted backdrop behind the title and hub screens. Shipped to the public link on 2026-10-09 | live | main, assets/ |
 | V18 step 2 | The System speaks: the game now plays 35 voice lines in the voice Chris chose (River) and 8 sound effects he picked by ear, including the extraction line with its nervous pause before "Successful" or "Failed". It works on the work branch and is not on the public site until Chris has played it and says ship. Music stays blocked until he says so | built not live | branch v18-world; assets/voice/, assets/sfx/ |
 | V18 step 3 | Each shadow soldier looks like the enemy it was and fights the way that enemy fought: archers shoot, casters drop blasts, chargers rush, brutes slam, sappers burst, and boss shadows fire a ring of shots | live | main (shipped 2026-10-09) |
-| V18 step 4 | The hunter gets a real body in place of the stick figure, and each boss gets its own look | open | docs/context/ACTIVE_PROJECTS.md |
+| V18 step 4 | Give the hunter a real body in place of the glowing stick figure, built from separate jointed parts so it can still swing, dodge and run. Three candidate looks are drawn (hooded coat, dark armour, combat jacket with twin blades) and wait for Chris to pick one | waiting on Chris | docs/art-direction/hunter-style/ |
 | V18 step 5 | Real dungeons: generated rooms and corridors to explore, with the open arena kept for boss fights and endless mode | open | docs/context/ACTIVE_PROJECTS.md |
 | V18 step 6 | Loot and gear: armour and accessories with rarities, dropped by enemies | open | docs/context/ACTIVE_PROJECTS.md |
 | V18 step 7 | A story thread: a scripted opening and a chapter card for each gate | open | docs/context/ACTIVE_PROJECTS.md |
