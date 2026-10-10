@@ -1,0 +1,186 @@
+'use strict';
+
+// ================================================================
+//  HUD — only touches the DOM when a value actually changes
+// ================================================================
+const hudCache = {};
+function setT(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
+function setW(id, pct) { const v = clamp(pct, 0, 100).toFixed(1)+'%'; if (hudCache[id+':w'] !== v) { hudCache[id+':w'] = v; $(id).style.width = v; } }
+function setD(id, on, mode = 'block') { const v = on ? mode : 'none'; if (hudCache[id+':d'] !== v) { hudCache[id+':d'] = v; $(id).style.display = v; } }
+function setC(id, cls, on) { const k = id+':c:'+cls; if (hudCache[k] !== on) { hudCache[k] = on; $(id).classList.toggle(cls, on); } }
+
+const SHORT = { slash:'Slash', dash_strike:'Dash', shadow_strike:'Strike', rulers:'Domain', legion:'Legion', ult:'Awaken' };
+let skillEls = [];
+function buildSkillBar() {
+  $('hud-skills').innerHTML = SKILL_DEFS.map(s => `<div class="skill-slot" id="slot-${s.id}"><span class="key">${s.key}</span><span class="icon">${s.icon}</span><span class="cd-num"></span><div class="cd-overlay"></div><span class="skill-name">${SHORT[s.id]}</span></div>`).join('');
+  skillEls = SKILL_DEFS.map(s => { const el = $('slot-'+s.id); return { s, el, ov:el.querySelector('.cd-overlay'), num:el.querySelector('.cd-num'), cls:'', h:'', n:'' }; });
+}
+
+function updateHUD() {
+  if (!player || gameState !== 'DUNGEON' || !dungeon) return;
+  setT('hud-name', player.name); setT('hud-rank', `RANK ${player.rank} — HUNTER`);
+  setW('hud-hp-fill', player.hp/player.maxHp*100); setT('hud-hp-text', `${fmtNum(Math.ceil(player.hp))} / ${fmtNum(player.maxHp)}`);
+  setW('hud-mp-fill', player.mp/player.maxMp*100); setT('hud-mp-text', `${fmtNum(Math.ceil(player.mp))} / ${fmtNum(player.maxMp)}`);
+  setW('hud-xp-fill', player.xp/player.xpToNext*100); setT('hud-xp-text', `${fmtNum(player.xp)} / ${fmtNum(player.xpToNext)}`);
+  const ultOn = player.level >= SKILL.ult.unlockLevel;
+  setD('hud-ult', ultOn); setW('hud-ult-fill', player.ultT > 0 ? player.ultT/(8+2*tr('sovereign'))*100 : player.ult); setC('hud-ult', 'full', player.ult >= 100);
+  setT('hud-level', player.ultT > 0 ? `LV. ${player.level}  👁️ MONARCH ${Math.ceil(player.ultT)}s` : legionTimer > 0 ? `LV. ${player.level}  ☠️ LEGION ${Math.ceil(legionTimer)}s` : `LV. ${player.level}`);
+  setT('hud-gold', `◈ ${fmtNum(player.gold)}`); setT('hud-potions', `✚ ${player.potions}`);
+  setT('hud-wave', dungeon.bossRef ? 'BOSS HUNT' : dungeon.endless ? `FLOOR ${dungeon.wave}` : `WAVE ${Math.min(dungeon.wave, dungeon.maxWaves)} / ${dungeon.maxWaves}`);
+  setT('hud-enemies', dungeon.alive > 0 ? `ENEMIES: ${dungeon.alive}` : '');
+  if (dungeon.bossRef) { const p = dungeon.bossRef.hp/dungeon.bossRef.maxHp*100; setW('boss-bar-fill', p); setW('boss-bar-ghost', p); }
+
+  const comboOn = comboCount >= 3 && comboTimer > 0;
+  setD('hud-combo', comboOn);
+  if (comboOn) { setT('combo-count', comboCount); setT('combo-multi', `x${(1 + Math.min(comboCount,50)*0.02).toFixed(2)} XP`); }
+
+  for (const k of skillEls) {
+    const s = k.s, unlocked = player.level >= s.unlockLevel, isUlt = s.type === 'ult';
+    const cd = player.cds[s.id] || 0, max = s.id === 'slash' ? 0.46 : s.cooldown*cdMult();
+    const pct = !unlocked ? 100 : isUlt ? (player.ultT > 0 ? 0 : 100-player.ult) : cd > 0 ? cd/max*100 : 0;
+    const cls = 'skill-slot ' + (!unlocked ? 'locked' : isUlt ? (player.ult >= 100 || player.ultT > 0 ? 'ult-ready' : 'on-cd') : cd <= 0 ? 'ready' : 'on-cd');
+    const h = clamp(pct, 0, 100).toFixed(0)+'%', n = !isUlt && unlocked && cd >= 1 ? String(Math.ceil(cd)) : '';
+    if (k.cls !== cls) { k.cls = cls; k.el.className = cls; }
+    if (k.h !== h) { k.h = h; k.ov.style.height = h; }
+    if (k.n !== n) { k.n = n; k.num.textContent = n; }
+  }
+  if (isMobile) { setC('tbtn-ult', 'ready', player.ult >= 100); setD('tbtn-arise', dungeon.state === 'fight' && !!nearRemnant(), 'flex'); }
+}
+
+// ================================================================
+//  SYSTEM MENU — Status · Gates · Skill Tree · Shadows · Armory
+// ================================================================
+const TABS = [['status','STATUS'], ['gates','GATES'], ['tree','SKILL TREE'], ['shadows','SHADOWS'], ['armory','ARMORY'], ['controls','CONTROLS']];
+const row = (k, v) => `<div class="stat-row"><span class="stat-name">${k}</span><span class="stat-value">${v}</span></div>`;
+const potionCost = () => 40 + player.level*6;
+
+function renderSystemMenu() {
+  if (!player) return;
+  checkDailyReset();
+  $('sys-tabs').innerHTML = TABS.map(([id, label], i) => {
+    const pip = id === 'status' ? player.statPoints : id === 'tree' ? player.skillPoints : 0;
+    return `<div class="sys-tab ${menuTab === id ? 'on' : ''}" data-act="tab" data-v="${id}">${isMobile ? '' : `<span style="opacity:.4">${i+1}</span> `}${label}${pip ? `<span class="pip">${pip}</span>` : ''}</div>`;
+  }).join('');
+
+  const w = WEAPONS[player.weapon];
+  $('sys-card').innerHTML = `
+    <div class="rank-badge ${player.rank}"><span>${player.rank}</span></div>
+    <div class="card-name">${esc(player.name)}</div>
+    <div class="card-sub">LEVEL ${player.level} · ${player.rank}-RANK HUNTER</div>
+    <div class="hud-bar xp" style="width:100%"><div class="hud-bar-fill" style="width:${player.xp/player.xpToNext*100}%"></div><div class="hud-bar-text">${fmtNum(player.xp)} / ${fmtNum(player.xpToNext)} XP</div></div>
+    <div style="height:10px"></div>
+    ${row('HP', fmtNum(player.maxHp))}${row('MP', fmtNum(player.maxMp))}
+    ${row('ATTACK', fmtNum(pDamage()))}${row('CRIT', Math.round(pCrit()*100)+'%')}
+    ${row('GOLD', `<span style="color:#ffd866">◈ ${fmtNum(player.gold)}</span>`)}
+    ${row('POTIONS', `<span style="color:#ff7788">✚ ${player.potions}</span>`)}
+    ${row('ARMY', `<span style="color:#bb88ff">${Math.min(player.shadows.length, armyCap())} / ${armyCap()}</span>`)}
+    <div style="margin-top:12px;font-size:12px;color:${w.color};letter-spacing:1px;text-align:center">⚔ ${w.name}</div>
+    ${isMobile ? '' : `<button class="sys-btn" data-act="aim" style="width:100%;margin-top:14px">AIM: ${settings.aim.toUpperCase()} &nbsp;[M]</button>`}`;
+
+  $('sys-main').innerHTML = ({ status:tabStatus, gates:tabGates, tree:tabTree, shadows:tabShadows, armory:tabArmory, controls:tabControls })[menuTab]();
+}
+
+function tabStatus() {
+  let left = '<h3>Attributes</h3>';
+  if (player.statPoints > 0) left += `<div class="stat-points">Available Points: <span>${player.statPoints}</span> <button class="sys-btn" style="margin-left:10px" data-act="auto">AUTO</button></div>`;
+  const hint = { STR:'damage', AGI:'speed · attack rate', INT:'mana · extraction', VIT:'health · defense', PER:'critical hits' };
+  for (const [k, v] of Object.entries(player.stats)) left += `<div class="stat-row"><span class="stat-name">${k} <span style="font-size:10px;opacity:.4;letter-spacing:1px">${hint[k]}</span></span><span class="stat-value">${v}${player.statPoints > 0 ? `<button class="stat-btn" data-act="stat" data-v="${k}">+</button>` : ''}</span></div>`;
+  left += '<h3>Records</h3>' + row('Best Level', highScores.bestLevel) + row('Best Combo', highScores.bestCombo+'x') + row('Total Kills', fmtNum(highScores.totalKills))
+    + row('Gates Cleared', highScores.gatesCleared) + row('Best Gate', highScores.bestGate+'-RANK') + row('Demon Castle', highScores.bestFloor ? 'FLOOR '+highScores.bestFloor : '—');
+
+  const now = new Date(), midnight = new Date(now); midnight.setHours(24,0,0,0);
+  const ms = midnight - now, hL = Math.floor(ms/3600000), mL = Math.floor((ms%3600000)/60000);
+  let right = `<h3>Daily Quests</h3><div style="text-align:center;margin-bottom:10px;padding:6px;border:1px solid rgba(0,212,255,0.1);font-family:Orbitron,monospace;font-size:10px;letter-spacing:2px;color:rgba(0,212,255,0.4)">RESETS IN ${hL}h ${mL}m</div>`;
+  DAILY_QUESTS.forEach(q => {
+    const prog = Math.min(questProgress[q.stat] || 0, q.target);
+    right += `<div class="quest-item"><div class="quest-name">${q.name} ${q.completed ? '✓' : ''}</div>
+      <div class="quest-progress"><div class="quest-progress-fill" style="width:${prog/q.target*100}%"></div></div>
+      <div class="quest-reward">${q.desc} — ${fmtNum(prog)}/${fmtNum(q.target)} — ${q.completed ? 'COMPLETE' : `Reward: ${q.reward*player.level} XP`}</div></div>`;
+  });
+  if (bonusQuestsUnlocked) {
+    right += '<h3 style="color:rgba(136,68,255,0.6)">Bonus Quests</h3>';
+    BONUS_QUESTS.forEach(q => {
+      const prog = Math.min(highScores[BONUS_STAT[q.stat]] || 0, q.target);
+      right += `<div class="quest-item"><div class="quest-name" style="color:#bb88ff">${q.name} ${q.completed ? '✓' : ''}</div>
+        <div class="quest-progress"><div class="quest-progress-fill" style="width:${prog/q.target*100}%;background:linear-gradient(90deg,#8844ff,#bb88ff)"></div></div>
+        <div class="quest-reward" style="color:rgba(136,68,255,0.6)">${q.desc} — ${fmtNum(prog)}/${fmtNum(q.target)} — ${q.completed ? 'COMPLETE' : `Reward: ${q.reward} Stat Points`}</div></div>`;
+    });
+  }
+  return `<div class="two-col"><div>${left}</div><div>${right}</div></div>`;
+}
+
+function tabGates() {
+  // Highlight the highest unlocked gate
+  let nextId = null;
+  for (let i = GATE_DEFS.length-1; i >= 0; i--) if (player.level >= GATE_DEFS[i].reqLevel) { nextId = GATE_DEFS[i].id; break; }
+  let h = '<h3>Gates</h3><div class="gate-grid">';
+  GATE_DEFS.forEach(g => {
+    const locked = player.level < g.reqLevel, n = player.cleared[g.id] || 0;
+    h += `<div class="gate-item ${locked ? 'locked' : ''} ${g.id === nextId ? 'next-gate' : ''}" ${locked ? '' : `data-act="gate" data-v="${g.id}"`} style="border-left:3px solid ${g.theme.line}">
+      <span class="gate-rank">${g.rank}-RANK</span><div class="gate-name">${g.name}${g.id === nextId ? ' ◄' : ''}</div>
+      <div class="gate-desc">${locked ? `Requires Level ${g.reqLevel}` : `${g.waves} waves — ${g.boss.name}`}</div>
+      <div class="gate-meta">${locked ? 'LOCKED' : n ? `CLEARED ×${n}` : 'UNCLEARED'}</div></div>`;
+  });
+  const eLocked = player.level < ENDLESS.reqLevel;
+  h += `<div class="gate-item endless ${eLocked ? 'locked' : ''}" ${eLocked ? '' : 'data-act="endless"'} style="border-left:3px solid #8844ff">
+    <span class="gate-rank">ENDLESS</span><div class="gate-name">${ENDLESS.name}</div>
+    <div class="gate-desc">${eLocked ? `Requires Level ${ENDLESS.reqLevel}` : ENDLESS.desc}</div>
+    <div class="gate-meta">${highScores.bestFloor ? `BEST: FLOOR ${highScores.bestFloor}` : 'UNCLIMBED'}</div></div></div>`;
+  return h;
+}
+
+function tabTree() {
+  let h = `<h3>Skill Tree</h3><div class="stat-points">Skill Points: <span>${player.skillPoints}</span> <button class="sys-btn" style="margin-left:10px" data-act="respec">RESET TREE</button><div style="font-size:11px;opacity:.5;margin-top:6px;letter-spacing:1px">You earn 1 skill point every 2 levels</div></div><div class="tree">`;
+  TREE.forEach(b => {
+    h += `<div class="branch" style="color:${b.color}"><h4>${b.name}</h4>`;
+    b.nodes.forEach((n, i) => {
+      const r = player.tree[n.id] || 0, open = i === 0 || (player.tree[b.nodes[i-1].id] || 0) > 0;
+      let pips = ''; for (let p = 0; p < n.max; p++) pips += `<i class="${p < r ? 'f' : ''}"></i>`;
+      h += `<div class="node ${open ? '' : 'locked'} ${r ? 'owned' : ''}" data-act="node" data-v="${n.id}"><div class="n-pips">${pips}</div><div class="n-name">${n.name}</div><div class="n-desc">${n.desc}</div></div>`;
+    });
+    h += '</div>';
+  });
+  h += '</div><h3>Active Skills</h3>';
+  SKILL_DEFS.forEach(s => { const u = player.level >= s.unlockLevel; h += `<div class="stat-row" style="opacity:${u ? 1 : 0.3}"><span class="stat-name">${s.icon} ${s.name} <span style="opacity:.4">[${s.key}]</span></span><span class="stat-value" style="font-size:11px;font-family:Rajdhani,sans-serif;letter-spacing:1px">${u ? s.desc : `Unlocks Lv.${s.unlockLevel}`}</span></div>`; });
+  return h;
+}
+
+function tabShadows() {
+  const cap = armyCap(), ranked = [...player.shadows].sort((a,b) => b.damage - a.damage);
+  let h = `<h3>Shadow Army — ${Math.min(ranked.length, cap)} / ${cap} deployed</h3>`;
+  if (!ranked.length) return h + '<div style="color:rgba(255,255,255,0.35);font-size:14px;line-height:1.7">No shadows extracted yet.<br>Slain enemies sometimes leave a shadow behind — stand over it and press <b style="color:#bb88ff">E</b> to say the word.<br>Bosses can always be extracted. You get three attempts.</div>';
+  h += '<div class="two-col" style="gap:0 22px">';
+  ranked.forEach((s, i) => {
+    h += `<div class="shadow-item" style="opacity:${i < cap ? 1 : 0.4}"><div class="shadow-icon" style="color:${s.color}">☠</div><div><div class="shadow-name">${esc(s.name)}<span class="grade" style="color:${GRADE_COLOR[s.grade] || '#9988bb'}">${(s.grade || 'Soldier').toUpperCase()}</span></div>
+      <div class="shadow-level">DMG ${fmtNum(shadowDmg(s))} — ${i < cap ? 'DEPLOYED' : 'RESERVE'}</div></div></div>`;
+  });
+  return h + '</div><div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:1px">Shadows grow with your level. The strongest take the field; raise the cap in the Monarch branch.</div>';
+}
+
+function tabControls() {
+  const k = (what, keys) => `<div class="stat-row"><span class="stat-name" style="letter-spacing:1px">${what}</span><span class="stat-value" style="font-size:12px">${keys}</span></div>`;
+  const or = ' <span style="opacity:.4;font-family:Rajdhani,sans-serif">or</span> ';
+  const left = '<h3>Keyboard + Mouse</h3>' + k('Move', 'W A S D' + or + 'ARROWS') + k('Attack (hold it down)', 'X' + or + 'J' + or + 'CLICK')
+    + k('Dodge', 'SPACE' + or + 'SHIFT') + k('Skills', '1 &nbsp; 2 &nbsp; 3 &nbsp; 4 &nbsp; 5') + k('Awakening, when the purple bar is full', 'R')
+    + k('Arise a fallen shadow (stand on the wisp)', 'E') + k('Healing potion', 'F') + k('Pause', 'ESC' + or + 'P') + k('Change aim mode', 'M') + k('Pick a reward between waves', '1 &nbsp; 2 &nbsp; 3');
+  const slider = (id, label) => `<div class="stat-row"><span class="stat-name">${label}</span><span class="audio-ctrl"><input type="range" data-set="${id}" min="0" max="100" value="${Math.round(settings[id]*100)}" style="width:150px"></span></div>`;
+  const aimText = { auto:'Face where you move. The pointer takes over only while you move it.', keys:'Always face where you move.', mouse:'Always face the pointer.' }[settings.aim];
+  const right = '<h3>Touch</h3>' + k('Move and aim', 'LEFT STICK') + k('Attack (hold it down)', '⚔️') + k('Dodge', '🏃') + k('Skills', '💨 🗡️ 👑 ☠️') + k('Awakening', '👁️') + k('Healing potion', '✚') + k('Arise a fallen shadow', 'ARISE BUTTON')
+    + '<h3>Settings</h3>' + (isMobile ? '' : `<div class="stat-row"><span class="stat-name">Aim</span><button class="sys-btn" data-act="aim">${settings.aim.toUpperCase()}</button></div><div style="font-size:12px;color:rgba(255,255,255,0.45);padding:4px 0 8px">${aimText}</div>`)
+    + slider('music', 'Music') + slider('sfx', 'Sound effects')
+    + '<h3>Good to know</h3><div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6">Keep moving: standing still makes every hit hurt more.<br>Your shadows only fight while you do.<br>The third slash in a row is the big one.</div>';
+  return `<div class="two-col"><div>${left}</div><div>${right}</div></div>`;
+}
+
+function tabArmory() {
+  let h = '<h3>Weapons</h3>';
+  WEAPONS.forEach((w, i) => {
+    const cur = i === player.weapon, owned = i < player.weapon, next = i === player.weapon+1;
+    h += `<div class="shop-item ${cur ? 'cur' : ''} ${owned ? 'done' : ''}" style="color:${w.color}"><div class="s-ico"></div><div class="s-body"><div class="s-name">${w.name}</div><div class="s-desc">${w.desc}</div></div>
+      ${cur ? '<span class="grade" style="color:#ffcc00">EQUIPPED</span>' : owned ? '' : `<button class="sys-btn gold" data-act="weapon" ${next && player.gold >= w.cost ? '' : 'disabled'}>◈ ${fmtNum(w.cost)}</button>`}</div>`;
+  });
+  const pc = potionCost();
+  h += `<h3>Supplies</h3><div class="shop-item" style="color:#ff7788"><div class="s-ico"></div><div class="s-body"><div class="s-name">Healing Potion <span style="opacity:.5">(${player.potions}/5)</span></div><div class="s-desc">Restores 40% HP. Press F in a gate.</div></div>
+    <button class="sys-btn gold" data-act="potion" ${player.potions < 5 && player.gold >= pc ? '' : 'disabled'}>◈ ${fmtNum(pc)}</button></div>`;
+  return h;
+}

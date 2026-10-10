@@ -40,6 +40,9 @@ Arise is a browser-based action RPG inspired by the manga/anime **Solo Leveling*
 ### V17 "Monarch Update" (Session 3, live since 2026-10-09)
 Full script rewrite. Adds: frame-rate-independent engine, 3-hit combo + dodge, six enemy archetypes with telegraphed attacks, pattern bosses with an enrage phase, remnant extraction (E), army cap and grades, skill tree, run boons, Monarch's Awakening ultimate (R), gold + armory, S-rank gate, endless Demon Castle, adaptive music. Controls: WASD move, mouse aim/attack, Space dodge, 1–5 skills, R ultimate, E arise, F potion, Esc pause. See SESSION_LOG Session 3 for the full list. `#debug` in the URL exposes `window.__arise`.
 
+### Structure since V18 work began (branch `v18-world`)
+Chris lifted the single-file rule on 2026-10-09 ("you can use as many folders and whatever you need"). `index.html` now holds the CSS and markup and loads 13 classic scripts from `js/` in order (they share one global scope; no modules, no build step). Painted art lives in `assets/` with provenance in `assets/CREDITS.md`. `tools/process_art.py` turns raw generated images into game assets; `tools/stamp.sh` refreshes the `?v=` on the script tags and must be run before committing any change in `js/`. How work is done: Claude writes briefs, reviews and tests; free image models and the worker do the generating and coding.
+
 ### Origin
 Kevin proposed building an MMO RPG that simulates the Solo Leveling experience. For V1, we scoped it to a single-player browser game capturing the core loop: enter gates, fight enemies, level up, extract shadows, repeat with harder content. By Session 1's end, the game was publicly deployed and mobile-ready.
 

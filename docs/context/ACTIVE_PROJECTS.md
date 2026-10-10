@@ -37,6 +37,19 @@
 - [x] Frame-rate independence, combo attacks, dodge, ultimate, run boons, armory, endless mode
 - [x] Remnant extraction + army cap and grades
 
+### V18 plan (approved by Chris 2026-10-09; built on branch `v18-world`, one step at a time, nothing live until he says ship)
+- [x] Step 1 — Painted world: a painted floor per gate and a backdrop for the title and hub (built, not live)
+- [ ] Step 2 — The System speaks: voiced lines for the big moments, ElevenLabs signature sound effects (waiting on Chris's approval to spend ElevenLabs credits)
+- [ ] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows keep one old attack
+- [ ] Step 4 — A hunter with a real body (jointed parts on the existing skeleton) and a look for each boss
+- [ ] Step 5 — Real dungeons: generated rooms and corridors; the arena stays for boss fights and endless mode
+- [ ] Step 6 — Loot and gear
+- [ ] Step 7 — Story thread: scripted opening, chapter card per gate
+- [ ] Step 8 — Hand-designed boss fights
+- [ ] Step 9 — Shareable result card
+- Parked for later: shared leaderboard, co-op
+- Done alongside: script split into `js/` (13 files, behaviour unchanged) so workers can take one small file per job
+
 ### Next Up
 - [ ] Human play-test of V17 (Chris + Kevin), then tune feel and balance
 - [ ] Test on a real phone; listen to the music

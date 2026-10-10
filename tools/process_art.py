@@ -1,6 +1,8 @@
 """Turn raw generated images into game assets.
 
-  floor:  process_art.py floor RAW.png OUT.webp   -> a seamless, darkened 640px floor tile
+  floor:  process_art.py floor RAW.png OUT.webp [LEVEL] [SATURATION]
+                                                  -> a seamless, darkened 640px floor tile
+                                                     (LEVEL = target mean brightness 0-255, default 36; SATURATION default 0.85)
   bg:     process_art.py bg    RAW.png OUT.webp   -> a darkened 1280px-wide backdrop
 
 Run with a Python that has Pillow and numpy (e.g. ~/LocalModels/bg/bin/python).
@@ -27,13 +29,15 @@ def tone(img, brightness, saturation):
 
 
 kind, src, dst = sys.argv[1:4]
+level = float(sys.argv[4]) if len(sys.argv) > 4 else 36.0
+saturation = float(sys.argv[5]) if len(sys.argv) > 5 else 0.85
 im = Image.open(src)
 if kind == "floor":
     # Floors sit under the action, so every one is brought to the same dark level and muted a little.
     # Normalising (rather than a fixed multiplier) keeps a pale marble floor as dark as a cave floor.
     im = seamless(im).resize((640, 640), Image.LANCZOS)
     mean = np.asarray(im.convert("L")).mean()
-    im = tone(im, min(1.0, 36.0 / max(mean, 1.0)), 0.85)
+    im = tone(im, min(1.0, level / max(mean, 1.0)), saturation)
 else:
     im = tone(im.convert("RGB").resize((1280, round(1280 * im.height / im.width)), Image.LANCZOS), 0.7, 1.0)
 im.save(dst, "WEBP", quality=82, method=6)
