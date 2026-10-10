@@ -19,3 +19,9 @@ Floors share a frame: "Seamless tileable texture, straight top-down orthographic
 - `bg/hub`: an empty city street at night after rain, a huge upright oval gate of swirling blue and violet energy in the middle of the street, dark skyscrapers, wet asphalt reflections (first try came out shaped like a question mark and was rejected)
 
 Rule for anything added here: no star symbols, runes or occult imagery. Check each image by eye before it goes in.
+
+## Third-party code
+
+| File | What | Licence | Source | Date |
+|---|---|---|---|---|
+| `3d/vendor/three.min.js` | three.js r149 (3D rendering library), 608,081 bytes, unmodified | MIT | https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js | 2026-10-09 |
