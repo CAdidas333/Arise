@@ -97,7 +97,7 @@ function updateProjectiles(dt) {
   const live = [];
   for (const p of projectiles) {
     p.life -= dt; p.x += p.vx*dt; p.y += p.vy*dt;
-    if (p.life <= 0 || Math.abs(p.x) > arenaW/2+40 || Math.abs(p.y) > arenaH/2+40) continue;
+    if (p.life <= 0 || !inMap(p.x, p.y, -40)) continue;
     if (p.fromEnemy) {
       if (dist(p.x, p.y, player.x, player.y-12) < p.size+13 && hurtPlayer(p.damage)) { spawnBurst(p.x, p.y, p.color, 6, 200); continue; }
     } else {
@@ -143,7 +143,7 @@ function updateSpawns(dt) {
     s.t -= dt;
     if (s.t > 0) { wait.push(s); continue; }
     s.o.scale = s.o.scale || 1;
-    const e = makeEnemy(s.def, clamp(s.x, -arenaW/2+40, arenaW/2-40), clamp(s.y, -arenaH/2+40, arenaH/2-40), s.o);
+    const sp = keepIn(s.x, s.y, 40), e = makeEnemy(s.def, sp.x, sp.y, s.o);
     enemies.push(e);
     ring(e.x, e.y, e.elite ? '#ffcc66' : COLORS.danger, 4, e.size*2.4, 0.5, 3); smoke(e.x, e.y, '#220011', 4, 10);
   }

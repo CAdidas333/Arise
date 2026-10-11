@@ -19,7 +19,7 @@ function aimAssist() {
   for (const e of enemies) { if (!e.alive || e.spawnT > 0) continue; const d = dist(player.x, player.y, e.x, e.y) - e.size; if (d < td) { t = e; td = d; } }
   if (t) { const dx = t.x-player.x, dy = t.y-player.y, d = Math.hypot(dx,dy) || 1; player.facing = { x:dx/d, y:dy/d }; }
 }
-const movePlayerTo = (x, y) => { player.x = clamp(x, -arenaW/2+20, arenaW/2-20); player.y = clamp(y, -arenaH/2+20, arenaH/2-20); };
+const movePlayerTo = (x, y) => { const p = keepIn(x, y, 20); player.x = p.x; player.y = p.y; };
 
 function useSkill(sd) {
   if (!sd || !canAct() || player.level < sd.unlockLevel) return;
@@ -55,7 +55,7 @@ function useSkill(sd) {
     }
     case 'dash': {
       const sx = player.x, sy = player.y, k0 = run.kills;
-      movePlayerTo(sx + fx*sd.range, sy + fy*sd.range);
+      { const n = Math.ceil(sd.range/16), stp = sd.range/n; for (let i = 0; i < n; i++) movePlayerTo(player.x + fx*stp, player.y + fy*stp); } // in short steps, so a dash slides along a wall instead of passing through it
       for (let i = 0; i < 6; i++) ghosts.push({ x:lerp(sx,player.x,i/6), y:lerp(sy,player.y,i/6), fx, anim:'dash', animT:player.animT, t:0, dur:0.2+i*0.04 });
       for (let i = 0; i < 16; i++) spawnParticle(lerp(sx,player.x,Math.random()), lerp(sy,player.y,Math.random())-12, wc, { vx:rand(-60,60), vy:rand(-60,60), size:rand(2,5), life:0.4 });
       player.inv = Math.max(player.inv, 0.3); player.anim = 'dash'; player.atkDur = player.atkT = 0.18;
@@ -267,6 +267,7 @@ function updateShadows(dt) {
       s.x += (tx-s.x)*k; s.y += (ty-s.y)*k; s.moving = mvd > 12;
       if (mvd > 12) s.facing = { x:Math.sign(tx-s.x) || 1, y:0 }; else s.facing = { x:player.facing.x, y:0 };
     }
+    { const p = keepIn(s.x, s.y, 14); s.x = p.x; s.y = p.y; }
     if (s.atkT > 0) s.atkT -= dt;
     if (Math.random() < (berserk ? 14 : 4)*dt) spawnParticle(s.x+rand(-6,6), s.y-rand(0,24), berserk ? '#cc55ff' : COLORS.accent, { vx:rand(-15,15), vy:rand(-70,-25), size:rand(2, berserk ? 6 : 4), life:0.5, alpha:0.6 });
   });
