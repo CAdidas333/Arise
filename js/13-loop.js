@@ -84,7 +84,8 @@ function step(raw) {
     gameTime += dt; run.time += dt;
     updatePlayer(dt); updateSpawns(dt); updateEnemies(dt); updateTelegraphs(dt); updateProjectiles(dt); updateShadows(dt);
     if (dungeon.state === 'fight') {
-      if (dungeon.wait > 0) { dungeon.wait -= dt; if (dungeon.wait <= 0) spawnWave(); }
+      if (layout && layout.lock < 0) roomStep(); // between chambers: wait for the hunter to walk in
+      else if (dungeon.wait > 0) { dungeon.wait -= dt; if (dungeon.wait <= 0) spawnWave(); }
       else checkWave();
     }
   }
@@ -102,8 +103,8 @@ function step(raw) {
 // Open the page with #debug to poke at internals from the console
 if (location.hash === '#debug') window.__arise = {
   get player() { return player; }, get dungeon() { return dungeon; }, get enemies() { return enemies; }, get run() { return run; },
-  get gameState() { return gameState; }, get particles() { return particles; }, get remnants() { return remnants; }, get telegraphs() { return telegraphs; },
-  GATE_DEFS, ENDLESS, SKILL, startDungeon, step, useSkill, damageEnemy, chooseBoon, returnToHub, addShadow, tryArise, dodge, hurtPlayer, makeEnemy, saveGame,
+  get gameState() { return gameState; }, get particles() { return particles; }, get remnants() { return remnants; }, get telegraphs() { return telegraphs; }, get layout() { return layout; }, set layout(v) { layout = v; },
+  GATE_DEFS, ENDLESS, SKILL, startDungeon, step, useSkill, damageEnemy, chooseBoon, returnToHub, addShadow, tryArise, dodge, hurtPlayer, makeEnemy, saveGame, genLayout, keepIn, inMap, roomAt, pointInRoom, mapRects, roomStep, enterBossArena,
 };
 
 let lastTime = performance.now(), loopErr = 0;
