@@ -14,7 +14,7 @@ function makeEnemy(def, x, y, o = {}) {
   e.maxHp = e.hp;
   return e;
 }
-const clampArena = e => { e.x = clamp(e.x, -arenaW/2+e.size, arenaW/2-e.size); e.y = clamp(e.y, -arenaH/2+e.size, arenaH/2-e.size); };
+const clampArena = e => { const p = keepIn(e.x, e.y, e.size); e.x = p.x; e.y = p.y; };
 const mv = (e, ux, uy, spd, dt) => { e.x += ux*spd*dt; e.y += uy*spd*dt; };
 const telegraph = o => telegraphs.push(Object.assign({ t:0 }, o));
 function shoot(e, ang, speed, dmg, size, color) {
