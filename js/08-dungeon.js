@@ -11,6 +11,7 @@ const endlessGate = floor => GATE_DEFS[Math.min(GATE_DEFS.length-1, Math.floor((
 
 function startDungeon(gateDef, endless = false) {
   arenaW = 1400; arenaH = 1000; // reset to normal, expands for boss
+  layout = (endless || typeof THREE !== 'undefined') ? null : genLayout(gateDef.waves - 1); // rooms and corridors; the open arena stays for endless mode, boss fights and (for now) the 3D view
   enemies = []; projectiles = []; telegraphs = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
   particles = []; texts = []; rings = []; arcs = []; ghosts = []; bolts = [];
   run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0 };
@@ -26,7 +27,7 @@ function startDungeon(gateDef, endless = false) {
   $('hud-gate-name').textContent = endless ? 'DEMON CASTLE — ENDLESS' : `${gateDef.rank}-RANK: ${gateDef.name.toUpperCase()}`;
   toast(endless ? 'ENTERING THE DEMON CASTLE' : `ENTERING ${gateDef.rank}-RANK GATE: ${gateDef.name.toUpperCase()}`, 'blue', 2000); say('gate_enter');
   initAudio(); setMusic('battle'); renderBoons(); buildSkillBar();
-  spawnWave();
+  if (!layout) spawnWave(); // with a layout, wave 1 starts when the hunter walks into the first chamber (roomStep)
 }
 
 function spawnWave() {
@@ -40,9 +41,10 @@ function spawnWave() {
   for (let i = 0; i < count; i++) {
     const a = rand(0, TAU), r = rand(300, 520);
     const elite = lw >= 3 && Math.random() < Math.min(0.14, 0.04 + 0.012*w);
-    spawnQueue.push({ t:0.3 + i*0.07, def:pick(pool), x:player.x + Math.cos(a)*r, y:player.y + Math.sin(a)*r, o:{ scale:dungeon.scale, elite } });
+    const pt = layout ? pointInRoom(layout.lock, player.x, player.y, 280) : { x:player.x + Math.cos(a)*r, y:player.y + Math.sin(a)*r };
+    spawnQueue.push({ t:0.3 + i*0.07, def:pick(pool), x:pt.x, y:pt.y, o:{ scale:dungeon.scale, elite } });
   }
-  toast(dungeon.endless ? `FLOOR ${w}` : `WAVE ${w}`, 'blue', 1500);
+  toast(dungeon.endless ? `FLOOR ${w}` : layout ? `CHAMBER ${w} OF ${dungeon.maxWaves-1}` : `WAVE ${w}`, 'blue', 1500);
 }
 
 function checkWave() {
@@ -51,6 +53,7 @@ function checkWave() {
   nextWave();
 }
 function nextWave() {
+  if (layout) { layout.cleared = dungeon.wave; layout.lock = -1; } // the chamber is clear: its doors open
   dungeon.wave++;
   if (dungeon.endless) {
     highScores.bestFloor = Math.max(highScores.bestFloor, dungeon.wave-1);
@@ -59,6 +62,25 @@ function nextWave() {
   }
   // A System reward every second wave, and always right before the boss
   if ((dungeon.wave-1) % 2 === 0 || isBossWave()) showBoons(); else { dungeon.wait = 1.2; say('wave_clear'); }
+  if (layout && isBossWave()) toast('THE WAY TO THE BOSS IS OPEN', 'red', 2600);
+}
+
+// Between chambers nothing spawns. When the hunter walks into the next chamber its doors shut and the wave starts.
+function roomStep() {
+  if (isBossWave()) { if (dist(player.x, player.y, layout.exit.x, layout.exit.y) < 70) enterBossArena(); return; }
+  if (roomAt(player.x, player.y, 70) !== dungeon.wave) return;
+  layout.lock = dungeon.wave; dungeon.wait = 0;
+  shake(6); playSfx('deny');
+  spawnWave();
+}
+// The way out of the last chamber leads to the open arena, where the boss hunt runs as it always has
+function enterBossArena() {
+  layout = null; dungeon.wait = 0;
+  remnants = []; projectiles = []; telegraphs = [];
+  player.x = 0; player.y = 0; camera.x = 0; camera.y = 0; lastMovePos = { x:0, y:0 }; lastMoveTime = gameTime;
+  player.shadows.forEach(s => { if (s.active) { s.x = rand(-50, 50); s.y = rand(20, 70); } });
+  flash('#ffffff', 0.5); playSfx('tele');
+  spawnWave(); // this is the boss wave, so it goes straight to startBoss()
 }
 
 function startBoss() {
@@ -194,7 +216,7 @@ function returnToHub() {
   ['hud','victory-overlay','death-overlay','extraction-overlay','boon-overlay','pause-overlay','cine'].forEach(hide);
   show('system-menu');
   enemies = []; projectiles = []; telegraphs = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
-  dungeon = null; run = null; legionTimer = 0; pendingExtraction = null; camera.focus = null; mouse.down = false; touchAttack = false;
+  dungeon = null; run = null; layout = null; legionTimer = 0; pendingExtraction = null; camera.focus = null; mouse.down = false; touchAttack = false;
   player.hp = player.maxHp; player.mp = player.maxMp;
   player.shadows.forEach(s => { s.active = false; });
   if (AC && AC.state !== 'running') AC.resume();
