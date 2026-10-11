@@ -75,6 +75,21 @@ function drawArena(vx0, vy0, vx1, vy1) {
 function drawLayout(vx0, vy0, vx1, vy1) {
   const th = floorTheme;
 
+  // 0. Wall mass. Every rectangle is drawn grown outward in dark stone first; the floors painted over it afterwards leave a band
+  //    of wall around the whole outline, correct at every corner with no extra geometry. North walls get a taller, lit face.
+  const WT = 30, WF = 70, FACE = 46; // wall thickness seen from above; how far the north wall reaches up; height of its lit face
+  const near = r => r.x1 + WT > vx0 && r.x0 - WT < vx1 && r.y1 + WT > vy0 && r.y0 - WF < vy1;
+  const grown = () => { ctx.beginPath(); for (const r of layout.rects) if (near(r)) ctx.rect(r.x0 - WT, r.y0 - WF, r.x1 - r.x0 + 2*WT, r.y1 - r.y0 + WF + WT); };
+  if (floorPat) { ctx.fillStyle = floorPat; grown(); ctx.fill(); }      // the same stone as the floor...
+  ctx.fillStyle = floorPat ? 'rgba(4,4,10,0.74)' : '#08080e'; grown(); ctx.fill(); // ...much darker. One path, one fill, so overlaps do not darken twice
+  for (const r of layout.rects) { // the lit face of each north wall, directly above the rectangle's top edge
+    if (!near(r)) continue;
+    const g = ctx.createLinearGradient(0, r.y0 - FACE, 0, r.y0);
+    g.addColorStop(0, 'rgba(255,255,255,0.11)'); g.addColorStop(1, 'rgba(0,0,0,0.38)');
+    ctx.fillStyle = g; ctx.fillRect(r.x0, r.y0 - FACE, r.x1 - r.x0, FACE);
+    ctx.globalAlpha = 0.28; ctx.fillStyle = th.line; ctx.fillRect(r.x0, r.y0 - FACE - 2, r.x1 - r.x0, 2); ctx.globalAlpha = 1; // the top edge of the face catches the light
+  }
+
   // 1. Floors
   if (floorPat) {
     ctx.fillStyle = floorPat;
@@ -155,6 +170,16 @@ function drawLayout(vx0, vy0, vx1, vy1) {
       ctx.beginPath(); ctx.moveTo(door.x0, door.y0); ctx.lineTo(door.x1, door.y1); ctx.stroke();
     }
   });
+  ctx.restore();
+
+  // 5b. A short stone post at each end of every doorway
+  ctx.save();
+  for (const d of layout.doors) for (const [px, py] of [[d.x0, d.y0], [d.x1, d.y1]]) {
+    if (px + 20 < vx0 || px - 20 > vx1 || py + 20 < vy0 || py - 40 > vy1) continue;
+    ctx.globalAlpha = 1; ctx.fillStyle = '#0b0b12'; ctx.fillRect(px - 13, py - 34, 26, 44);
+    ctx.fillStyle = 'rgba(255,255,255,0.09)'; ctx.fillRect(px - 13, py - 34, 26, 6);
+    ctx.globalAlpha = 0.45; ctx.strokeStyle = th.line; ctx.lineWidth = 1.5; ctx.strokeRect(px - 13, py - 34, 26, 44);
+  }
   ctx.restore();
 
   // 6. The exit: a doorway of light
