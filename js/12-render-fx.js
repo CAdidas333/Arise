@@ -151,22 +151,41 @@ function drawPost() {
 }
 
 function drawMinimap() {
-  const mw = isMobile ? 90 : 130, mh = mw*arenaH/arenaW, mx = W - mw - 20, my = 60;
-  const sx = mw/arenaW, sy = mh/arenaH, cx = mx + mw/2, cy = my + mh/2;
+  const L = layout, mw = isMobile ? 90 : 130, mh = L ? Math.round(mw*0.75) : mw*arenaH/arenaW, mx = W - mw - 20, my = 60;
+  const sx = L ? mw/3600 : mw/arenaW, sy = L ? sx : mh/arenaH, cx = mx + mw/2, cy = my + mh/2;
+  const ox = L ? player.x : 0, oy = L ? player.y : 0; // with a layout the map is centred on the hunter
+  const px = x => cx + (x-ox)*sx, py = y => cy + (y-oy)*sy;
   ctx.globalAlpha = 0.5; ctx.fillStyle = '#0a0a14'; ctx.fillRect(mx, my, mw, mh);
   ctx.strokeStyle = 'rgba(0,212,255,0.25)'; ctx.lineWidth = 1; ctx.strokeRect(mx, my, mw, mh);
+  if (L) {
+    ctx.save(); ctx.beginPath(); ctx.rect(mx, my, mw, mh); ctx.clip();
+    L.rects.forEach(r => {
+      ctx.globalAlpha = 1;
+      if (r.kind === 'hall') ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      else if (r.i === L.lock) ctx.fillStyle = 'rgba(255,60,80,0.32)';
+      else if (r.i <= L.cleared) ctx.fillStyle = 'rgba(0,212,255,0.22)';
+      else ctx.fillStyle = 'rgba(255,255,255,0.11)';
+      ctx.fillRect(px(r.x0), py(r.y0), (r.x1-r.x0)*sx, (r.y1-r.y0)*sy);
+    });
+    if (dungeon.wave >= dungeon.maxWaves) {
+      ctx.fillStyle = '#ffcc33';
+      ctx.globalAlpha = 0.6 + 0.4*Math.sin(clock*5);
+      ctx.fillRect(px(L.exit.x) - 2.5, py(L.exit.y) - 2.5, 5, 5);
+    }
+  }
   ctx.fillStyle = COLORS.accent; ctx.globalAlpha = 0.6;
-  player.shadows.forEach(s => { if (s.active) disc(cx + s.x*sx, cy + s.y*sy, 1.6); });
-  enemies.forEach(e => { if (!e.alive || e.isBoss) return; ctx.fillStyle = e.elite ? '#ffcc66' : COLORS.danger; ctx.globalAlpha = 0.7; disc(cx + e.x*sx, cy + e.y*sy, e.elite ? 2.6 : 1.8); });
+  player.shadows.forEach(s => { if (s.active) disc(px(s.x), py(s.y), 1.6); });
+  enemies.forEach(e => { if (!e.alive || e.isBoss) return; ctx.fillStyle = e.elite ? '#ffcc66' : COLORS.danger; ctx.globalAlpha = 0.7; disc(px(e.x), py(e.y), e.elite ? 2.6 : 1.8); });
   ctx.fillStyle = '#bb88ff'; ctx.globalAlpha = 0.9;
-  remnants.forEach(r => disc(cx + r.x*sx, cy + r.y*sy, 2));
+  remnants.forEach(r => disc(px(r.x), py(r.y), 2));
   const b = dungeon.bossRef;
   if (b && b.alive) { // pulsing boss marker
-    const bx = cx + b.x*sx, by = cy + b.y*sy;
+    const bx = px(b.x), by = py(b.y);
     ctx.globalAlpha = 0.6 + Math.sin(clock*4)*0.3; ctx.fillStyle = '#ff2222'; disc(bx, by, 4.5);
     ctx.strokeStyle = '#ff4444'; ctx.beginPath(); ctx.arc(bx, by, 8 + Math.sin(clock*6)*2, 0, TAU); ctx.stroke();
   }
-  ctx.globalAlpha = 1; ctx.fillStyle = COLORS.primary; disc(cx + player.x*sx, cy + player.y*sy, 3);
+  ctx.globalAlpha = 1; ctx.fillStyle = COLORS.primary; disc(px(player.x), py(player.y), 3);
+  if (L) ctx.restore();
   // Stationary warning
   const st = gameTime - lastMoveTime;
   if (st > 3 && dungeon.state === 'fight' && enemies.some(e => e.alive)) {
@@ -177,18 +196,28 @@ function drawMinimap() {
   ctx.globalAlpha = 1;
 }
 
-// Edge-of-screen arrow pointing at the boss you are hunting
+// Edge-of-screen arrow: the boss you are hunting, or the way to the next chamber
 function drawIndicators() {
   const b = dungeon.bossRef;
-  if (!b || !b.alive || dungeon.state !== 'fight') return;
-  const dx = (b.x-camera.x)*camera.zoom, dy = (b.y-camera.y)*camera.zoom;
+  let tx, ty, col = '#ff3344';
+  if (dungeon.state !== 'fight') return;
+  if (b && b.alive) { tx = b.x; ty = b.y; }
+  else if (layout && layout.lock < 0) {
+    // Between chambers: the door out of the chamber the hunter stands in, then the next chamber, and at the end the way to the boss
+    const k = dungeon.wave - 1, d = layout.doors[2*k], boss = dungeon.wave >= dungeon.maxWaves;
+    if (roomAt(player.x, player.y) === k) { tx = (d.x0+d.x1)/2; ty = (d.y0+d.y1)/2; }
+    else if (boss) { tx = layout.exit.x; ty = layout.exit.y; }
+    else { const r = layout.rooms[dungeon.wave]; tx = (r.x0+r.x1)/2; ty = (r.y0+r.y1)/2; }
+    col = boss ? '#ffcc33' : COLORS.primary;
+  } else return;
+  const dx = (tx-camera.x)*camera.zoom, dy = (ty-camera.y)*camera.zoom;
   if (Math.abs(dx) < W/2 - 30 && Math.abs(dy) < H/2 - 30) return;
   const a = Math.atan2(dy, dx), m = 70, k = Math.min((W/2-m)/Math.abs(Math.cos(a) || 1e-6), (H/2-m)/Math.abs(Math.sin(a) || 1e-6));
   const ix = W/2 + Math.cos(a)*k, iy = H/2 + Math.sin(a)*k;
   ctx.save(); ctx.translate(ix, iy);
-  ctx.globalAlpha = 0.7 + 0.3*Math.sin(clock*6); ctx.fillStyle = '#ff3344';
+  ctx.globalAlpha = 0.7 + 0.3*Math.sin(clock*6); ctx.fillStyle = col;
   ctx.font = 'bold 11px Orbitron, monospace'; ctx.textAlign = 'center';
-  ctx.fillText(Math.round(dist(player.x, player.y, b.x, b.y)/10) + 'm', 0, -22);
+  ctx.fillText(Math.round(dist(player.x, player.y, tx, ty)/10) + 'm', 0, -22);
   ctx.rotate(a); ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-8, -10); ctx.lineTo(-3, 0); ctx.lineTo(-8, 10); ctx.closePath(); ctx.fill();
   ctx.restore(); ctx.textAlign = 'left';
 }
