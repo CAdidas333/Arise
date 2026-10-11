@@ -19,3 +19,6 @@ dist/
 # Misc
 .env
 *.log
+
+# Music takes wait here until Chris has picked by ear; only the chosen files are committed
+assets/music/takes/
