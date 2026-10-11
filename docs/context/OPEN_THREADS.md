@@ -45,7 +45,7 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
-| U3 | Dress the rooms: every room is a bare rectangle of floor (no pillars, rubble or props) and corridors are plain | OPEN | session | Nothing | Left out of step 5 (2026-10-11) to ship the layout and the flow first |
+| U3 | Dress the rooms: no pillars, rubble or props on the floors yet. Done 2026-10-11: stone walls with a lit north face and door posts in 2D. Still thin glowing walls in 3D | OPEN | session | Nothing | Walls first; props need a decision on whether they block movement |
 | U4 | Warning circles and blast marks can be drawn on the dark outside a room's walls (the boss-style nova reaches 380 from the hunter) | OPEN | min | Nothing | Cosmetic; seen in the design, not yet in a frame |
 | U5 | The 3D view has no minimap; between rooms it shows only the arrow to the next door | OPEN | min | Nothing | The minimap lives in a 2D drawing script the 3D page does not load |
 
