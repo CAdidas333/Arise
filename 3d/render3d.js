@@ -77,11 +77,18 @@ const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x111118, roughnes
 const wallMeshes = [], floorGroup = new THREE.Group();
 scene.add(floorGroup);
 let lastArenaW = 0, lastArenaH = 0, lastLine = '';
+let lastFloorKey = '', lastLayoutRef = null;
+const layoutMeshes = []; // floor pieces, door bars and the exit light of a layout
+
+function clearFloorAndWalls() {
+  if (floorMesh) { floorGroup.remove(floorMesh); floorMesh.geometry.dispose(); floorMesh = null; }
+  while (wallMeshes.length) { const wm = wallMeshes.pop(); floorGroup.remove(wm); wm.geometry.dispose(); wm.material.dispose(); }
+  while (layoutMeshes.length) { const m = layoutMeshes.pop(); floorGroup.remove(m); m.geometry.dispose(); if (m.material !== floorMaterial) m.material.dispose(); }
+}
 
 function rebuildFloorAndWalls(w, h, line) {
   lastArenaW = w; lastArenaH = h; lastLine = line;
-  if (floorMesh) { floorGroup.remove(floorMesh); floorMesh.geometry.dispose(); floorMesh = null; }
-  while (wallMeshes.length) { const wm = wallMeshes.pop(); floorGroup.remove(wm); wm.geometry.dispose(); wm.material.dispose(); }
+  clearFloorAndWalls();
 
   const fg = new THREE.PlaneGeometry(w, h); fg.rotateX(-Math.PI / 2);
   floorMesh = new THREE.Mesh(fg, floorMaterial); floorGroup.add(floorMesh);
@@ -99,6 +106,59 @@ function rebuildFloorAndWalls(w, h, line) {
   }
 }
 
+// A flat floor piece over the world rectangle (x0,y0)-(x1,y1), textured in world units so neighbouring pieces line up
+function floorPiece(x0, y0, x1, y1) {
+  const g = new THREE.PlaneGeometry(x1 - x0, y1 - y0); g.rotateX(-Math.PI / 2); g.translate((x0 + x1) / 2, 0, (y0 + y1) / 2);
+  const pos = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / 384, -pos.getZ(i) / 384);
+  uv.needsUpdate = true;
+  const m = new THREE.Mesh(g, floorMaterial); floorGroup.add(m); layoutMeshes.push(m);
+}
+
+// Rooms and corridors: a floor piece per rectangle, a wall box per outline segment, a bar across each shut door, a slab of light at the exit
+function rebuildLayout3D(line) {
+  clearFloorAndWalls();
+  const L = layout;
+  if (floorTexture) floorTexture.repeat.set(1, 1);
+  for (const r of L.rooms) floorPiece(r.x0, r.y0, r.x1, r.y1);
+  for (const h of L.halls) { // only the part of a hall that lies outside the rooms, so two floors never share the same spot
+    let x0 = h.x0, y0 = h.y0, x1 = h.x1, y1 = h.y1;
+    for (const r of L.rooms) {
+      if (r.x1 <= x0 || r.x0 >= x1 || r.y1 <= y0 || r.y0 >= y1) continue;
+      if (r.x0 <= h.x0 && r.x1 >= h.x1) { if (r.y0 <= y0) y0 = Math.max(y0, r.y1); else y1 = Math.min(y1, r.y0); } // the hall runs north-south
+      else { if (r.x0 <= x0) x0 = Math.max(x0, r.x1); else x1 = Math.min(x1, r.x0); }                               // the hall runs east-west
+    }
+    if (x1 > x0 && y1 > y0) floorPiece(x0, y0, x1, y1);
+  }
+
+  const wallMat = new THREE.MeshBasicMaterial({ color: line, transparent: true, opacity: 0.65 });
+  const wallH = 30, t = 2;
+  for (const s of L.walls) {
+    const horiz = s.y0 === s.y1, len = horiz ? Math.abs(s.x1 - s.x0) : Math.abs(s.y1 - s.y0);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(horiz ? len : t, wallH, horiz ? t : len), wallMat);
+    m.position.set((s.x0 + s.x1) / 2, wallH / 2, (s.y0 + s.y1) / 2); floorGroup.add(m); wallMeshes.push(m);
+  }
+
+  const danger = (typeof COLORS !== 'undefined' && COLORS.danger) ? COLORS.danger : '#ff3344';
+  const primary = (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : '#00d4ff';
+  const next = L.lock < 0 ? L.doors[2 * (dungeon.wave - 1)] : null; // the door the hunter should go through next
+  for (const d of L.doors) {
+    const shut = d.room === L.lock;
+    if (!shut && d !== next) continue;
+    const horiz = d.y0 === d.y1, len = horiz ? Math.abs(d.x1 - d.x0) : Math.abs(d.y1 - d.y0), hgt = shut ? 34 : 1.5, th = shut ? 6 : 10;
+    const mat = new THREE.MeshBasicMaterial({ color: shut ? danger : primary, transparent: true, opacity: shut ? 0.85 : 0.7 });
+    const m = new THREE.Mesh(new THREE.BoxGeometry(horiz ? len : th, hgt, horiz ? th : len), mat);
+    m.position.set((d.x0 + d.x1) / 2, hgt / 2 + 0.5, (d.y0 + d.y1) / 2); floorGroup.add(m); layoutMeshes.push(m);
+  }
+
+  const open = dungeon.wave >= dungeon.maxWaves;
+  const ember = (dungeon.gate && dungeon.gate.theme && dungeon.gate.theme.ember) ? dungeon.gate.theme.ember : '#ffcc66';
+  const sd = L.doors[L.doors.length - 1], eastward = sd.x0 === sd.x1; // the stub's door is a north-south segment when the stub runs east
+  const em = new THREE.Mesh(new THREE.BoxGeometry(eastward ? 10 : 84, 150, eastward ? 84 : 10),
+    new THREE.MeshBasicMaterial({ color: ember, transparent: true, opacity: open ? 0.5 : 0.12, blending: THREE.AdditiveBlending, depthWrite: false }));
+  em.position.set(L.exit.x, 75, L.exit.y); floorGroup.add(em); layoutMeshes.push(em);
+}
+
 function buildFloor(g) {
   currentGate = g;
   floorMaterial.map = null; floorMaterial.color.set(0x111118); floorMaterial.needsUpdate = true;
@@ -108,7 +168,7 @@ function buildFloor(g) {
     floorTexture = tex;
     const w = typeof arenaW !== 'undefined' ? arenaW : 1400;
     const h = typeof arenaH !== 'undefined' ? arenaH : 1000;
-    tex.repeat.set(w / 384, h / 384);
+    if (typeof layout !== 'undefined' && layout) tex.repeat.set(1, 1); else tex.repeat.set(w / 384, h / 384);
     floorMaterial.map = tex; floorMaterial.color.set(0xffffff); floorMaterial.needsUpdate = true;
   }, undefined, () => {
     floorTexture = null; floorMaterial.map = null; floorMaterial.color.set(0x111118); floorMaterial.needsUpdate = true;
@@ -240,14 +300,17 @@ function draw() {
   camera3D.lookAt(camX, 20, camY);
   viewYaw = view3D.yaw;
 
-  // Floor & walls rebuild if arena dimensions change
+  // Floor and walls are rebuilt when the arena size, the layout, a door, the wave or the wall colour changes
   const curArenaW = typeof arenaW !== 'undefined' ? arenaW : 1400;
   const curArenaH = typeof arenaH !== 'undefined' ? arenaH : 1000;
   const curLine = (dungeon.gate && dungeon.gate.theme && dungeon.gate.theme.line)
     ? dungeon.gate.theme.line
     : ((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : '#00d4ff');
-  if (curArenaW !== lastArenaW || curArenaH !== lastArenaH || curLine !== lastLine || !floorMesh) {
-    rebuildFloorAndWalls(curArenaW, curArenaH, curLine);
+  const L3 = (typeof layout !== 'undefined') ? layout : null;
+  const floorKey = L3 ? 'L' + L3.seed + '|' + L3.lock + '|' + dungeon.wave + '|' + curLine : 'A' + curArenaW + 'x' + curArenaH + '|' + curLine;
+  if (floorKey !== lastFloorKey || L3 !== lastLayoutRef || (!L3 && !floorMesh)) {
+    lastFloorKey = floorKey; lastLayoutRef = L3;
+    if (L3) rebuildLayout3D(curLine); else rebuildFloorAndWalls(curArenaW, curArenaH, curLine);
   }
 
   // Hunter
@@ -595,6 +658,38 @@ function drawFx3D() {
         ctx.fillText(t.text, pt[0], pt[1]);
       }
       ctx.textAlign = 'left';
+    }
+
+    // 8b. Between chambers: an arrow to the door out, then to the next chamber, and at the end to the way to the boss
+    if (typeof layout !== 'undefined' && layout && layout.lock < 0 && dungeon.state === 'fight' && !(dungeon.bossRef && dungeon.bossRef.alive)) {
+      const k = dungeon.wave - 1, d = layout.doors[2 * k], boss = dungeon.wave >= dungeon.maxWaves;
+      let tx, ty;
+      if (roomAt(player.x, player.y) === k) { tx = (d.x0 + d.x1) / 2; ty = (d.y0 + d.y1) / 2; }
+      else if (boss) { tx = layout.exit.x; ty = layout.exit.y; }
+      else { const r = layout.rooms[dungeon.wave]; tx = (r.x0 + r.x1) / 2; ty = (r.y0 + r.y1) / 2; }
+      const col = boss ? '#ffcc33' : ((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : '#00d4ff');
+      const far = dist(player.x, player.y, tx, ty), sp = toScreen(tx, ty, 70);
+      ctx.fillStyle = col; ctx.font = 'bold 11px Orbitron, monospace'; ctx.textAlign = 'center';
+      if (sp && sp[0] > 40 && sp[0] < w - 40 && sp[1] > 40 && sp[1] < h - 40) {
+        // the target is on screen: a small marker bobbing above it, pointing down
+        const bob = Math.sin(clock * 4) * 5;
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath(); ctx.moveTo(sp[0], sp[1] + 12 + bob); ctx.lineTo(sp[0] - 10, sp[1] - 6 + bob); ctx.lineTo(sp[0] + 10, sp[1] - 6 + bob); ctx.closePath(); ctx.fill();
+      } else if (far > 1) {
+        // off screen (or behind the camera): an arrow at the screen edge, in the direction the hunter must walk
+        const ux = (tx - player.x) / far, uy = (ty - player.y) / far;
+        const p0 = toScreen(player.x, player.y, 0), p1 = toScreen(player.x + ux * 150, player.y + uy * 150, 0);
+        if (p0 && p1) {
+          const a = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]), mg = 70;
+          const kk = Math.min((w / 2 - mg) / Math.abs(Math.cos(a) || 1e-6), (h / 2 - mg) / Math.abs(Math.sin(a) || 1e-6));
+          ctx.save(); ctx.translate(w / 2 + Math.cos(a) * kk, h / 2 + Math.sin(a) * kk);
+          ctx.globalAlpha = 0.7 + 0.3 * Math.sin(clock * 6);
+          ctx.fillText(Math.round(far / 10) + 'm', 0, -22);
+          ctx.rotate(a); ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-8, -10); ctx.lineTo(-3, 0); ctx.lineTo(-8, 10); ctx.closePath(); ctx.fill();
+          ctx.restore();
+        }
+      }
+      ctx.textAlign = 'left'; ctx.globalAlpha = 1;
     }
 
     // 9. Screen flash

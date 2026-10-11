@@ -11,7 +11,7 @@ const endlessGate = floor => GATE_DEFS[Math.min(GATE_DEFS.length-1, Math.floor((
 
 function startDungeon(gateDef, endless = false) {
   arenaW = 1400; arenaH = 1000; // reset to normal, expands for boss
-  layout = (endless || typeof THREE !== 'undefined') ? null : genLayout(gateDef.waves - 1); // rooms and corridors; the open arena stays for endless mode, boss fights and (for now) the 3D view
+  layout = endless ? null : genLayout(gateDef.waves - 1); // rooms and corridors; the open arena stays for endless mode and boss fights
   enemies = []; projectiles = []; telegraphs = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
   particles = []; texts = []; rings = []; arcs = []; ghosts = []; bolts = [];
   run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0 };
