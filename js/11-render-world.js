@@ -51,6 +51,7 @@ function buildFloor(g) {
 }
 
 function drawArena(vx0, vy0, vx1, vy1) {
+  if (layout) { drawLayout(vx0, vy0, vx1, vy1); return; }
   const hw = arenaW/2, hh = arenaH/2, th = floorTheme;
   const x0 = Math.max(vx0, -hw), y0 = Math.max(vy0, -hh), x1 = Math.min(vx1, hw), y1 = Math.min(vy1, hh);
   if (x1 > x0 && y1 > y0 && floorPat) { ctx.fillStyle = floorPat; ctx.fillRect(x0, y0, x1-x0, y1-y0); }
@@ -68,6 +69,129 @@ function drawArena(vx0, vy0, vx1, vy1) {
   ctx.strokeStyle = th.line; ctx.lineWidth = 3; ctx.globalAlpha = 0.55 + 0.15*Math.sin(clock*2);
   ctx.shadowColor = th.line; ctx.shadowBlur = 22;
   ctx.strokeRect(-hw, -hh, arenaW, arenaH);
+  ctx.restore();
+}
+
+function drawLayout(vx0, vy0, vx1, vy1) {
+  const th = floorTheme;
+
+  // 1. Floors
+  if (floorPat) {
+    ctx.fillStyle = floorPat;
+    layout.rects.forEach(r => {
+      const x0 = Math.max(vx0, r.x0), y0 = Math.max(vy0, r.y0);
+      const x1 = Math.min(vx1, r.x1), y1 = Math.min(vy1, r.y1);
+      if (x1 > x0 && y1 > y0) ctx.fillRect(x0, y0, x1-x0, y1-y0);
+    });
+  }
+
+  // 2. Corridors a little darker
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  layout.rects.forEach(r => {
+    if (r.kind !== 'hall') return;
+    const x0 = Math.max(vx0, r.x0), y0 = Math.max(vy0, r.y0);
+    const x1 = Math.min(vx1, r.x1), y1 = Math.min(vy1, r.y1);
+    if (x1 > x0 && y1 > y0) ctx.fillRect(x0, y0, x1-x0, y1-y0);
+  });
+
+  // 3. Rooms not yet reached a little darker
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  layout.rects.forEach(r => {
+    if (r.kind !== 'room' || r.i <= layout.cleared || r.i === layout.lock) return;
+    const x0 = Math.max(vx0, r.x0), y0 = Math.max(vy0, r.y0);
+    const x1 = Math.min(vx1, r.x1), y1 = Math.min(vy1, r.y1);
+    if (x1 > x0 && y1 > y0) ctx.fillRect(x0, y0, x1-x0, y1-y0);
+  });
+
+  // 4. Walls
+  ctx.save();
+  ctx.strokeStyle = th.line;
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'square';
+  ctx.globalAlpha = 0.55 + 0.15*Math.sin(clock*2);
+  ctx.shadowColor = th.line;
+  ctx.shadowBlur = 22;
+  ctx.beginPath();
+  layout.walls.forEach(w => {
+    const minX = Math.min(w.x0, w.x1), maxX = Math.max(w.x0, w.x1);
+    const minY = Math.min(w.y0, w.y1), maxY = Math.max(w.y0, w.y1);
+    if (maxX >= vx0 && minX <= vx1 && maxY >= vy0 && minY <= vy1) {
+      ctx.moveTo(w.x0, w.y0);
+      ctx.lineTo(w.x1, w.y1);
+    }
+  });
+  ctx.stroke();
+  ctx.restore();
+
+  // 5. Doors
+  ctx.save();
+  layout.doors.forEach((door, idx) => {
+    if (door.room === layout.lock) {
+      ctx.strokeStyle = COLORS.danger;
+      ctx.lineWidth = 9;
+      ctx.lineCap = 'butt';
+      ctx.shadowColor = COLORS.danger;
+      ctx.shadowBlur = 26;
+      ctx.globalAlpha = 0.75 + 0.25*Math.sin(clock*5);
+      ctx.beginPath(); ctx.moveTo(door.x0, door.y0); ctx.lineTo(door.x1, door.y1); ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.moveTo(door.x0, door.y0); ctx.lineTo(door.x1, door.y1); ctx.stroke();
+    } else if (layout.lock < 0 && idx === 2*(dungeon.wave-1)) {
+      ctx.strokeStyle = COLORS.primary;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = COLORS.primary;
+      ctx.shadowBlur = 18;
+      ctx.globalAlpha = 0.45 + 0.35*Math.sin(clock*4);
+      ctx.beginPath(); ctx.moveTo(door.x0, door.y0); ctx.lineTo(door.x1, door.y1); ctx.stroke();
+    } else {
+      ctx.strokeStyle = th.line;
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 0.16;
+      ctx.beginPath(); ctx.moveTo(door.x0, door.y0); ctx.lineTo(door.x1, door.y1); ctx.stroke();
+    }
+  });
+  ctx.restore();
+
+  // 6. The exit: a doorway of light
+  const ex = layout.exit.x, ey = layout.exit.y;
+  const open = dungeon.wave >= dungeon.maxWaves;
+  const k = open ? 1 : 0.22;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+
+  // pool of light on the floor
+  const rg = ctx.createRadialGradient(ex, ey, 0, ex, ey, 70);
+  rg.addColorStop(0, th.ember);
+  rg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = rg;
+  ctx.globalAlpha = k*(0.5 + 0.15*Math.sin(clock*3));
+  ctx.beginPath();
+  ctx.ellipse(ex, ey, 70, 26, 0, 0, TAU);
+  ctx.fill();
+
+  // standing rectangle of light
+  const lg = ctx.createLinearGradient(ex, ey-170, ex, ey);
+  lg.addColorStop(0, 'rgba(0,0,0,0)');
+  lg.addColorStop(1, th.ember);
+  ctx.fillStyle = lg;
+  ctx.globalAlpha = k*(0.55 + 0.2*Math.sin(clock*2.2));
+  ctx.fillRect(ex-42, ey-170, 84, 170);
+
+  // vertical lines when open
+  if (open) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(ex-42, ey-150); ctx.lineTo(ex-42, ey);
+    ctx.moveTo(ex+42, ey-150); ctx.lineTo(ex+42, ey);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
