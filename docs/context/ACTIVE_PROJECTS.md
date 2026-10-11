@@ -1,6 +1,6 @@
 # Arise — Active Projects
 
-## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 to 4 live; a 3D lane with a free camera and fight effects runs beside the 2D game)
+## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 to 5 live; a 3D lane with a free camera and fight effects runs beside the 2D game)
 **Priority**: MEDIUM (fun/showcase project)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
@@ -50,7 +50,7 @@
 - [x] Step 2 — The System speaks: 35 voice lines in the River voice and 8 sound effects, all chosen by Chris by ear, play in the game; the extraction line is "Shadow extraction.", a 2-second wait with a charge effect, then "Successful." or "Failed.". **Live** (shipped to main 2026-10-09 on Chris's word, commit 18b896a; he will say if anything needs changing). Recipe in `assets/CREDITS.md`. ElevenLabs music is still blocked: Chris has now heard the voice and effects but has not said yes to music
 - [x] Step 3 — Shadows look like the enemy they were and fight the way it fought; boss shadows fire a ring of shots on a timer. **Live** (shipped to main 2026-10-09, commit f465a46)
 - [x] Step 4 — A hunter with a real body and a look for each boss. **Live.** Hunter: pass 3 (2026-10-10), closer to the picture Chris picked, drawn at 1.35 size; the old stick figure is one switch away (System menu, Controls tab, "Hunter look"; `settings.hunter`, `drawHunterClassic`). Bosses (2026-10-10): each of the six has its own body drawn by `drawBoss` in `js/11-render-world.js` (spider, hulking orc, cloaked knight with a greatsword, burning armoured king, dragon with spread wings, cracked stone colossus); boss shadow soldiers use the same bodies in shadow colours
-- [ ] Step 5 — Real dungeons: generated rooms and corridors; the arena stays for boss fights and endless mode
+- [x] Step 5 — Real dungeons. **Live** in both views (2026-10-11). A gate is a generated chain of rooms and corridors (`genLayout` in `js/03a-layout.js`, a new 14th script). One wave per room: walking in shuts the doors (`roomStep` in `js/08-dungeon.js`), clearing it opens them. After the last room an exit leads to the boss, fought in the open arena as before (`enterBossArena`). Every position limit goes through `keepIn` / `inMap`. The minimap follows the hunter; an arrow points to the next door. The 3D view builds the same layout (`rebuildLayout3D`). Endless mode keeps the open arena. Test: `node tools/test_layout.js` (expects `PASS 8000`)
 - [ ] Step 6 — Loot and gear
 - [ ] Step 7 — Story thread: scripted opening, chapter card per gate
 - [ ] Step 8 — Hand-designed boss fights
@@ -62,10 +62,10 @@
 - [ ] 3D lane (Chris, 2026-10-09: "develop both lanes simultaneously", with a button to flip between 2D and 3D): the same game rules in a third-person 3D view at `/3d/`, **live** with a switch link on both pages; the save is shared. `3d/index.html` is generated from `index.html` by `tools/sync3d.py` (run by `tools/stamp.sh`; never edit it by hand). **Free camera live since 2026-10-10**: Z and C turn it, V resets, right-drag orbits, the wheel zooms, and movement is relative to the camera (`view3D` in `3d/render3d.js`, shared `viewYaw`). **Fight effects live since 2026-10-10**: damage numbers, slash crescents, rings, lightning, sparks and the screen flash are drawn on a transparent overlay (`drawFx3D`), and left-click attack now works there. State: simple shapes, no hub backdrop. Next: (1) the hunter and enemies as real 3D figures (bosses are still a plain solid in 3D); (2) touch control for the camera (thread F5)
 
 ### Next Up (ranked)
-1. V18 step 5: generated dungeons (rooms and corridors; the arena stays for boss fights and endless mode). Plan it first as several small worker jobs
-2. ElevenLabs music: write `tools/el_music.py` and file one card with Houston for the key rule
-3. 3D lane: real 3D figures for the hunter, enemies and bosses; touch control for the camera (F5)
-4. V18 step 6: loot and gear
+1. ElevenLabs music: write `tools/el_music.py` and file one card with Houston for the key rule
+2. 3D lane: real 3D figures for the hunter, enemies and bosses; touch control for the camera (F5)
+3. V18 step 6: loot and gear
+4. Dress the rooms (open thread U3)
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`
 
 ### Backlog / Future Vision

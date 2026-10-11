@@ -45,6 +45,9 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
+| U3 | Dress the rooms: every room is a bare rectangle of floor (no pillars, rubble or props) and corridors are plain | OPEN | session | Nothing | Left out of step 5 (2026-10-11) to ship the layout and the flow first |
+| U4 | Warning circles and blast marks can be drawn on the dark outside a room's walls (the boss-style nova reaches 380 from the hunter) | OPEN | min | Nothing | Cosmetic; seen in the design, not yet in a frame |
+| U5 | The 3D view has no minimap; between rooms it shows only the arrow to the next door | OPEN | min | Nothing | The minimap lives in a 2D drawing script the 3D page does not load |
 
 ### Engine
 
@@ -52,6 +55,7 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 |---|---|---|---|---|---|
 | E1 | Levelling speed: bot runs showed about 5 to 12 levels per gate; slow XP if the skill tree still fills too fast | OPEN | min | A human play-through showing it is a problem | Skill points were already slowed to one per 2 levels (2026-10-09); XP is the next lever |
 | E2 | First boss difficulty: a level-1 character that never dodges dies to the first boss | OPEN | min | A human player confirming it is a problem | Found in bot runs only; not confirmed by a person |
+| E4 | Dungeon pacing: a gate has one room per wave (4 rooms in the E gate, 9 in the A and S gates) plus the walk between them; no person has played it | OPEN | min | A human play-through | Bot runs only (2026-10-11): a level-40 test hunter cleared the D gate's five rooms and boss |
 | E3 | Phone performance: never measured on a real phone | OPEN | session | Chris (or a tester) with a real phone | Matters more once painted layers and the 3D view arrive; V17 only passed emulated touch and a desktop frame-time check |
 
 ### Infra / Hygiene
