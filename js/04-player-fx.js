@@ -9,6 +9,7 @@ function createPlayer(name) {
     stats:{ STR:5, AGI:5, INT:5, VIT:5, PER:5 }, statPoints:0, skillPoints:0, tree:{},
     weapon:0, gold:0, potions:1, shadows:[], cleared:{},
     gear:{ armor:null, boots:null, ring:null }, bag:[],
+    story:{ opening:false, gates:{} }, // what the story has shown: the opening once, each gate's chapter card once
     hp:1, maxHp:1, mp:1, maxMp:1, x:0, y:0, facing:{ x:1, y:0 },
     cds:{}, inv:0, hitFlash:0, anim:'idle', animT:0, atkT:0, atkDur:0.2, atkDir:1,
     combo:0, comboWin:0, dodgeCd:0, dodgeT:0, ddx:0, ddy:0, ghostAcc:0, perfect:false, perfectUsed:false,

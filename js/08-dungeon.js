@@ -185,6 +185,7 @@ function endExtraction(delay) {
 function showVictory() {
   say('gate_cleared');
   const g = dungeon.gate, par = g.waves*26;
+  storyVictoryLine(g);
   const score = 100 - Math.min(60, run.dmgTaken/player.maxHp*30) - Math.min(30, Math.max(0, (run.time-par)/par*30));
   const grade = score >= 90 ? 'S' : score >= 75 ? 'A' : score >= 55 ? 'B' : 'C';
   const bonus = Math.floor(g.boss.xp*0.5*{ S:2, A:1.5, B:1.2, C:1 }[grade]);

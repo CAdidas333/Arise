@@ -51,6 +51,30 @@ const GATE_DEFS = [
 ];
 const ENDLESS = { id:'endless', name:'Demon Castle', rank:'∞', reqLevel:15, desc:'Endless floors. A boss every 5th. How high can you climb?' };
 
+// The System's words, all original. opening: cards shown once to a new hunter, one to three lines each ({name} becomes the hunter's name).
+// Per gate id: the chapter number, the lines on its chapter card (first visit), and one closing line for the first clear.
+const STORY = {
+  opening: [
+    ['Qualification confirmed.', 'Welcome, player.'],
+    ['You were the weakest hunter on record.', 'That changes now.'],
+    ['Gates are opening across the city.', 'Most hunters never come back out.'],
+    ['The System will give you strength.', 'It will not give you mercy.'],
+    ['Clear every gate.', 'Grow stronger than what waits inside.', 'Begin, {name}.'],
+  ],
+  e_gate: { chapter:1, lines:['Every hunter starts somewhere small.', 'Goblins hold the cavern. Something far larger rules it.'],
+    cleared:'The brood mother is gone, and the cavern finally goes quiet.' },
+  d_gate: { chapter:2, lines:['A fortress built by people who only know war.', 'Break the Chieftain and the rest will scatter.'],
+    cleared:'The Iron Tusk banner falls, and the fortress is yours.' },
+  c_gate: { chapter:3, lines:['Cold stone, old armor, and no daylight.', 'The dead here have not forgotten how to fight.'],
+    cleared:'The Death Knight falls, and the crypt stops marching.' },
+  b_gate: { chapter:4, lines:['Heat rolls out of the gate before you step through.', 'Everything here was made to burn a hunter down.'],
+    cleared:'The Demon Lord is beaten, and the heat drains out of the gate.' },
+  a_gate: { chapter:5, lines:['Gold glitters in the dark. Do not trust it.', 'Wings, fire, and a beast that has never lost.'],
+    cleared:'The Ancient Dragon is down, and very few hunters ever stand where you stand.' },
+  s_gate: { chapter:6, lines:['Silent halls of pale stone, older than the gates.', 'The statues here are not decoration.'],
+    cleared:'The last guardian crumbles, and the gates have nothing stronger to send.' },
+};
+
 const WEAPONS = [
   { name:'Rusted Dagger', mult:1.0, cost:0, color:'#aaddff', desc:'It is, technically, a weapon.' },
   { name:"Kasaka's Venom Fang", mult:1.25, cost:300, color:'#66ffaa', desc:'+25% damage' },

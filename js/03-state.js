@@ -14,7 +14,7 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 
-let gameState = 'TITLE'; // TITLE | CREATE | HUB | DUNGEON
+let gameState = 'TITLE'; // TITLE | CREATE | STORY (the opening) | HUB | DUNGEON
 let player = null, paused = false;
 let viewYaw = 0; // camera turn in radians, set by the 3D view; 0 in the 2D game
 let enemies = [], projectiles = [], particles = [], texts = [], rings = [], arcs = [], ghosts = [], bolts = [];
@@ -51,7 +51,7 @@ function saveGame() {
     v:VERSION, spv:2, name:player.name, level:player.level, xp:player.xp, rank:player.rank,
     stats:{...player.stats}, statPoints:player.statPoints, skillPoints:player.skillPoints, tree:{...player.tree},
     weapon:player.weapon, gold:player.gold, potions:player.potions, cleared:{...player.cleared},
-    gear:{...player.gear}, bag:[...player.bag],
+    gear:{...player.gear}, bag:[...player.bag], story:{ opening:!!player.story.opening, gates:{...player.story.gates} },
     shadows:player.shadows.map(s => ({ name:s.name, kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })),
     questProgress:{...questProgress}, questDate, highScores:{...highScores},
     questsCompleted:DAILY_QUESTS.filter(q => q.completed).map(q => q.id),
@@ -96,6 +96,10 @@ function loadGame() {
     player.xp = 0; player.skillPoints = Math.floor(player.level/2); player.potions = 2;
     toast(`SAVE UPGRADED TO V17 — ${player.skillPoints} SKILL POINTS GRANTED`, 'purple', 5000);
   }
+  // Story: what has been shown. No field (a save from before the story) means nothing seen, but a hunter who has already played is not given the opening
+  const sd = d.story && typeof d.story === 'object' ? d.story : {};
+  player.story.opening = sd.opening === true || player.level > 1 || GATE_DEFS.some(g => player.cleared[g.id]);
+  for (const g of GATE_DEFS) if (sd.gates && sd.gates[g.id] === true) player.story.gates[g.id] = true;
   if (d.settings) Object.assign(settings, d.settings);
   if (!AIM_MODES.includes(settings.aim)) settings.aim = 'auto';
   if (settings.hunter !== 'classic') settings.hunter = 'new';

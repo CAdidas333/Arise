@@ -208,3 +208,72 @@ function gearSection() {
   bag.forEach((it, i) => { h += gearRow(it, `<button class="sys-btn" data-act="gear-equip" data-v="${i}">EQUIP</button><button class="sys-btn gold" data-act="gear-sell" data-v="${i}">SELL ◈ ${fmtNum(gearValue(it))}</button>`); });
   return h;
 }
+
+// ================================================================
+//  STORY — full-screen cards in the System's voice: the opening, and a chapter card for each gate
+// ================================================================
+let storyRun = null; // while a card is up: { cards, i, head, onEnd, lock, timer }. Everything else ignores keys and clicks until it ends.
+const STORY_CHAPTER_MS = 3200;
+
+// cards: arrays of lines. head: null for the opening, or { chapter, name, rank } for a chapter card. onEnd runs when the last card is done or skipped.
+function runStory(cards, head, onEnd) {
+  if (storyRun) return;
+  storyRun = { cards, i:0, head, onEnd, lock:0, timer:0 };
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // a focused button would turn Enter or Space into a second click
+  $('story-overlay').classList.toggle('chapter', !!head);
+  $('story-skip').style.display = head ? 'none' : '';
+  show('story-overlay', 'flex');
+  storyCard(0);
+}
+function storyCard(i) {
+  const s = storyRun, h = s.head, box = $('story-card');
+  s.i = i; s.lock = performance.now() + (h ? 400 : 250); // a double click or a held key must not skip a card unread
+  const add = (cls, text, delay) => { const el = document.createElement('div'); el.className = cls; el.textContent = text; if (delay) el.style.animationDelay = delay+'s'; box.appendChild(el); };
+  box.textContent = '';
+  box.style.animation = 'none'; void box.offsetWidth; box.style.animation = ''; // play the entrance again for every card
+  add('story-kicker', h ? `CHAPTER ${h.chapter}` : '[ SYSTEM ]');
+  if (h) { add('story-title', h.name); add('story-rank', `${h.rank}-RANK GATE`); }
+  s.cards[i].forEach((line, n) => add('story-line', line.replace(/\{name\}/g, player.name), 0.25 + n*0.6));
+  const dots = $('story-dots'); dots.textContent = '';
+  if (s.cards.length > 1) s.cards.forEach((_, n) => { const d = document.createElement('i'); if (n <= i) d.className = 'on'; dots.appendChild(d); });
+  $('story-hint').textContent = h ? (isMobile ? 'TAP TO ENTER' : 'CLICK OR PRESS ANY KEY') : i === s.cards.length-1 ? (isMobile ? 'TAP TO BEGIN' : 'CLICK OR PRESS ENTER TO BEGIN') : (isMobile ? 'TAP TO CONTINUE' : 'CLICK, ENTER OR SPACE TO CONTINUE');
+  clearTimeout(s.timer);
+  if (h) s.timer = setTimeout(storyEnd, STORY_CHAPTER_MS);
+}
+function storyNext() {
+  const s = storyRun;
+  if (!s || performance.now() < s.lock) return;
+  playSfx('ui');
+  if (s.i + 1 < s.cards.length) storyCard(s.i + 1); else storyEnd();
+}
+function storyEnd() {
+  const s = storyRun; if (!s) return;
+  clearTimeout(s.timer); storyRun = null; hide('story-overlay');
+  s.onEnd();
+}
+// Called first by onKey while a card is up. Esc ends the story at once; the opening takes Enter or Space, a chapter card takes any key.
+function storyKey(key, e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return; // browser shortcuts are not for the story
+  if (key === 'enter' || key === ' ' || key === 'escape') e.preventDefault(); // not a second click on a focused button
+  if (key === 'escape') { storyEnd(); return; }
+  if (['shift','control','alt','meta','capslock','tab'].includes(key)) return;
+  if (storyRun.head || key === 'enter' || key === ' ') storyNext();
+}
+$('story-overlay').addEventListener('click', storyNext);
+$('story-skip').addEventListener('click', e => { e.stopPropagation(); storyEnd(); });
+
+// A gate's chapter card: the first time the hunter walks in, if the gate has never been cleared
+const chapterDue = g => !!STORY[g.id] && !player.cleared[g.id] && !player.story.gates[g.id];
+function showChapter(g, then) {
+  const st = STORY[g.id];
+  player.story.gates[g.id] = true; saveGame();
+  runStory([st.lines], { chapter:st.chapter, name:g.name, rank:g.rank }, then);
+}
+// The victory screen's closing line, for the first clear of a gate (clearGate has already counted this clear)
+function storyVictoryLine(g) {
+  let el = $('victory-story');
+  if (!el) { el = document.createElement('div'); el.id = 'victory-story'; $('victory-stats').after(el); }
+  const st = STORY[g.id];
+  el.textContent = st && player.cleared[g.id] === 1 ? st.cleared : '';
+  el.style.display = el.textContent ? '' : 'none';
+}

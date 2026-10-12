@@ -77,7 +77,9 @@ function sellCommonGear() {
 }
 function enterGate(id) {
   const g = GATE_DEFS.find(x => x.id === id);
-  if (g && player.level >= g.reqLevel) startDungeon(g);
+  if (!g || player.level < g.reqLevel || storyRun) return;
+  if (chapterDue(g)) showChapter(g, () => startDungeon(g)); // the first visit opens with a chapter card; any other visit starts at once
+  else startDungeon(g);
 }
 
 // Dev mode: ` = +5 levels, ~ (Shift+`) = -5 levels
@@ -155,19 +157,28 @@ function enterHub() { gameState = 'HUB'; show('system-menu'); applySettings(); s
 function beginFromTitle() {
   if (gameState !== 'TITLE') return;
   initAudio(); hide('title-screen');
-  if (loadGame()) { enterHub(); saveGame(); say('welcome_back'); } // saving here locks in a V16 → V17 upgrade
-  else { show('name-screen', 'flex'); $('name-input').focus(); gameState = 'CREATE'; }
+  if (loadGame()) {
+    if (player.story.opening) { enterHub(); saveGame(); say('welcome_back'); } // saving here locks in a V16 → V17 upgrade
+    else { saveGame(); showOpening(); } // a new hunter who left before the opening ended
+  } else { show('name-screen', 'flex'); $('name-input').focus(); gameState = 'CREATE'; }
 }
 function confirmName() {
   const name = $('name-input').value.trim();
   if (!name || gameState !== 'CREATE') return;
   player = createPlayer(name); questDate = today();
-  hide('name-screen'); enterHub(); saveGame();
-  toast('[SYSTEM] YOU HAVE BEEN CHOSEN AS A PLAYER.', 'blue', 3500); say('chosen');
+  hide('name-screen'); saveGame();
+  showOpening();
+}
+// The opening plays once, between creating the hunter and the hub. Finishing it or skipping it both count as seen.
+function showOpening() {
+  gameState = 'STORY'; setMusic('hub');
+  runStory(STORY.opening, null, () => { player.story.opening = true; enterHub(); saveGame(); });
+  if (VOICE_IDS.includes('chosen')) say('chosen');
 }
 
 function onKey(key, e) {
   initAudio(); // Browser requires a user gesture to start audio
+  if (storyRun) { storyKey(key, e); return; } // a story card is up: it alone takes the keys
   if (gameState === 'TITLE') { if (key === 'enter' || key === ' ') { e.preventDefault(); beginFromTitle(); } return; }
   if (gameState === 'CREATE') { if (key === 'enter') { e.preventDefault(); confirmName(); } return; }
   if (key === '`') { window.devBoost(); return; }
