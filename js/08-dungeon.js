@@ -188,6 +188,7 @@ function showVictory() {
   const score = 100 - Math.min(60, run.dmgTaken/player.maxHp*30) - Math.min(30, Math.max(0, (run.time-par)/par*30));
   const grade = score >= 90 ? 'S' : score >= 75 ? 'A' : score >= 55 ? 'B' : 'C';
   const bonus = Math.floor(g.boss.xp*0.5*{ S:2, A:1.5, B:1.2, C:1 }[grade]);
+  run.grade = grade; run.bonus = bonus; if (typeof armResultCard === 'function') armResultCard('victory'); // for the result card
   player.gold += bonus;
   const ge = $('victory-grade'); ge.textContent = grade; ge.style.color = { S:'#bb66ff', A:'#ffcc00', B:'#00d4ff', C:'#8899aa' }[grade];
   const mm = Math.floor(run.time/60), ss = String(Math.floor(run.time%60)).padStart(2, '0');
@@ -210,6 +211,7 @@ function showDeath() {
   $('death-stats').innerHTML = dungeon.endless
     ? `Reached floor ${dungeon.wave} &nbsp;·&nbsp; ${run.kills} kills &nbsp;·&nbsp; best floor ${highScores.bestFloor}`
     : `Fell on wave ${dungeon.wave} of ${dungeon.maxWaves} &nbsp;·&nbsp; ${run.kills} kills`;
+  if (typeof armResultCard === 'function') armResultCard('death'); // shows SAVE RESULT CARD in endless mode
   after(1.1, () => show('death-overlay', 'flex'), true);
   saveGame();
 }
