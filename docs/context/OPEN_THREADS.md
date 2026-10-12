@@ -77,7 +77,7 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
-| C1 | Printable status report (skipped at the Session 3 and Session 4 wraps) | OPEN | min | Weekly Claude usage having room | Skipped twice to save usage (76 percent on 2026-10-09 with two days to the reset) |
+| C1 | Printable status report (skipped at the Session 3, 4, 5 and 6 wraps) | OPEN | min | Weekly Claude usage having room | Skipped twice to save usage (76 percent on 2026-10-09 with two days to the reset) |
 
 ---
 

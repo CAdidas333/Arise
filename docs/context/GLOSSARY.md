@@ -41,7 +41,7 @@
 | G2 | The local preview sometimes failed to load one of the game's files. Fixed by `tools/serve.py` (threaded, port 8767) | done 2026-10-11 | docs/context/OPEN_THREADS.md |
 | G4 | Review pictures and sound demos in docs/previews are reachable on the public site. Harmless | open | docs/context/OPEN_THREADS.md |
 | G5 | In the 3D view the painted floor appears a few seconds after a gate starts; until then the floor is plain | open | docs/context/OPEN_THREADS.md |
-| C1 | The printable status report has been skipped at three wraps to save weekly Claude usage | open | docs/context/OPEN_THREADS.md |
+| C1 | The printable status report has been skipped at four wraps (Sessions 3 to 6) to save weekly Claude usage | open | docs/context/OPEN_THREADS.md |
 | F6 | Real 3D figures for the hunter, enemies, bosses and shadows | done 2026-10-11 | docs/context/OPEN_THREADS.md |
 | F7 | V18 step 8, hand-designed boss fights (first pass with a sub-agent, not merged) | in progress | docs/context/OPEN_THREADS.md |
 | F9 | Dodge afterimages, light pillars and the menu backdrop are still not drawn in the 3D view | open | docs/context/OPEN_THREADS.md |
