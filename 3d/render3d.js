@@ -763,7 +763,7 @@ const Fig = (function () {
     if (e.facing && (e.facing.x || e.facing.y)) fig.rotation.y = Math.atan2(e.facing.x, e.facing.y);
     stride(ud, e.x, e.y, sz, dt);
     A.t = e.animT || 0; A.ph = ud.phase; A.amp = ud.amp; A.wind = 0; A.strike = 0; A.dash = (e.state === 'dash' || e.state === 'cdash') ? 1 : 0;
-    if (e.isBoss) { ud.cast += (((e.state === 'cast' || e.state === 'cwind' || e.state === 'spiral') ? 1 : 0) - ud.cast) * ease(dt, 7); A.wind = ud.cast; }
+    if (e.isBoss) { ud.cast += (((e.state === 'cast' || e.state === 'swipe' || e.state === 'cwind' || e.state === 'spiral') ? 1 : 0) - ud.cast) * ease(dt, 7); A.wind = ud.cast; }
     else if (e.state === 'wind') { A.wind = 1 - clamp01(e.st / (WIND[e.kind] || 0.5)); ud.wound = true; }
     else if (ud.wound) { // just after the blow: the AI's cooldown tells how long ago it landed
       const s = e.kind === 'brute' ? (e.cd - 2.1) / 0.3 : e.kind === 'melee' ? (e.cd - 0.7) / 0.3 : 0;

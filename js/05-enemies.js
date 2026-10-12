@@ -80,9 +80,10 @@ function bossAI(e, dt, d, ux, uy) {
   switch (e.state) {
     case 'chase':
       if (d > e.size+34) mv(e, ux, uy, e.speed, dt);
-      else if (e.mcd <= 0) { e.mcd = 2.2; e.state = 'cast'; e.st = 0.65; telegraph({ type:'circle', x:e.x, y:e.y, r:e.size+85, dur:0.55, dmg:e.damage, color:'#ff5544', owner:e }); }
+      else if (e.mcd <= 0) { e.mcd = 2.2; e.state = 'swipe'; e.st = 0.65; telegraph({ type:'circle', x:e.x, y:e.y, r:e.size+85, dur:0.55, dmg:e.damage, color:'#ff5544', owner:e }); }
       if (e.cd <= 0 && e.state === 'chase') startPattern(e, d, ux, uy);
       break;
+    case 'swipe': e.st -= dt; if (e.st <= 0) { e.state = 'chase'; e.cd = Math.max(e.cd, 0.7); } break; // the close swipe leaves the pattern timer running, so a hunter who stays in close still meets every pattern
     case 'cast': e.st -= dt; if (e.st <= 0) endPattern(e); break;
     case 'spiral':
       e.st -= dt; e.sa += dt*(P2 ? 3.1 : 2.3); e.sacc += dt;
@@ -208,7 +209,7 @@ function startPattern(e, d, ux, uy) {
     }
   }
 }
-function endPattern(e) { e.state = 'chase'; e.cd = e.phase === 2 ? rand(1.3,2.1) : rand(2.2,3.2); }
+function endPattern(e) { e.state = 'chase'; e.cd = e.phase === 2 ? rand(1.3,2.1) : rand(2.2,3.2); e.mcd = Math.max(e.mcd, 0.9); } // a beat to hit back before the next close swipe
 
 function updateEnemies(dt) {
   for (const e of enemies) {
