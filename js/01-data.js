@@ -140,3 +140,70 @@ function segDist(px,py,x1,y1,x2,y2) {
   const t = clamp(((px-x1)*dx+(py-y1)*dy)/l2, 0, 1);
   return Math.hypot(px-(x1+dx*t), py-(y1+dy*t));
 }
+
+// ================================================================
+//  GEAR — armor, boots and a ring. Dropped in gates, kept in a small bag
+// ================================================================
+const GEAR_SLOTS = ['armor','boots','ring'];
+const GEAR_RARITY = ['Common','Rare','Epic','Legendary'];
+const GEAR_COLORS = ['#cfd8e3','#4aa8ff','#bb66ff','#ffcc33'];
+const BAG_MAX = 12;
+// mod key -> the most one item may carry. dmg, hp, mp, spd, def and gold multiply by (1+v); crit adds v; cdr multiplies cooldowns by (1-v)
+const GEAR_CAPS = { dmg:0.18, hp:0.25, mp:0.30, spd:0.10, crit:0.10, def:0.30, cdr:0.08, gold:0.30 };
+const GEAR_KEYS = Object.keys(GEAR_CAPS);
+const GEAR_LABEL = { dmg:'damage', hp:'max HP', mp:'max MP', spd:'move speed', crit:'crit chance', def:'defence', cdr:'cooldowns', gold:'gold' };
+const GEAR_FIRST = { armor:['hp','def'], boots:['spd'], ring:['dmg','crit'] }; // the slot decides an item's first mod
+// rarity weights [Common, Rare, Epic, Legendary] by who dropped it: 0 = any enemy, 1 = elite, 2 = boss
+const GEAR_ODDS = [[820,150,28,2], [640,290,65,5], [0,700,270,30]];
+const GEAR_NAMES = {
+  rarity:[['Worn','Plain','Sturdy','Rough'], ['Tempered','Fine','Keen','Polished'], ['Masterwork','Gilded','Storm-forged','Royal'], ["Monarch's",'Sovereign','Peerless','Ancient']],
+  material:['Iron','Steel','Bronze','Obsidian','Silver','Granite','Ember','Frost','Gale','Tide'],
+  owner:["Warden's","Hunter's","Ranger's","Vanguard's","Sentinel's","Captain's"],
+  origin:['the Deep','the Gale','the Forge','the Tide','the North','the Summit','the Vanguard','Embers'],
+  armor:['Plate','Cuirass','Mail','Vest','Hauberk'], boots:['Greaves','Boots','Treads','Striders','Sabatons'], ring:['Band','Ring','Loop','Coil'],
+};
+function gearName(slot, rarity) {
+  const n = GEAR_NAMES, noun = pick(n[slot]), r = Math.random();
+  if (r < 0.5) return `${pick(n.rarity[rarity])} ${pick(n.material)} ${noun}`;
+  if (rarity < 2 && r < 0.75) return `${pick(n.owner)} ${noun}`;
+  return `${rarity >= 2 ? pick(n.rarity[rarity]) + ' ' : ''}${noun} of ${pick(n.origin)}`;
+}
+// Mod values are whole percents, so the menu shows exactly what an item gives
+const gearVal = (k, v) => clamp(Math.round(v*100)/100, 0.01, GEAR_CAPS[k]);
+
+// lvl = the gate's level. luck: 0 any enemy, 1 elite, 2 boss. Higher gates lean towards the better rarities.
+function rollGear(lvl, minRarity = 0, luck = 0) {
+  lvl = clamp(lvl|0, 1, 100);
+  const t = lvl/100, odds = GEAR_ODDS[clamp(luck|0, 0, 2)];
+  const w = [odds[0], odds[1]*(1 + 0.3*t), odds[2]*(1 + 0.6*t), odds[3]*(1 + 0.5*t)].map((x, i) => i < minRarity ? 0 : x);
+  let r = Math.random()*(w[0] + w[1] + w[2] + w[3]), rarity = 3;
+  for (let i = 0; i < 3; i++) { r -= w[i]; if (r < 0) { rarity = i; break; } }
+  const slot = pick(GEAR_SLOTS), keys = [pick(GEAR_FIRST[slot])], rest = GEAR_KEYS.filter(k => k !== keys[0]);
+  while (keys.length < 1 + rarity) keys.push(rest.splice(randInt(0, rest.length-1), 1)[0]);
+  // A Legendary from the highest gate tops out at three quarters of the cap: three of them give about +40% damage
+  const power = (0.24 + 0.12*rarity) * (1 + 0.25*t), mods = {};
+  for (const k of keys) mods[k] = gearVal(k, GEAR_CAPS[k]*power*rand(0.8, 1));
+  return { slot, name:gearName(slot, rarity), rarity, lvl, mods };
+}
+const gearValue = item => Math.round((20 + item.lvl*6) * (1 + item.rarity*1.5)); // sell price
+// Anything read from a save goes through here: a clean item, or null
+function cleanGear(x) {
+  if (!x || typeof x !== 'object' || !GEAR_SLOTS.includes(x.slot) || !x.mods || typeof x.mods !== 'object') return null;
+  const rarity = clamp(x.rarity|0, 0, 3), mods = {};
+  let n = 0;
+  for (const k of Object.keys(x.mods)) {
+    const v = +x.mods[k];
+    if (n > rarity || !GEAR_KEYS.includes(k) || !(v > 0)) continue;
+    mods[k] = gearVal(k, v); n++;
+  }
+  if (!n) return null;
+  const name = typeof x.name === 'string' ? x.name.trim().slice(0, 40).trim() : '';
+  return { slot:x.slot, name:name || GEAR_NAMES[x.slot][0], rarity, lvl:clamp(x.lvl|0, 1, 100), mods };
+}
+// The summed value of one mod across the three equipped items: 0 with nothing equipped
+function gearMod(key, p = player) {
+  let v = 0;
+  if (p && p.gear) for (const s of GEAR_SLOTS) { const it = p.gear[s]; if (it) v += it.mods[key] || 0; }
+  return v;
+}
+const gearModText = (k, v) => `${k === 'cdr' ? '-' : '+'}${Math.round(v*100)}% ${GEAR_LABEL[k]}`;

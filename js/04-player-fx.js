@@ -8,6 +8,7 @@ function createPlayer(name) {
     name, level:1, xp:0, xpToNext:xpNeed(1), rank:'E',
     stats:{ STR:5, AGI:5, INT:5, VIT:5, PER:5 }, statPoints:0, skillPoints:0, tree:{},
     weapon:0, gold:0, potions:1, shadows:[], cleared:{},
+    gear:{ armor:null, boots:null, ring:null }, bag:[],
     hp:1, maxHp:1, mp:1, maxMp:1, x:0, y:0, facing:{ x:1, y:0 },
     cds:{}, inv:0, hitFlash:0, anim:'idle', animT:0, atkT:0, atkDur:0.2, atkDir:1,
     combo:0, comboWin:0, dodgeCd:0, dodgeT:0, ddx:0, ddy:0, ghostAcc:0, perfect:false, perfectUsed:false,
@@ -17,16 +18,25 @@ function createPlayer(name) {
   return p;
 }
 function recalcPlayer(p) {
-  p.maxHp = Math.floor((80 + p.stats.VIT*22) * (1 + 0.05*(p.tree.aegis || 0)));
-  p.maxMp = 30 + p.stats.INT*12;
+  const mp = gearMod('mp', p);
+  p.maxHp = Math.floor((80 + p.stats.VIT*22) * (1 + 0.05*(p.tree.aegis || 0)) * (1 + gearMod('hp', p)));
+  p.maxMp = mp ? Math.floor((30 + p.stats.INT*12) * (1 + mp)) : 30 + p.stats.INT*12;
+}
+// Call after equipment changes. In a gate the hunter keeps the health they have, within the new maximum.
+function gearChanged() {
+  recalcPlayer(player);
+  const full = gameState !== 'DUNGEON';
+  player.hp = full ? player.maxHp : Math.min(player.hp, player.maxHp);
+  player.mp = full ? player.maxMp : Math.min(player.mp, player.maxMp);
 }
 // AGI has diminishing returns on speed — fast, but still controllable at 100+
-const pSpeed    = () => (215 + 290*(1 - Math.exp(-player.stats.AGI/60))) * (1 + 0.04*tr('swift')) * (1 + 0.1*bn('haste')) * (player.ultT > 0 ? 1.25 : 1);
-const pDamage   = () => (8 + player.stats.STR*2.5) * WEAPONS[player.weapon].mult * (1 + 0.06*tr('edge')) * (1 + 0.15*bn('might')) * (player.ultT > 0 ? 2 : 1);
-const pCrit     = () => Math.min(0.8, 0.05 + player.stats.PER*0.012 + 0.03*tr('lethal') + 0.08*bn('focus'));
+// Gear multiplies in last: with nothing equipped every gearMod is 0, so each of these is exactly what it was without gear
+const pSpeed    = () => (215 + 290*(1 - Math.exp(-player.stats.AGI/60))) * (1 + 0.04*tr('swift')) * (1 + 0.1*bn('haste')) * (player.ultT > 0 ? 1.25 : 1) * (1 + gearMod('spd'));
+const pDamage   = () => (8 + player.stats.STR*2.5) * WEAPONS[player.weapon].mult * (1 + 0.06*tr('edge')) * (1 + 0.15*bn('might')) * (player.ultT > 0 ? 2 : 1) * (1 + gearMod('dmg'));
+const pCrit     = () => Math.min(0.8, 0.05 + player.stats.PER*0.012 + 0.03*tr('lethal') + 0.08*bn('focus') + gearMod('crit'));
 const pCritMult = () => 1.8 + player.stats.PER*0.02 + 0.1*tr('lethal');
-const pDefense  = () => player.stats.VIT*0.8 * (1 + 0.1*tr('aegis'));
-const cdMult    = () => 1 - 0.04*tr('flow');
+const pDefense  = () => player.stats.VIT*0.8 * (1 + 0.1*tr('aegis')) * (1 + gearMod('def'));
+const cdMult    = () => (1 - 0.04*tr('flow')) * (1 - Math.min(0.25, gearMod('cdr')));
 const armyCap   = () => 6 + 2*tr('army');
 const rankFor   = lvl => { for (let i = RANKS.length-1; i >= 0; i--) if (lvl >= RANK_LEVELS[i]) return RANKS[i]; return 'E'; };
 const healPlayer = n => { player.hp = Math.min(player.maxHp, player.hp + n); };

@@ -47,6 +47,34 @@ function buyPotion() {
   if (player.potions >= 5 || player.gold < c) { playSfx('deny'); return; }
   player.gold -= c; player.potions++; playSfx('buy'); saveGame();
 }
+// --- GEAR --- i is a place in the bag
+function equipGear(i) {
+  const it = player.bag[i];
+  if (!it) { playSfx('deny'); return; }
+  const old = player.gear[it.slot];
+  if (old) player.bag[i] = old; else player.bag.splice(i, 1); // what was worn takes the item's place in the bag
+  player.gear[it.slot] = it; gearChanged();
+  playSfx('buy'); saveGame();
+}
+function unequipGear(slot) {
+  const it = GEAR_SLOTS.includes(slot) && player.gear[slot];
+  if (!it || player.bag.length >= BAG_MAX) { playSfx('deny'); return; }
+  player.gear[slot] = null; player.bag.push(it); gearChanged();
+  playSfx('ui'); saveGame();
+}
+function sellGear(i) {
+  const it = player.bag[i];
+  if (!it) { playSfx('deny'); return; }
+  player.bag.splice(i, 1); player.gold += gearValue(it);
+  playSfx('pickup'); saveGame();
+}
+function sellCommonGear() {
+  const sold = player.bag.filter(it => it.rarity === 0);
+  if (!sold.length) { playSfx('deny'); return; }
+  const total = sold.reduce((a, it) => a + gearValue(it), 0);
+  player.bag = player.bag.filter(it => it.rarity !== 0); player.gold += total;
+  playSfx('buy'); toast(`SOLD ${sold.length} COMMON ITEM${sold.length > 1 ? 'S' : ''} FOR ◈ ${fmtNum(total)}`, 'gold', 2000); saveGame();
+}
 function enterGate(id) {
   const g = GATE_DEFS.find(x => x.id === id);
   if (g && player.level >= g.reqLevel) startDungeon(g);
@@ -84,6 +112,10 @@ $('system-menu').addEventListener('click', e => {
     case 'respec': respec(); break;
     case 'weapon': buyWeapon(); break;
     case 'potion': buyPotion(); break;
+    case 'gear-equip': equipGear(+v); break;
+    case 'gear-unequip': unequipGear(v); break;
+    case 'gear-sell': sellGear(+v); break;
+    case 'gear-sell-common': sellCommonGear(); break;
     case 'aim': cycleAim(); break;
     case 'look': cycleLook(); break;
     case 'gate': enterGate(v); return;

@@ -51,9 +51,11 @@ function killEnemy(e, o = {}) {
   KILL_STREAKS.forEach(ks => { if (comboCount === ks.count) { toast(ks.label, ks.color, 2500, true); shake(12); } });
   gainUlt(2);
   // Drops
-  const gold = Math.ceil(e.xp*0.35*(1 + 0.5*bn('greed'))*rand(0.8, 1.2)), n = e.isBoss ? 10 : e.elite ? 3 : 1;
+  const gold = Math.ceil(e.xp*0.35*(1 + 0.5*bn('greed'))*(1 + gearMod('gold'))*rand(0.8, 1.2)), n = e.isBoss ? 10 : e.elite ? 3 : 1;
   for (let i = 0; i < n; i++) orbs.push({ type:'gold', val:Math.ceil(gold/n), x:e.x, y:e.y, vx:rand(-240,240), vy:rand(-240,240), t:0 });
   if (e.elite || e.isBoss || Math.random() < 0.07) orbs.push({ type:'hp', val:0, x:e.x, y:e.y, vx:rand(-200,200), vy:rand(-200,200), t:0 });
+  // Gear: a boss always drops one item, Rare or better; an elite often does; anything else rarely
+  if (Math.random() < (e.isBoss ? 1 : e.elite ? 0.22 : 0.015)) dropGear(e.x, e.y, e.isBoss ? 2 : e.elite ? 1 : 0);
   // A fallen enemy sometimes leaves a shadow behind — walk over and say the word
   if (!e.isBoss && remnants.length < 4 && (e.elite || Math.random() < 0.05)) remnants.push({ x:e.x, y:e.y, name:e.baseName, kind:e.kind, damage:e.damage, color:e.color, size:e.size, elite:e.elite, t:0, dur:14 });
   const { x, y } = e;
@@ -127,6 +129,7 @@ function updateOrbs(dt) {
       o.vx = lerp(o.vx, dx/d*sp, 0.22); o.vy = lerp(o.vy, dy/d*sp, 0.22);
       if (d < 26) {
         if (o.type === 'gold') { player.gold += o.val; run.gold += o.val; playSfx('pickup', rand(0.9,1.3)); }
+        else if (o.type === 'gear') takeGear(o.item);
         else { healPlayer(player.maxHp*0.12); floatText(player.x, player.y-50, `+${fmtNum(player.maxHp*0.12)}`, COLORS.health, 15); playSfx('heal'); }
         continue;
       }
@@ -135,6 +138,34 @@ function updateOrbs(dt) {
     live.push(o);
   }
   orbs = live;
+}
+
+// --- GEAR DROPS ---
+// luck: 0 any enemy, 1 elite, 2 boss. The item's level is the gate's level.
+function dropGear(x, y, luck = 0) {
+  const item = rollGear(Math.max(1, (dungeon && dungeon.gate.reqLevel)|0), luck >= 2 ? 1 : 0, luck);
+  orbs.push({ type:'gear', item, val:0, x, y, vx:rand(-200,200), vy:rand(-200,200), t:0 });
+}
+// A found item goes on if its slot is empty, into the bag if there is room, and is sold on the spot if there is not
+function takeGear(item) {
+  const slot = item.slot, name = item.name.toUpperCase(), style = ['blue','blue','purple','gold'][item.rarity];
+  if (run && run.loot) run.loot.push(item);
+  if (!player.gear[slot]) { player.gear[slot] = item; gearChanged(); toast(`EQUIPPED: ${name}`, style, 2600); }
+  else if (player.bag.length < BAG_MAX) { player.bag.push(item); toast(`LOOT: ${name}`, style, 2600); }
+  else {
+    const v = gearValue(item);
+    player.gold += v; if (run) run.gold += v;
+    toast(`BAG FULL. SOLD ${name} FOR ◈ ${fmtNum(v)}`, 'gold', 2600);
+  }
+  floatText(player.x, player.y-62, item.name, GEAR_COLORS[item.rarity], 15); playSfx('boon');
+  saveGame(); // a find is kept even if the page is closed mid-gate
+}
+// Called when a gate is cleared: nothing dropped is left behind on the floor
+function sweepGear() {
+  const left = orbs.filter(o => o.type === 'gear');
+  if (!left.length) return;
+  orbs = orbs.filter(o => o.type !== 'gear');
+  left.forEach(o => takeGear(o.item));
 }
 
 function updateSpawns(dt) {

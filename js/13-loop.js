@@ -103,8 +103,9 @@ function step(raw) {
 // Open the page with #debug to poke at internals from the console
 if (location.hash === '#debug') window.__arise = {
   get player() { return player; }, get dungeon() { return dungeon; }, get enemies() { return enemies; }, get run() { return run; },
-  get gameState() { return gameState; }, get particles() { return particles; }, get remnants() { return remnants; }, get telegraphs() { return telegraphs; }, get layout() { return layout; }, set layout(v) { layout = v; },
+  get gameState() { return gameState; }, get particles() { return particles; }, get remnants() { return remnants; }, get telegraphs() { return telegraphs; }, get layout() { return layout; }, set layout(v) { layout = v; }, get orbs() { return orbs; },
   GATE_DEFS, ENDLESS, SKILL, startDungeon, step, useSkill, damageEnemy, chooseBoon, returnToHub, addShadow, tryArise, dodge, hurtPlayer, makeEnemy, saveGame, genLayout, keepIn, inMap, roomAt, pointInRoom, mapRects, roomStep, enterBossArena,
+  rollGear, takeGear, gearMod, cleanGear, gearValue, dropGear,
 };
 
 let lastTime = performance.now(), loopErr = 0;

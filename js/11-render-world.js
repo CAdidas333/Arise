@@ -899,6 +899,20 @@ function drawPickups() {
     }
   }
   for (const o of orbs) {
+    if (o.type === 'gear') { // a dropped item: a cut gem in its rarity colour, bobbing over a soft glow
+      const s = 9, x = o.x, y = o.y - 5 + Math.sin(clock*3 + o.x*0.05)*3, col = GEAR_COLORS[o.item.rarity] || GEAR_COLORS[0];
+      const gem = (...p) => { ctx.beginPath(); ctx.moveTo(x + p[0]*s, y + p[1]*s); for (let i = 2; i < p.length; i += 2) ctx.lineTo(x + p[i]*s, y + p[i+1]*s); ctx.closePath(); ctx.fill(); };
+      ctx.globalAlpha = 0.25; ctx.fillStyle = '#000000'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 9, 7, 2.5, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = col;
+      ctx.globalAlpha = 0.13 + 0.05*Math.sin(clock*4 + o.x); disc(x, y, 22);
+      ctx.globalAlpha = 0.28; disc(x, y, 13);
+      ctx.globalAlpha = 1; gem(-0.45,-0.8, 0.45,-0.8, 0.85,-0.25, 0,1, -0.85,-0.25);       // the whole stone
+      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.5; gem(-0.45,-0.8, 0.45,-0.8, 0.3,-0.25, -0.3,-0.25); // the lit top face
+      ctx.globalAlpha = 0.22; gem(-0.85,-0.25, -0.3,-0.25, 0,1);                               // a lit side
+      ctx.fillStyle = '#000000'; ctx.globalAlpha = 0.3; gem(0.85,-0.25, 0.3,-0.25, 0,1);      // a shaded side
+      ctx.globalAlpha = 1;
+      continue;
+    }
     const gold = o.type === 'gold';
     ctx.globalAlpha = 0.3; ctx.fillStyle = gold ? COLORS.gold : COLORS.health; disc(o.x, o.y, 9);
     ctx.globalAlpha = 1;
