@@ -38,7 +38,6 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
 | F1 | Shared leaderboard and co-op play | OPEN | multi-session | Chris's word to start | Chris parked it ("maybe we do that later") when he picked the nine-step V18 plan |
-| F3 | ElevenLabs music for the game | BLOCKED | session | Chris saying yes to music (he has now heard the voice and effects in the game and shipped them, 2026-10-09, but has not been asked about music) | The key broker blocks the music script until he says so |
 | F5 | 3D camera on phones: turning and zooming work with keys, right-drag and the wheel only; there is no touch control | OPEN | min | Nothing | Left out of the free-camera job (2026-10-10) to keep it small; desktop first |
 
 ### UX
@@ -46,7 +45,6 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
 | U3 | Dress the rooms: no pillars, rubble or props on the floors yet. Done 2026-10-11: stone walls with a lit north face and door posts in 2D. Still thin glowing walls in 3D | OPEN | session | Nothing | Walls first; props need a decision on whether they block movement |
-| U4 | Warning circles and blast marks can be drawn on the dark outside a room's walls (the boss-style nova reaches 380 from the hunter) | OPEN | min | Nothing | Cosmetic; seen in the design, not yet in a frame |
 | U5 | The 3D view has no minimap; between rooms it shows only the arrow to the next door | OPEN | min | Nothing | The minimap lives in a 2D drawing script the 3D page does not load |
 
 ### Engine
@@ -65,7 +63,6 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | I1 | Blender install: only needed if real 3D characters are made | OPEN | min | The 3D experiment continuing to real characters; ask Chris before downloading | Not needed for shapes-only 3D |
 | I2 | parallax-threejs plugin (three.js debugging help) | OPEN | min | The 3D experiment continuing | Only worth adding if the experiment goes on |
 | G1 | Repeatable balance bot in `tools/`: the bot that plays each gate through the `#debug` hook exists only in the session transcript | OPEN | session | Nothing | Not saved when it was written; worth a worker job when balance work resumes |
-| G2 | Local preview drops connections: the simple Python server resets some requests when many files load at once (seen with the 13 scripts, and with the 43 sound files on 2026-10-09; again on 2026-10-10, when a dropped script looked like a broken game until the page was reloaded) | OPEN | min | Nothing | Local preview only; the game falls back to audio elements and the public site has not shown it. A threaded local server would fix it |
 | G3 | ElevenLabs key cannot list voices: it lacks the "voices read" permission, so `el_voice.py --list` fails | OPEN | min | Chris adding that permission to the key on the ElevenLabs site (optional) | Worked around: voice ids are read from the ElevenLabs connector instead |
 | G4 | `docs/previews/` (review frames and audio demos) is served on the public site | OPEN | min | Nothing | Harmless; left in place at the Session 4 wrap to keep the links in the docs working |
 | F6 | 3D view: bosses, enemies and the hunter are still plain solids; afterimages, light pillars and the hub backdrop are not drawn | OPEN | multi-session | Nothing | The 2D bodies are canvas drawings and do not carry over; real 3D figures are the next 3D job |
@@ -83,6 +80,9 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 
 | # | Title | Shipped | Notes |
 |---|---|---|---|
+| F3 | ElevenLabs music for the game | ✅ DONE 2026-10-11 | Chris approved the cost in chat ($0.15 a minute; nine minutes made). Hub take 2, fight take 1, boss take 1 are live, picked from a classifier's labels, not by ear; Chris can swap. Details in `assets/CREDITS.md` |
+| U4 | Warning circles drawn outside a room's walls | ✅ DONE 2026-10-11 | Clipped to the walkable floor in `drawWorld` |
+| G2 | Local preview drops connections | ✅ DONE 2026-10-11 | `tools/serve.py`: threaded, deep backlog, no caching, port 8767 (another project took 8765) |
 | F4 | 3D view fight effects: damage numbers, slash crescents, rings, lightning, sparks and the screen flash | ✅ DONE 2026-10-10 | Drawn on a transparent overlay by `drawFx3D`. Still not drawn in 3D: afterimages, light pillars, the hub backdrop |
 | U2 | A body for each boss that cannot be read as a star symbol | ✅ DONE 2026-10-10 | `drawBoss`; the spiky shape is gone. The statue's first pass had face lines that read as a cross and was sent back |
 | F2 | 3D lane: a camera the player can turn (Z and C keys, right-drag, wheel to zoom, V resets), with movement relative to the camera | ✅ DONE 2026-10-10 | Live at `/3d/`. Touch control is thread F5 |

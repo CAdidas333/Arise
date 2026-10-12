@@ -39,3 +39,18 @@ Rule for anything added here: no star symbols, runes or occult imagery. Check ea
 ## Signature sound effects (`assets/sfx/`)
 
 Eight clips, made 2026-10-09 with ElevenLabs sound generation through `tools/el_sfx.py` (paid account; `prompt_influence` 0.5). The prompt and length for each are in `assets/sfx/prompts.tsv`. Two takes of each were made and Chris chose by ear: the second take for the three extraction effects (`extract_charge`, `extract_success`, `extract_fail`) and the first take for the other five. `extract_success` was turned down 3.5 dB with a 4 ms fade-in because its first hit ran over full level and clipped. `awakening` and `boss_appear` also peak just over full level, so the game must play them at 0.7 gain or lower.
+
+## Music (`assets/music/`)
+
+| Files | Model | Date | How |
+|---|---|---|---|
+| `hub.mp3`, `fight.mp3`, `boss.mp3` | ElevenLabs Music, `music_v2_5`, through the API (`POST /v1/music`), 90 seconds each, MP3 192 kbps | 2026-10-11 | `keyguard run ELEVENLABS_API_KEY -- python3 tools/el_music.py OUT.mp3 90 'prompt'` |
+
+Two takes of each were made (nine minutes in all, about $1.35 at the listed $0.15 a minute; approved by Chris). In the game: hub take 2, fight take 1, boss take 1. The picks were made from a local audio classifier's labels (`~/LocalModels/ast_classify.py`: all six read as music with no speech or singing; hub take 1 was labelled partly "singing bowl" and "gong", so take 2 was used), not by ear; Chris can swap any of them. ElevenLabs' music terms apply (elevenlabs.io/music-terms); they have not been read in full for this project, which is a non-commercial fan game.
+
+Prompts (each ends "Instrumental only, no vocals, no choir. Even energy from start to finish so it can loop."):
+- `hub`: Dark ambient electronic underscore for a hunter resting at base between battles. Slow, about 72 BPM. Warm analog synth pads, a low sub drone, a sparse felt piano motif, a soft pulsing arpeggio, distant metallic shimmer. Mysterious, calm, a little lonely, with quiet resolve. A soft heartbeat kick enters in the second half.
+- `fight`: High-energy dungeon battle music, 135 BPM, hybrid orchestral and electronic. Pounding war drums and a tight kick, driving distorted synth bass, fast staccato strings, punchy brass stabs, and a bold lead synth power riff. Dark, urgent, heroic. Constant momentum from the first bar, no long intro, no breakdown.
+- `boss`: Epic dark boss battle music, 150 BPM, massive hybrid orchestral. Thunderous taiko drums, low brass and horns in menacing rising figures, heavy chugging distorted guitars, a relentless string ostinato, deep sub hits, and a soaring lead melody in the second half. Enormous, threatening, climactic. Starts at full intensity.
+
+How it plays: `js/02-audio.js` fetches the three files at start, decodes one when its mode is first needed (two kept at once, one on phones), loops each with a 2.5 second crossfade, and falls back to the synthesised music for any file that is missing.

@@ -103,6 +103,7 @@ window.devDown = () => { if (player) { devDown(); if (gameState === 'HUB') rende
 
 $('system-menu').addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if (!el || gameState !== 'HUB') return;
+  if (e.detail > 1 && el.dataset.act.startsWith('gear-')) return; // the list re-renders under the pointer: a double click must not sell or equip the next item too
   const v = el.dataset.v;
   switch (el.dataset.act) {
     case 'tab': menuTab = v; playSfx('ui'); break;
