@@ -54,7 +54,7 @@
 - [x] Step 6 — Loot and gear. **Live** (2026-10-11). Elites (22 percent) and bosses (always, Rare or better) drop gear as a gem; other enemies 1.5 percent. Three slots (armor, boots, ring) and a 12-item bag; four rarities; mods for damage, HP, MP, speed, crit, defence, cooldowns and gold, each capped. Equip, unequip and sell in the ARMORY tab. Saved with the game through `cleanGear`. Code: the GEAR section of `js/01-data.js`, `takeGear` and `dropGear` in `js/06-combat.js`. Test: `node tools/test_gear.js`
 - [x] Step 7 — Story thread. **Live** (2026-10-11). A one-time opening of five System cards for a new hunter, a chapter card the first time each gate is entered, and a closing line on the victory screen the first time each gate is cleared. Text in the `STORY` table (`js/01-data.js`); what has been seen is saved in `player.story`
 - [ ] Step 8 — Hand-designed boss fights
-- [ ] Step 9 — Shareable result card
+- [x] Step 9 — Shareable result card. **Live** (2026-10-11). SAVE RESULT CARD on the victory screen (and on the death screen in endless mode) makes a 1200 by 630 image of the run and opens the share sheet where the device supports it, otherwise downloads it. Code: `js/12a-card.js` (a 15th script). Not tried with a real share sheet
 - Parked for later: shared leaderboard, co-op
 - Done alongside: script split into `js/` (13 files, behaviour unchanged) so workers can take one small file per job
 
