@@ -38,7 +38,7 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
 | F1 | Shared leaderboard and co-op play | OPEN | multi-session | Chris's word to start | Chris parked it ("maybe we do that later") when he picked the nine-step V18 plan |
-| F7 | V18 step 8, hand-designed boss fights. First pass (one signature attack per boss: brood, pound, cleave, firewall, breath, pillars; `js/05-enemies.js`) went **live 2026-10-12** on Chris's word (stamp 20261011231255). Left: bosses rarely use any pattern against a hunter in melee range (the swipe resets the pattern timer), then phases and arena tricks per boss | IN-PROGRESS | session | Nothing | First pass shipped; the melee-range fix is next |
+| F7 | V18 step 8, hand-designed boss fights. Live: one signature attack per boss (2026-10-12), and bosses now use their patterns against a hunter in close (2026-10-12: the close swipe has its own `swipe` state in `bossAI`, `js/05-enemies.js`, and no longer resets the pattern timer; measured 0 patterns a minute before, 13 to 16 after). Left: phases and arena tricks per boss, and a human check that bosses are not now too hard up close (a level-60 test hunter who never dodged took 2.6 times the damage from the Statue of God) | IN-PROGRESS | session | A human play-through for the difficulty | The melee fix makes every boss harder for a player who stays in close |
 | F9 | 3D view still lacks dodge afterimages, light pillars and the hub backdrop | OPEN | session | Nothing | Left out of the 2026-10-10 effects job and the 2026-10-11 figures job |
 
 ### UX
@@ -48,6 +48,7 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 | U3 | Dress the rooms in 3D. The 2D rooms were dressed 2026-10-11 (stone walls with a lit north face, door posts, pilasters, wall torches, floor inlays, rubble, cracks, corridor runners; see the Done log). The 3D rooms still have thin glowing walls and no props | OPEN | session | Nothing | 2D first; props in 2D do not block movement (they are drawn dressing from `layout.decor`), so 3D needs the same call |
 | U5 | The 3D view has no minimap; between rooms it shows only the arrow to the next door | OPEN | min | Nothing | The minimap lives in a 2D drawing script the 3D page does not load |
 | U6 | The recorded music was picked without a human hearing it (hub take 2, fight take 1, boss take 1, from a classifier's labels). Chris may want to swap takes or have different music made | OPEN | min | Chris listening | He has the six files; the unpicked takes are in `assets/music/takes/` (ignored by git). A swap is: name the track and take, copy the file over `assets/music/<track>.mp3`, stamp, ship |
+| U8 | On upright phones a wide pop-up covers part of the combo number (pop-ups sit at 150 pixels, centred; the combo number is at 160 on the left) | OPEN | min | Chris confirming where he wants pop-ups | Seen in test frames 2026-10-12; the pop-up position is last night's fix and Chris has not confirmed it yet |
 
 ### Engine
 
@@ -84,6 +85,7 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 
 | # | Title | Shipped | Notes |
 |---|---|---|---|
+| U7 | Boss name and health bar on upright phones | ✅ DONE 2026-10-12 | Chris's recording (440 by 762 in Chrome on his phone) showed the bar just above the hunter, on top of the boss when it is close. On upright phones (portrait, up to 520 wide) the health is now a thin strip along the top edge and the name sits under the gate label (`index.html`). Other layouts unchanged. Frames: `docs/previews/boss_bar_top_strip_2d_v1.jpg`, `_3d_v1.jpg`. Not yet seen by Chris on his phone |
 | G7 | Stale sub-agent worktrees and branches | ✅ DONE 2026-10-11 | All seven `worktree-agent-*` folders and their merged branches were removed at about 21:20 by Session 6; confirmed 2026-10-12 with `git worktree list` (only the main checkout) and `git branch -a` |
 | U3 (2D part) | Dress the 2D rooms | ✅ DONE 2026-10-11 | Stone walls with a lit north face and door posts (worker), then pilasters, wall torches, floor inlays, rubble, cracks and corridor runners from a seeded generator cached as `layout.decor` (sub-agent). The 3D part stays open under U3 |
 | F6 | 3D view: real figures for the hunter, the six enemy kinds, the six bosses and the shadow soldiers | ✅ DONE 2026-10-11 | Built from three.js primitives in `3d/render3d.js`, shared geometry. Still not drawn in 3D: afterimages, light pillars, the hub backdrop, a minimap (U5) |
