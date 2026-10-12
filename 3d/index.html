@@ -430,6 +430,11 @@
   .sys-btn:disabled { opacity:0.25; cursor:not-allowed; box-shadow:none; }
   .sys-btn.gold { color:#ffd866; border-color:rgba(255,216,102,0.4); background:rgba(255,216,102,0.08); }
   .grade { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; padding:1px 6px; border:1px solid currentColor; margin-left:6px; }
+  /* Gear rows: on a narrow screen the buttons drop under the text */
+  .gear-item { flex-wrap:wrap; } .gear-item .s-body { min-width:170px; }
+  .g-mods { font-size:12px; letter-spacing:0.5px; color:rgba(224,232,255,0.82); margin-top:2px; }
+  .g-btns { display:flex; gap:6px; margin-left:auto; }
+  .g-total { font-size:12px; letter-spacing:1px; color:rgba(255,255,255,0.45); padding:2px 2px 0; } .g-total span { color:#e0e8ff; }
 
   #boon-overlay { display:none; position:fixed; inset:0; z-index:58; background:rgba(4,4,10,0.72); backdrop-filter:blur(3px); flex-direction:column; align-items:center; justify-content:center; }
   #boon-overlay h2 { font-family:'Orbitron',monospace; font-size:14px; letter-spacing:8px; color:rgba(0,212,255,0.7); margin-bottom:6px; }
@@ -593,19 +598,19 @@
 </div>
 
 <!-- Classic scripts sharing one scope, loaded in order. tools/stamp.sh refreshes ?v= so browsers never mix old and new files. -->
-<script src="js/01-data.js?v=20261011202326"></script>
-<script src="js/02-audio.js?v=20261011202326"></script>
-<script src="js/03-state.js?v=20261011202326"></script>
-<script src="js/03a-layout.js?v=20261011202326"></script>
-<script src="js/04-player-fx.js?v=20261011202326"></script>
-<script src="js/05-enemies.js?v=20261011202326"></script>
-<script src="js/06-combat.js?v=20261011202326"></script>
-<script src="js/07-skills-shadows.js?v=20261011202326"></script>
-<script src="js/08-dungeon.js?v=20261011202326"></script>
-<script src="js/09-ui.js?v=20261011202326"></script>
-<script src="js/10-actions.js?v=20261011202326"></script>
+<script src="js/01-data.js?v=20261011202449"></script>
+<script src="js/02-audio.js?v=20261011202449"></script>
+<script src="js/03-state.js?v=20261011202449"></script>
+<script src="js/03a-layout.js?v=20261011202449"></script>
+<script src="js/04-player-fx.js?v=20261011202449"></script>
+<script src="js/05-enemies.js?v=20261011202449"></script>
+<script src="js/06-combat.js?v=20261011202449"></script>
+<script src="js/07-skills-shadows.js?v=20261011202449"></script>
+<script src="js/08-dungeon.js?v=20261011202449"></script>
+<script src="js/09-ui.js?v=20261011202449"></script>
+<script src="js/10-actions.js?v=20261011202449"></script>
 <script src="3d/vendor/three.min.js"></script>
-<script src="3d/render3d.js?v=20261011202326"></script>
-<script src="js/13-loop.js?v=20261011202326"></script>
+<script src="3d/render3d.js?v=20261011202449"></script>
+<script src="js/13-loop.js?v=20261011202449"></script>
 </body>
 </html>
