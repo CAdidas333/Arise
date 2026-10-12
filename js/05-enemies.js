@@ -157,7 +157,7 @@ function startPattern(e, d, ux, uy) {
       for (let i = 0; i < n; i++) {
         const x = cx + Math.cos(a0 + i/n*TAU)*R, y = cy + Math.sin(a0 + i/n*TAU)*R;
         telegraph({ type:'circle', x, y, r:60, dur:1.4, dmg:e.damage*0.7, color:'#cc77cc', owner:e,
-          land() { if (dist(cx, cy, player.x, player.y) < R+10) spawnQueue.push({ t:0, def, x, y, o:{ scale:dungeon.scale } }); } });
+          land() { if (i % 2 === 0 && dist(cx, cy, player.x, player.y) < R+10) spawnQueue.push({ t:0, def, x, y, o:{ scale:dungeon.scale } }); } }); // every other egg hatches: about as many as her summon
       }
       playSfx('tele'); e.st = 1.5; break;
     }
