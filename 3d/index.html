@@ -436,6 +436,35 @@
   .g-btns { display:flex; gap:6px; margin-left:auto; }
   .g-total { font-size:12px; letter-spacing:1px; color:rgba(255,255,255,0.45); padding:2px 2px 0; } .g-total span { color:#e0e8ff; }
 
+  /* ===== STORY CARDS: the opening, and a chapter card for each gate ===== */
+  #story-overlay { display:none; position:fixed; inset:0; z-index:70; flex-direction:column; align-items:center; justify-content:center; padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px)); text-align:center;
+    background:radial-gradient(ellipse at center, rgba(0,26,52,0.72), rgba(2,3,8,0.97) 72%); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  #story-overlay.chapter { background:radial-gradient(ellipse at center, rgba(0,22,44,0.6), rgba(2,3,8,0.92) 76%); backdrop-filter:blur(3px); }
+  #story-skip { position:absolute; top:calc(14px + env(safe-area-inset-top,0px)); right:calc(14px + env(safe-area-inset-right,0px)); }
+  #story-card { position:relative; width:min(640px, 100%); padding:38px 34px 40px; background:rgba(0,12,26,0.84); border:1px solid rgba(0,212,255,0.28); box-shadow:0 0 60px rgba(0,212,255,0.12), inset 0 0 40px rgba(0,60,120,0.14); animation:storyIn 0.45s ease-out both; }
+  #story-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:2px; background:linear-gradient(90deg, transparent, rgba(0,212,255,0.7), transparent); }
+  .story-kicker { font-family:'Orbitron',monospace; font-size:12px; letter-spacing:8px; color:rgba(0,212,255,0.72); margin-bottom:22px; text-indent:8px; }
+  .story-title { font-family:'Orbitron',monospace; font-weight:900; font-size:clamp(22px,5vw,38px); letter-spacing:5px; color:#00d4ff; text-shadow:0 0 30px rgba(0,212,255,0.6); text-transform:uppercase; line-height:1.15; margin-bottom:10px; }
+  .story-rank { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:5px; color:rgba(187,136,255,0.9); margin-bottom:26px; }
+  .story-line { font-size:clamp(19px,3.4vw,27px); font-weight:500; letter-spacing:2px; line-height:1.35; color:rgba(224,232,255,0.93); margin:10px 0; opacity:0; text-wrap:balance; animation:storyLine 0.7s ease-out forwards; }
+  #story-overlay.chapter .story-kicker { font-size:14px; color:rgba(0,212,255,0.92); }
+  #story-foot { margin-top:26px; display:flex; flex-direction:column; align-items:center; gap:12px; min-height:36px; }
+  #story-dots { display:flex; gap:8px; }
+  #story-dots i { width:22px; height:3px; background:rgba(0,212,255,0.18); }
+  #story-dots i.on { background:#00d4ff; box-shadow:0 0 10px rgba(0,212,255,0.8); }
+  #story-hint { font-family:'Orbitron',monospace; font-size:10px; letter-spacing:4px; color:rgba(255,255,255,0.5); animation:promptBlink 2s ease-in-out infinite; }
+  @keyframes storyIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+  @keyframes storyLine { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  #victory-story { max-width:520px; margin:22px 16px 0; padding-top:16px; border-top:1px solid rgba(0,212,255,0.22); text-align:center; font-size:17px; letter-spacing:2px; line-height:1.4; text-wrap:balance; color:rgba(0,212,255,0.78); }
+  @media (max-width: 520px) {
+    #story-card { padding:30px 18px 32px; } .story-kicker { letter-spacing:5px; text-indent:5px; } .story-title { letter-spacing:3px; } .story-rank { letter-spacing:4px; }
+    .story-line { letter-spacing:1px; } #story-hint { letter-spacing:3px; } #victory-story { font-size:15px; letter-spacing:1px; }
+  }
+  @media (max-height: 500px) and (orientation: landscape) {
+    #story-card { padding:18px 24px 20px; } .story-kicker { margin-bottom:10px; } .story-rank { margin-bottom:10px; } .story-line { margin:5px 0; font-size:18px; } #story-foot { margin-top:12px; } #victory-story { margin-top:10px; padding-top:8px; font-size:14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #story-card, .story-line { animation:none; opacity:1; } #story-hint { animation:none; } }
+
   #boon-overlay { display:none; position:fixed; inset:0; z-index:58; background:rgba(4,4,10,0.72); backdrop-filter:blur(3px); flex-direction:column; align-items:center; justify-content:center; }
   #boon-overlay h2 { font-family:'Orbitron',monospace; font-size:14px; letter-spacing:8px; color:rgba(0,212,255,0.7); margin-bottom:6px; }
   #boon-overlay p { font-size:20px; letter-spacing:3px; margin-bottom:26px; }
@@ -575,6 +604,12 @@
   <div id="boon-cards"></div>
 </div>
 
+<div id="story-overlay">
+  <button class="sys-btn" id="story-skip" type="button">SKIP</button>
+  <div id="story-card" aria-live="polite"></div>
+  <div id="story-foot"><div id="story-dots"></div><div id="story-hint"></div></div>
+</div>
+
 <div id="extraction-overlay">
   <h2>ARISE</h2>
   <div class="extract-enemy-name" id="extract-name">—</div>
@@ -598,19 +633,19 @@
 </div>
 
 <!-- Classic scripts sharing one scope, loaded in order. tools/stamp.sh refreshes ?v= so browsers never mix old and new files. -->
-<script src="js/01-data.js?v=20261011205140"></script>
-<script src="js/02-audio.js?v=20261011205140"></script>
-<script src="js/03-state.js?v=20261011205140"></script>
-<script src="js/03a-layout.js?v=20261011205140"></script>
-<script src="js/04-player-fx.js?v=20261011205140"></script>
-<script src="js/05-enemies.js?v=20261011205140"></script>
-<script src="js/06-combat.js?v=20261011205140"></script>
-<script src="js/07-skills-shadows.js?v=20261011205140"></script>
-<script src="js/08-dungeon.js?v=20261011205140"></script>
-<script src="js/09-ui.js?v=20261011205140"></script>
-<script src="js/10-actions.js?v=20261011205140"></script>
+<script src="js/01-data.js?v=20261011205420"></script>
+<script src="js/02-audio.js?v=20261011205420"></script>
+<script src="js/03-state.js?v=20261011205420"></script>
+<script src="js/03a-layout.js?v=20261011205420"></script>
+<script src="js/04-player-fx.js?v=20261011205420"></script>
+<script src="js/05-enemies.js?v=20261011205420"></script>
+<script src="js/06-combat.js?v=20261011205420"></script>
+<script src="js/07-skills-shadows.js?v=20261011205420"></script>
+<script src="js/08-dungeon.js?v=20261011205420"></script>
+<script src="js/09-ui.js?v=20261011205420"></script>
+<script src="js/10-actions.js?v=20261011205420"></script>
 <script src="3d/vendor/three.min.js"></script>
-<script src="3d/render3d.js?v=20261011205140"></script>
-<script src="js/13-loop.js?v=20261011205140"></script>
+<script src="3d/render3d.js?v=20261011205420"></script>
+<script src="js/13-loop.js?v=20261011205420"></script>
 </body>
 </html>

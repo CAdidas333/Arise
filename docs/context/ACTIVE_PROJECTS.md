@@ -1,6 +1,6 @@
 # Arise — Active Projects
 
-## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 to 6 live; recorded music live; a 3D lane with a free camera and fight effects runs beside the 2D game)
+## Current Phase: Phase 3 — V17 live; V18 under way (steps 1 to 7 live; recorded music live; a 3D lane with a free camera and fight effects runs beside the 2D game)
 **Priority**: MEDIUM (fun/showcase project)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
@@ -52,7 +52,7 @@
 - [x] Step 4 — A hunter with a real body and a look for each boss. **Live.** Hunter: pass 3 (2026-10-10), closer to the picture Chris picked, drawn at 1.35 size; the old stick figure is one switch away (System menu, Controls tab, "Hunter look"; `settings.hunter`, `drawHunterClassic`). Bosses (2026-10-10): each of the six has its own body drawn by `drawBoss` in `js/11-render-world.js` (spider, hulking orc, cloaked knight with a greatsword, burning armoured king, dragon with spread wings, cracked stone colossus); boss shadow soldiers use the same bodies in shadow colours
 - [x] Step 5 — Real dungeons. **Live** in both views (2026-10-11). A gate is a generated chain of rooms and corridors (`genLayout` in `js/03a-layout.js`, a new 14th script). One wave per room: walking in shuts the doors (`roomStep` in `js/08-dungeon.js`), clearing it opens them. After the last room an exit leads to the boss, fought in the open arena as before (`enterBossArena`). Every position limit goes through `keepIn` / `inMap`. The minimap follows the hunter; an arrow points to the next door. The 3D view builds the same layout (`rebuildLayout3D`). Endless mode keeps the open arena. Test: `node tools/test_layout.js` (expects `PASS 8000`)
 - [x] Step 6 — Loot and gear. **Live** (2026-10-11). Elites (22 percent) and bosses (always, Rare or better) drop gear as a gem; other enemies 1.5 percent. Three slots (armor, boots, ring) and a 12-item bag; four rarities; mods for damage, HP, MP, speed, crit, defence, cooldowns and gold, each capped. Equip, unequip and sell in the ARMORY tab. Saved with the game through `cleanGear`. Code: the GEAR section of `js/01-data.js`, `takeGear` and `dropGear` in `js/06-combat.js`. Test: `node tools/test_gear.js`
-- [ ] Step 7 — Story thread: scripted opening, chapter card per gate
+- [x] Step 7 — Story thread. **Live** (2026-10-11). A one-time opening of five System cards for a new hunter, a chapter card the first time each gate is entered, and a closing line on the victory screen the first time each gate is cleared. Text in the `STORY` table (`js/01-data.js`); what has been seen is saved in `player.story`
 - [ ] Step 8 — Hand-designed boss fights
 - [ ] Step 9 — Shareable result card
 - Parked for later: shared leaderboard, co-op
