@@ -183,5 +183,28 @@ function tabArmory() {
   const pc = potionCost();
   h += `<h3>Supplies</h3><div class="shop-item" style="color:#ff7788"><div class="s-ico"></div><div class="s-body"><div class="s-name">Healing Potion <span style="opacity:.5">(${player.potions}/5)</span></div><div class="s-desc">Restores 40% HP. Press F in a gate.</div></div>
     <button class="sys-btn gold" data-act="potion" ${player.potions < 5 && player.gold >= pc ? '' : 'disabled'}>◈ ${fmtNum(pc)}</button></div>`;
+  return h + gearSection();
+}
+
+// --- GEAR: three slots, the total they give, and the bag ---
+const gearChip = (k, v) => gearModText(k, v).replace(/ /g, '&nbsp;'); // a line of mods breaks between mods, never inside one
+const gearMods = it => Object.keys(it.mods).map(k => gearChip(k, it.mods[k])).join(' · ');
+const gearRow = (it, btns) => `<div class="shop-item gear-item" style="color:${GEAR_COLORS[it.rarity]}"><div class="s-ico"></div><div class="s-body"><div class="s-name">${esc(it.name)}<span class="grade">${GEAR_RARITY[it.rarity].toUpperCase()}</span></div>
+  <div class="s-desc">${it.slot.toUpperCase()} · LV ${it.lvl}</div><div class="g-mods">${gearMods(it)}</div></div><div class="g-btns">${btns}</div></div>`;
+function gearSection() {
+  const bag = player.bag, room = bag.length < BAG_MAX;
+  let h = '<h3>Gear</h3>';
+  GEAR_SLOTS.forEach(s => {
+    const it = player.gear[s];
+    h += it ? gearRow(it, room ? `<button class="sys-btn" data-act="gear-unequip" data-v="${s}">UNEQUIP</button>` : '')
+      : `<div class="shop-item gear-item done" style="color:#8899aa"><div class="s-ico"></div><div class="s-body"><div class="s-name">${s.toUpperCase()}</div><div class="s-desc">Nothing equipped</div></div></div>`;
+  });
+  const total = GEAR_KEYS.filter(k => gearMod(k) > 0).map(k => gearChip(k, k === 'cdr' ? Math.min(0.25, gearMod(k)) : gearMod(k))).join(' · ');
+  h += `<div class="g-total">${total ? `GEAR TOTAL &nbsp; <span>${total}</span>` : 'Enemies inside gates drop gear. A boss always drops one item.'}</div>`;
+  h += `<h3>Bag — ${bag.length} / ${BAG_MAX}</h3>`;
+  const common = bag.filter(it => it.rarity === 0);
+  if (common.length) h += `<button class="sys-btn gold" data-act="gear-sell-common" style="margin-bottom:10px">SELL ALL COMMON &nbsp; ◈ ${fmtNum(common.reduce((a, it) => a + gearValue(it), 0))}</button>`;
+  if (!bag.length) h += '<div class="g-total">The bag is empty. When it is full, new finds are sold on the spot.</div>';
+  bag.forEach((it, i) => { h += gearRow(it, `<button class="sys-btn" data-act="gear-equip" data-v="${i}">EQUIP</button><button class="sys-btn gold" data-act="gear-sell" data-v="${i}">SELL ◈ ${fmtNum(gearValue(it))}</button>`); });
   return h;
 }

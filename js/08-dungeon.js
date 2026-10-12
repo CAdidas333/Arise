@@ -14,7 +14,7 @@ function startDungeon(gateDef, endless = false) {
   layout = endless ? null : genLayout(gateDef.waves - 1); // rooms and corridors; the open arena stays for endless mode and boss fights
   enemies = []; projectiles = []; telegraphs = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
   particles = []; texts = []; rings = []; arcs = []; ghosts = []; bolts = [];
-  run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0 };
+  run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0, loot:[] };
   dungeon = { gate:endless ? endlessGate(1) : gateDef, wave:1, maxWaves:endless ? Infinity : gateDef.waves, state:'fight', wait:0, bossRef:null, endless, scale:1, introT:0, alive:0, picks:[] };
   Object.assign(player, { x:0, y:0, hp:player.maxHp, mp:player.maxMp, cds:{}, ult:0, ultT:0, inv:0, combo:0, comboWin:0, dodgeCd:0, dodgeT:0, atkT:0, perfect:false, hitFlash:0 });
   comboCount = 0; comboTimer = 0; legionTimer = 0; lastPlayerAttackTime = -99; lastMoveTime = gameTime; lastMovePos = { x:0, y:0 };
@@ -191,11 +191,14 @@ function showVictory() {
   player.gold += bonus;
   const ge = $('victory-grade'); ge.textContent = grade; ge.style.color = { S:'#bb66ff', A:'#ffcc00', B:'#00d4ff', C:'#8899aa' }[grade];
   const mm = Math.floor(run.time/60), ss = String(Math.floor(run.time%60)).padStart(2, '0');
+  sweepGear(); // loot still on the floor is picked up before the count
+  const loot = run.loot, best = loot.reduce((m, it) => Math.max(m, it.rarity), 0);
   $('victory-stats').innerHTML = `
     <div>Enemies Defeated: <span>${run.kills}</span> &nbsp; Best Combo: <span>${run.bestCombo}x</span></div>
     <div>Time: <span>${mm}:${ss}</span> &nbsp; Damage Taken: <span>${fmtNum(run.dmgTaken)}</span></div>
     <div>XP Earned: <span>${fmtNum(run.xp)}</span> &nbsp; Gold: <span>${fmtNum(run.gold)} + ${fmtNum(bonus)}</span></div>
-    <div>Level: <span>${player.level}</span> &nbsp; Rank: <span>${player.rank}</span></div>`;
+    <div>Level: <span>${player.level}</span> &nbsp; Rank: <span>${player.rank}</span></div>
+    ${loot.length ? `<div>Loot: <span>${loot.length} item${loot.length > 1 ? 's' : ''}</span> &nbsp; Best: <span style="color:${GEAR_COLORS[best]}">${GEAR_RARITY[best]}</span></div>` : ''}`;
   show('victory-overlay', 'flex'); saveGame();
 }
 

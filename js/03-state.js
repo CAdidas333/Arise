@@ -51,6 +51,7 @@ function saveGame() {
     v:VERSION, spv:2, name:player.name, level:player.level, xp:player.xp, rank:player.rank,
     stats:{...player.stats}, statPoints:player.statPoints, skillPoints:player.skillPoints, tree:{...player.tree},
     weapon:player.weapon, gold:player.gold, potions:player.potions, cleared:{...player.cleared},
+    gear:{...player.gear}, bag:[...player.bag],
     shadows:player.shadows.map(s => ({ name:s.name, kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })),
     questProgress:{...questProgress}, questDate, highScores:{...highScores},
     questsCompleted:DAILY_QUESTS.filter(q => q.completed).map(q => q.id),
@@ -87,6 +88,9 @@ function loadGame() {
       toast('SKILL TREE REBALANCED — 1 POINT PER 2 LEVELS. YOUR POINTS WERE REFUNDED.', 'purple', 6000);
     }
     player.weapon = clamp(d.weapon|0, 0, WEAPONS.length-1); player.potions = d.potions|0; player.cleared = d.cleared || {};
+    // Gear: a save from before gear has none, and anything that is not a clean item is dropped
+    for (const s of GEAR_SLOTS) { const it = cleanGear(d.gear && d.gear[s]); player.gear[s] = it && it.slot === s ? it : null; }
+    player.bag = (Array.isArray(d.bag) ? d.bag.slice(0, 4*BAG_MAX) : []).map(cleanGear).filter(Boolean).slice(0, BAG_MAX);
   } else {
     // V16 save: the old XP curve was exponential, so re-seat XP on the new one and grant the skill points those levels would have earned
     player.xp = 0; player.skillPoints = Math.floor(player.level/2); player.potions = 2;
