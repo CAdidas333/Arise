@@ -490,8 +490,8 @@
     .boss-bar-wrap { bottom:auto !important; top:calc(228px + env(safe-area-inset-top,0px)); width:86vw !important; }
     .hud-wave { left:auto; right:calc(62px + env(safe-area-inset-right,0px)); transform:none; font-size:11px; letter-spacing:2px; top:calc(14px + env(safe-area-inset-top,0px)); }
     .hud-enemies { left:auto; right:calc(62px + env(safe-area-inset-right,0px)); transform:none; font-size:10px; top:calc(32px + env(safe-area-inset-top,0px)); }
-    #toast-container { top:calc(292px + env(safe-area-inset-top,0px)) !important; bottom:auto !important; flex-direction:column !important; width:94vw; }
-    .toast { white-space:normal; text-align:center; font-size:10px; letter-spacing:2px; padding:6px 12px; } .toast.streak { font-size:13px; letter-spacing:3px; }
+    #toast-container { top:calc(150px + env(safe-area-inset-top,0px)) !important; bottom:auto !important; flex-direction:column !important; width:94vw; gap:4px; } /* under the stat bars, clear of the hunter in the middle of the screen */
+    .toast { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:94vw; text-align:center; font-size:10px; letter-spacing:1px; padding:5px 12px; } .toast.streak { font-size:12px; letter-spacing:2px; padding:6px 14px; }
   }
   @media (max-height: 500px) and (orientation: landscape) { .hud-hint { display:none; } .boon-card { width:170px; padding:10px; } .boon-card .b-ico { font-size:26px; } #boon-overlay p { margin-bottom:10px; font-size:14px; } }
 </style>
@@ -633,20 +633,20 @@
 </div>
 
 <!-- Classic scripts sharing one scope, loaded in order. tools/stamp.sh refreshes ?v= so browsers never mix old and new files. -->
-<script src="js/01-data.js?v=20261011205713"></script>
-<script src="js/02-audio.js?v=20261011205713"></script>
-<script src="js/03-state.js?v=20261011205713"></script>
-<script src="js/03a-layout.js?v=20261011205713"></script>
-<script src="js/04-player-fx.js?v=20261011205713"></script>
-<script src="js/05-enemies.js?v=20261011205713"></script>
-<script src="js/06-combat.js?v=20261011205713"></script>
-<script src="js/07-skills-shadows.js?v=20261011205713"></script>
-<script src="js/08-dungeon.js?v=20261011205713"></script>
-<script src="js/09-ui.js?v=20261011205713"></script>
-<script src="js/10-actions.js?v=20261011205713"></script>
-<script src="js/11-render-world.js?v=20261011205713"></script>
-<script src="js/12-render-fx.js?v=20261011205713"></script>
-<script src="js/12a-card.js?v=20261011205713"></script>
-<script src="js/13-loop.js?v=20261011205713"></script>
+<script src="js/01-data.js?v=20261011221249"></script>
+<script src="js/02-audio.js?v=20261011221249"></script>
+<script src="js/03-state.js?v=20261011221249"></script>
+<script src="js/03a-layout.js?v=20261011221249"></script>
+<script src="js/04-player-fx.js?v=20261011221249"></script>
+<script src="js/05-enemies.js?v=20261011221249"></script>
+<script src="js/06-combat.js?v=20261011221249"></script>
+<script src="js/07-skills-shadows.js?v=20261011221249"></script>
+<script src="js/08-dungeon.js?v=20261011221249"></script>
+<script src="js/09-ui.js?v=20261011221249"></script>
+<script src="js/10-actions.js?v=20261011221249"></script>
+<script src="js/11-render-world.js?v=20261011221249"></script>
+<script src="js/12-render-fx.js?v=20261011221249"></script>
+<script src="js/12a-card.js?v=20261011221249"></script>
+<script src="js/13-loop.js?v=20261011221249"></script>
 </body>
 </html>

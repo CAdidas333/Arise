@@ -128,7 +128,8 @@ function checkDailyReset() {
 // ================================================================
 function toast(text, style = 'blue', duration = 2000, isStreak = false) {
   const box = $('toast-container');
-  while (box.children.length >= 4) box.firstChild.remove();
+  const cap = isMobile ? 2 : 4; // on a phone a tall stack of pop-ups covers the fight
+  while (box.children.length >= cap) box.firstChild.remove();
   const el = document.createElement('div');
   el.className = `toast ${style}` + (isStreak ? ' streak' : '');
   el.textContent = text;
