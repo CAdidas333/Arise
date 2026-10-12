@@ -163,3 +163,67 @@
 **Outcome**: The browser pane blocks requests from a public page to a local address ("Failed to fetch"), whatever headers the receiver sends.
 
 **Next time**: On the public page, draw the frames into one canvas and store the data URL in `window.name`. Navigate the same tab to the local preview page, read `window.name` there, and post it to the receiver. It survives the navigation.
+
+## 2026-10-11 — Two agents declared the same top-level name and the whole 3D renderer stopped loading
+
+**Tried**: Two sub-agents built in parallel and each added a top-level constant called `GEAR_COLORS` (one in `js/01-data.js`, one in `3d/render3d.js`).
+
+**Outcome**: All the scripts share one global scope, so the second declaration is an error and the whole 3D renderer failed to load. The orchestrator's browser test before shipping caught it; it never reached the public page. `tools/check_names.sh` now lists any top-level name declared twice.
+
+**Next time**: Run `tools/check_names.sh` after every merge, and tell parallel agents which names the others own. (Open thread G8: run it from `tools/stamp.sh`.)
+
+## 2026-10-11 — `git add -A` staged the sub-agents' worktrees as embedded repositories
+
+**Tried**: Committed with `git add -A` while sub-agent worktrees sat under `.claude/worktrees/`.
+
+**Outcome**: They were staged as embedded repositories. Caught before any push and removed; `.claude/worktrees/` is now in `.gitignore` (and `assets/music/takes/`).
+
+**Next time**: Ignore a worktree folder before the first agent uses it, and read `git status` before committing in a repo that has worktrees.
+
+## 2026-10-11 — Another project's server answered for `localhost`, so a test loaded the wrong site
+
+**Tried**: Tested Arise at `http://localhost:8765/` while another project's session had started a server on `*:8765`.
+
+**Outcome**: `localhost` resolved to the other server and the test loaded the wrong site; the page title gave it away. Arise now has its own port, 8767 (`tools/serve.py`, a threaded server), and tests use `127.0.0.1`.
+
+**Next time**: Check the page title (or a known function) before trusting a test, use a project-specific port and `127.0.0.1`.
+
+## 2026-10-11 — A cached page after a re-stamp made a test run old code and "pass"
+
+**Tried**: Re-ran a browser test after `tools/stamp.sh` changed the script stamps.
+
+**Outcome**: The browser pane served the cached page, so the test ran old code and passed. Screenshots of the hidden browser pane are also stale (see 2026-10-09). A headless Chrome screenshot (`--headless=new --screenshot`) of a temporary copy of the page is reliable; disable CSS animations when using virtual time.
+
+**Next time**: Add a fresh query string, then check the stamp and that a function you just added exists before trusting any result. On a heavily loaded Mac one long browser script times out at 45 seconds, so split tests into short calls.
+
+## 2026-10-11 — Sub-agents that render and LOOK at their own work needed no second pass
+
+**Tried**: Briefed sub-agents on visual work (room dressing, 3D figures, the result card) to render their output with headless Chrome from a temporary page with a small setup script, look at the picture, and fix what they saw before returning.
+
+**Outcome**: The visual work came back needing no second pass, where earlier visual jobs (hunter pass 1, boss looks) were sent back after a diff that matched the brief looked wrong on screen.
+
+**Next time**: Put the render-and-look recipe in every visual brief.
+
+## 2026-10-11 — A read-only reader agent ran out of turns before writing anything
+
+**Tried**: Sent a read-only "reader" agent to sweep the code with no limit on how many tool calls it could make.
+
+**Outcome**: It spent its turns reading and returned nothing.
+
+**Next time**: Give readers a hard tool-call budget and say a partial report beats none.
+
+## 2026-10-11 — A cost lookup changed the question: API music is billed in dollars, not credits
+
+**Tried**: Planned the ElevenLabs music job on the assumption that it spends plan credits, as the voice and effects did.
+
+**Outcome**: A cost lookup before the first call showed music through the API is billed in dollars ($0.15 a minute), so the question became one of money. Money is Chris's call, so the orchestrator held the first call and asked (decision cards D-0097 and D-0099). He approved in chat; six takes cost about $1.35. His later "approved. do it." was read as "put it in, you pick", and that reading was stated aloud, so the picks (made from a classifier's labels, not by ear) are marked as his to swap.
+
+**Next time**: Look up the billing basis before any paid generation, hold the first call when it turns out to be money, and state out loud how an ambiguous "approved" was read.
+
+## 2026-10-11 — When a sub-agent adds a script tag while the orchestrator re-stamps, the merge conflicts on the script-tag block
+
+**Tried**: Merged a sub-agent's branch after the orchestrator had run `tools/stamp.sh` on the main line.
+
+**Outcome**: Both sides changed the `<script>` block in `index.html` (a new tag on one side, new `?v=` stamps on the other), so git reported a conflict.
+
+**Next time**: Keep the block that has the new tag, then run `tools/stamp.sh` to refresh every stamp.
