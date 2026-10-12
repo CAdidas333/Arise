@@ -883,7 +883,7 @@ const Fig = (function () {
 // Shared geometries
 const geoProjectile = new THREE.SphereGeometry(1, 10, 10), geoOrb = new THREE.SphereGeometry(6, 12, 12);
 const geoGear = new THREE.OctahedronGeometry(8, 0), geoRemnant = new THREE.ConeGeometry(7, 14, 12);
-const GEAR_COLORS = [0xcfd8e3, 0x4aa8ff, 0xbb66ff, 0xffcc33]; // by rarity
+const GEAR_HEX3D = [0xcfd8e3, 0x4aa8ff, 0xbb66ff, 0xffcc33]; // by rarity
 
 // Entity tracking maps
 const enemyMeshes = new Map(), shadowMeshes = new Map(), projectileMeshes = new Map();
@@ -1047,7 +1047,7 @@ function draw() {
     activeOrbs.add(o);
     let m = orbMeshes.get(o);
     const gear = o.type === 'gear';
-    const col = gear ? (GEAR_COLORS[o.item ? o.item.rarity : 0] || GEAR_COLORS[0]) : o.type === 'gold' ? 0xffcc00 : 0x44ff66;
+    const col = gear ? (GEAR_HEX3D[o.item ? o.item.rarity : 0] || GEAR_HEX3D[0]) : o.type === 'gold' ? 0xffcc00 : 0x44ff66;
     if (!m) {
       m = new THREE.Mesh(gear ? geoGear : geoOrb, new THREE.MeshBasicMaterial({ color: col }));
       scene.add(m); orbMeshes.set(o, m);

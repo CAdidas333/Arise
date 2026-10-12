@@ -38,7 +38,6 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
 | F1 | Shared leaderboard and co-op play | OPEN | multi-session | Chris's word to start | Chris parked it ("maybe we do that later") when he picked the nine-step V18 plan |
-| F5 | 3D camera on phones: turning and zooming work with keys, right-drag and the wheel only; there is no touch control | OPEN | min | Nothing | Left out of the free-camera job (2026-10-10) to keep it small; desktop first |
 
 ### UX
 
@@ -65,7 +64,6 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 | G1 | Repeatable balance bot in `tools/`: the bot that plays each gate through the `#debug` hook exists only in the session transcript | OPEN | session | Nothing | Not saved when it was written; worth a worker job when balance work resumes |
 | G3 | ElevenLabs key cannot list voices: it lacks the "voices read" permission, so `el_voice.py --list` fails | OPEN | min | Chris adding that permission to the key on the ElevenLabs site (optional) | Worked around: voice ids are read from the ElevenLabs connector instead |
 | G4 | `docs/previews/` (review frames and audio demos) is served on the public site | OPEN | min | Nothing | Harmless; left in place at the Session 4 wrap to keep the links in the docs working |
-| F6 | 3D view: bosses, enemies and the hunter are still plain solids; afterimages, light pillars and the hub backdrop are not drawn | OPEN | multi-session | Nothing | The 2D bodies are canvas drawings and do not carry over; real 3D figures are the next 3D job |
 | G5 | 3D view shows a plain dark floor for the first seconds of a gate, until the painted floor image has loaded | OPEN | min | Nothing | Seen in the 2026-10-10 camera frames; it was there before the camera job |
 
 ### Docs
@@ -80,6 +78,8 @@ All threads below were registered 2026-10-09 at the wrap of Session 3.
 
 | # | Title | Shipped | Notes |
 |---|---|---|---|
+| F6 | 3D view: real figures for the hunter, the six enemy kinds, the six bosses and the shadow soldiers | ✅ DONE 2026-10-11 | Built from three.js primitives in `3d/render3d.js`, shared geometry. Still not drawn in 3D: afterimages, light pillars, the hub backdrop, a minimap (U5) |
+| F5 | 3D camera on phones | ✅ DONE 2026-10-11 | Two-finger drag turns, pinch zooms. Checked with fake touch events only, not on a real phone |
 | F3 | ElevenLabs music for the game | ✅ DONE 2026-10-11 | Chris approved the cost in chat ($0.15 a minute; nine minutes made). Hub take 2, fight take 1, boss take 1 are live, picked from a classifier's labels, not by ear; Chris can swap. Details in `assets/CREDITS.md` |
 | U4 | Warning circles drawn outside a room's walls | ✅ DONE 2026-10-11 | Clipped to the walkable floor in `drawWorld` |
 | G2 | Local preview drops connections | ✅ DONE 2026-10-11 | `tools/serve.py`: threaded, deep backlog, no caching, port 8767 (another project took 8765) |
