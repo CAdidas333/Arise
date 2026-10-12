@@ -74,6 +74,7 @@ function drawArena(vx0, vy0, vx1, vy1) {
 
 function drawLayout(vx0, vy0, vx1, vy1) {
   const th = floorTheme;
+  const dc = layout.decor || (layout.decor = buildLayoutDecor(layout)); // room dressing: built once per layout, then only drawn
 
   // 0. Wall mass. Every rectangle is drawn grown outward in dark stone first; the floors painted over it afterwards leave a band
   //    of wall around the whole outline, correct at every corner with no extra geometry. North walls get a taller, lit face.
@@ -89,6 +90,7 @@ function drawLayout(vx0, vy0, vx1, vy1) {
     ctx.fillStyle = g; ctx.fillRect(r.x0, r.y0 - FACE, r.x1 - r.x0, FACE);
     ctx.globalAlpha = 0.28; ctx.fillStyle = th.line; ctx.fillRect(r.x0, r.y0 - FACE - 2, r.x1 - r.x0, 2); ctx.globalAlpha = 1; // the top edge of the face catches the light
   }
+  drawWallFurniture(dc, vx0, vy0, vx1, vy1, FACE); // pilasters and torch brackets: after the face, before the floors of any joining corridor cover it
 
   // 1. Floors
   if (floorPat) {
@@ -117,6 +119,9 @@ function drawLayout(vx0, vy0, vx1, vy1) {
     const x1 = Math.min(vx1, r.x1), y1 = Math.min(vy1, r.y1);
     if (x1 > x0 && y1 > y0) ctx.fillRect(x0, y0, x1-x0, y1-y0);
   });
+
+  // 3b. Floor detail and torchlight: after the floors and their darkening, before the glowing wall lines
+  drawRoomDetail(dc, th, vx0, vy0, vx1, vy1);
 
   // 4. Walls
   ctx.save();
@@ -216,6 +221,184 @@ function drawLayout(vx0, vy0, vx1, vy1) {
     ctx.moveTo(ex-42, ey-150); ctx.lineTo(ex-42, ey);
     ctx.moveTo(ex+42, ey-150); ctx.lineTo(ex+42, ey);
     ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ----------------------------------------------------------------
+//  Room dressing for the 2D dungeon. Drawing only: none of this feeds back into walls, doors or movement.
+//  Plain shapes only (strips, quads, straight lines, soft glows). Every position comes from a seeded generator and is built
+//  ONCE per layout (cached as layout.decor), so nothing moves between frames and Math.random() is never used here.
+// ----------------------------------------------------------------
+const distSeg = (px, py, x0, y0, x1, y1) => {
+  const dx = x1 - x0, dy = y1 - y0, l2 = dx*dx + dy*dy, t = l2 ? clamp(((px - x0)*dx + (py - y0)*dy)/l2, 0, 1) : 0;
+  return dist(px, py, x0 + t*dx, y0 + t*dy);
+};
+
+function buildLayoutDecor(L) {
+  const dc = { rooms: [], pil: [], runners: [] };
+  for (const r of L.rooms) {
+    const rng = mulberry32((L.seed*31 + r.i) | 0), rr = (a, b) => a + rng()*(b - a);
+    const doors = L.doors.filter(d => d.room === r.i);
+    const halls = L.halls.filter(h => h.x0 < r.x1 && h.x1 > r.x0 && h.y0 < r.y1 && h.y1 > r.y0); // corridors that join this room
+    const nearDoor = (x, y, m) => doors.some(d => distSeg(x, y, d.x0, d.y0, d.x1, d.y1) < m);
+    const inHall = (x, y, m) => halls.some(h => x > h.x0 - m && x < h.x1 + m && y > h.y0 - m && y < h.y1 + m);
+    const rd = { r, inlay: [[], []], rubble: [], cracks: [] };
+
+    // Pilasters along the north wall, one every 240 to 300 units, never within 40 of a door on that wall; every second one carries a torch
+    const nd = doors.filter(d => d.y0 === r.y0 && d.y1 === r.y0);
+    for (let x = r.x0 + rr(110, 160), k = 0; x < r.x1 - 110; x += rr(240, 300))
+      if (!nd.some(d => x > d.x0 - 54 && x < d.x1 + 54)) dc.pil.push({ x, y: r.y0, torch: k++ % 2 === 0, ph: rr(0, TAU) });
+
+    // Floor inlay in the fight rooms: two plain rectangles, 90 and 110 in from the walls, left open where a corridor mouth crosses them
+    if (r.i >= 1) [90, 110].forEach((ins, k) => {
+      const a = r.x0 + ins, b = r.x1 - ins, c = r.y0 + ins, d = r.y1 - ins;
+      for (const y of [c, d]) {
+        let spans = [[a, b]];
+        for (const h of halls) if (h.y0 < y && y < h.y1) spans = subtract1D(spans, h.x0 - 14, h.x1 + 14);
+        for (const [u, v] of spans) if (v - u > 6) rd.inlay[k].push(u, y, v, y);
+      }
+      for (const x of [a, b]) {
+        let spans = [[c, d]];
+        for (const h of halls) if (h.x0 < x && x < h.x1) spans = subtract1D(spans, h.y0 - 14, h.y1 + 14);
+        for (const [u, v] of spans) if (v - u > 6) rd.inlay[k].push(x, u, x, v);
+      }
+    });
+
+    // Rubble: 3 to 5 clusters of 3 to 6 small stones near a wall or in a corner, none within 60 of a door or in a corridor mouth
+    for (let n = 3 + Math.floor(rng()*3), tries = 0; n > 0 && tries < 60; tries++) {
+      let cx, cy;
+      if (rng() < 0.5) { cx = rng() < 0.5 ? r.x0 + rr(36, 100) : r.x1 - rr(36, 100); cy = rng() < 0.5 ? r.y0 + rr(36, 100) : r.y1 - rr(36, 100); } // a corner
+      else {
+        const side = Math.floor(rng()*4), t = rr(0.08, 0.92);
+        if (side < 2) { cx = r.x0 + t*(r.x1 - r.x0); cy = side ? r.y1 - rr(36, 100) : r.y0 + rr(36, 100); }
+        else { cy = r.y0 + t*(r.y1 - r.y0); cx = side === 2 ? r.x0 + rr(36, 100) : r.x1 - rr(36, 100); }
+      }
+      if (nearDoor(cx, cy, 100) || inHall(cx, cy, 60)) continue;
+      n--;
+      for (let s = 3 + Math.floor(rng()*4); s > 0; s--) {
+        const a = rr(0, TAU), d = rr(0, 1)*26, w = rr(6, 12);
+        const x = clamp(cx + Math.cos(a)*d*1.2, r.x0 + 14, r.x1 - 14), y = clamp(cy + Math.sin(a)*d*0.8, r.y0 + 14, r.y1 - 14); // a stone never pokes into the wall
+        if (nearDoor(x, y, 60) || inHall(x, y, 12)) continue;
+        for (let k = 0; k < 4; k++) { // an irregular four-sided stone: top-left, top-right, bottom-right, bottom-left, each corner pulled in and turned a little
+          const ang = (225 + 90*k + rr(-28, 28))*Math.PI/180, rad = w*rr(0.55, 1);
+          rd.rubble.push(x + Math.cos(ang)*rad, y + Math.sin(ang)*rad*0.85);
+        }
+      }
+    }
+
+    // Cracks: 2 or 3 long jagged lines of 5 to 7 points that start at a wall and run inward
+    for (let n = 2 + Math.floor(rng()*2), tries = 0; n > 0 && tries < 40; tries++) {
+      const side = Math.floor(rng()*4), t = rr(0.1, 0.9);
+      let x = side < 2 ? r.x0 + t*(r.x1 - r.x0) : side === 2 ? r.x0 + 2 : r.x1 - 2;
+      let y = side >= 2 ? r.y0 + t*(r.y1 - r.y0) : side === 0 ? r.y0 + 2 : r.y1 - 2;
+      let base = [Math.PI/2, -Math.PI/2, 0, Math.PI][side];
+      if (nearDoor(x, y, 60) || inHall(x, y, 20)) continue;
+      const pts = [x, y];
+      for (let k = 4 + Math.floor(rng()*3); k > 0; k--) { // 4 to 6 more points: 5 to 7 in all
+        const a = base + rr(-0.9, 0.9), l = rr(45, 90);
+        x += Math.cos(a)*l; y += Math.sin(a)*l; base += rr(-0.15, 0.15);
+        if (x < r.x0 + 4 || x > r.x1 - 4 || y < r.y0 + 4 || y > r.y1 - 4 || inHall(x, y, 10)) break;
+        pts.push(x, y);
+      }
+      if (pts.length >= 10) { rd.cracks.push(pts); n--; }
+    }
+    dc.rooms.push(rd);
+  }
+
+  // Corridor runners: two thin guide lines down the centre, from room edge to room edge (a dead end stops short of the exit's light)
+  for (const h of L.halls) {
+    const horiz = h.x1 - h.x0 > h.y1 - h.y0;
+    let a = horiz ? h.x0 : h.y0, b = horiz ? h.x1 : h.y1, openA = true, openB = true;
+    const mid = (a + b)/2;
+    for (const r of L.rooms) {
+      if (!(r.x0 < h.x1 && r.x1 > h.x0 && r.y0 < h.y1 && r.y1 > h.y0)) continue;
+      const lo = horiz ? r.x0 : r.y0, hi = horiz ? r.x1 : r.y1;
+      if (hi < mid) { a = Math.max(a, hi); openA = false; } else if (lo > mid) { b = Math.min(b, lo); openB = false; }
+    }
+    if (openA) a += 140;
+    if (openB) b -= 140;
+    if (b - a < 40) continue;
+    const c = horiz ? (h.y0 + h.y1)/2 : (h.x0 + h.x1)/2, s = horiz ? [a, c - 15, b, c - 15, a, c + 15, b, c + 15] : [c - 15, a, c - 15, b, c + 15, a, c + 15, b];
+    dc.runners.push({ x0: horiz ? a : c - 15, y0: horiz ? c - 15 : a, x1: horiz ? b : c + 15, y1: horiz ? c + 15 : b, s });
+  }
+  return dc;
+}
+
+// Pilasters (flat, slightly lighter strips with a small cap and base) and torch brackets on the north wall face
+function drawWallFurniture(dc, vx0, vy0, vx1, vy1, FACE) {
+  const ps = dc.pil.filter(p => p.x > vx0 - 20 && p.x < vx1 + 20 && p.y > vy0 - 10 && p.y - FACE < vy1);
+  if (!ps.length) return;
+  const batch = (color, f) => { ctx.fillStyle = color; ctx.beginPath(); for (const p of ps) f(p); ctx.fill(); };
+  batch('rgba(196,204,230,0.08)', p => ctx.rect(p.x - 9, p.y - FACE + 6, 18, FACE - 6));  // the shaft
+  batch('rgba(255,255,255,0.07)', p => ctx.rect(p.x - 9, p.y - FACE + 6, 2, FACE - 6));   // its lit edge
+  batch('rgba(0,0,0,0.30)', p => ctx.rect(p.x + 7, p.y - FACE + 6, 2, FACE - 6));         // its shaded edge
+  batch('rgba(205,212,238,0.14)', p => ctx.rect(p.x - 13, p.y - FACE + 1, 26, 6));        // the cap
+  batch('rgba(0,0,0,0.32)', p => ctx.rect(p.x - 13, p.y - FACE + 7, 26, 2));              // shadow under the cap
+  batch('rgba(205,212,238,0.08)', p => ctx.rect(p.x - 12, p.y - 6, 24, 6));               // the base
+  ctx.fillStyle = '#07070c'; ctx.beginPath(); // torch brackets: a stick and a small cup
+  for (const p of ps) if (p.torch) {
+    ctx.rect(p.x - 1.5, p.y - 14, 3, 9);
+    ctx.moveTo(p.x - 5.5, p.y - 21); ctx.lineTo(p.x + 5.5, p.y - 21); ctx.lineTo(p.x + 3, p.y - 13); ctx.lineTo(p.x - 3, p.y - 13); ctx.closePath();
+  }
+  ctx.fill();
+  batch('rgba(255,255,255,0.16)', p => { if (p.torch) ctx.rect(p.x - 5.5, p.y - 21, 11, 1.2); });
+}
+
+// Torchlight is two soft gradients made once per gate colour and moved with the transform, so no gradient is created per frame
+let decorLight = { key: '' };
+function decorGradients(ember) {
+  if (decorLight.key === ember) return decorLight;
+  const n = /^#[0-9a-f]{6}$/i.test(ember) ? parseInt(ember.slice(1), 16) : 0xffaa55, R = n >> 16, G = (n >> 8) & 255, B = n & 255;
+  const c = `${R},${G},${B}`, hot = `rgb(${Math.round(R + (255 - R)*0.6)},${Math.round(G + (255 - G)*0.6)},${Math.round(B + (255 - B)*0.6)})`;
+  const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 1), pool = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  [[0, 0.9], [0.1, 0.55], [0.35, 0.2], [1, 0]].forEach(([o, a]) => glow.addColorStop(o, `rgba(${c},${a})`));
+  [[0, 0.6], [0.5, 0.25], [1, 0]].forEach(([o, a]) => pool.addColorStop(o, `rgba(${c},${a})`));
+  return decorLight = { key: ember, glow, pool, hot, ember: `rgb(${c})` };
+}
+
+// Floor detail (inlay, rubble, cracks, corridor runners) and the light of the wall torches
+function drawRoomDetail(dc, th, vx0, vy0, vx1, vy1) {
+  const seen = dc.rooms.filter(d => d.r.x1 > vx0 && d.r.x0 < vx1 && d.r.y1 > vy0 && d.r.y0 < vy1);
+  const runs = dc.runners.filter(u => u.x1 > vx0 && u.x0 < vx1 && u.y1 > vy0 && u.y0 < vy1);
+  ctx.save();
+  ctx.strokeStyle = th.line; ctx.lineJoin = 'round';
+  const segs = (list, pick) => { ctx.beginPath(); for (const o of list) { const s = pick(o); for (let i = 0; i < s.length; i += 4) { ctx.moveTo(s[i], s[i+1]); ctx.lineTo(s[i+2], s[i+3]); } } ctx.stroke(); };
+  ctx.lineCap = 'butt'; ctx.globalAlpha = 0.09; ctx.lineWidth = 1.5; segs(runs, u => u.s);                       // corridor runners
+  ctx.lineCap = 'square';
+  ctx.globalAlpha = 0.13; ctx.lineWidth = 2; segs(seen, d => d.inlay[0]);                                         // floor inlay, outer line
+  ctx.globalAlpha = 0.10; ctx.lineWidth = 1.5; segs(seen, d => d.inlay[1]);                                       // floor inlay, inner line
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#000'; ctx.globalAlpha = 0.32; ctx.lineWidth = 1.6; ctx.beginPath();                         // cracks
+  for (const d of seen) for (const p of d.cracks) { ctx.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) ctx.lineTo(p[i], p[i+1]); }
+  ctx.stroke();
+  ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(6,5,10,0.62)'; ctx.beginPath();                                      // rubble: dark stones...
+  for (const d of seen) for (let i = 0; i < d.rubble.length; i += 8) { const q = d.rubble; ctx.moveTo(q[i], q[i+1]); ctx.lineTo(q[i+2], q[i+3]); ctx.lineTo(q[i+4], q[i+5]); ctx.lineTo(q[i+6], q[i+7]); ctx.closePath(); }
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.26)'; ctx.lineWidth = 1.2; ctx.beginPath();                             // ...with a lighter top edge
+  for (const d of seen) for (let i = 0; i < d.rubble.length; i += 8) { ctx.moveTo(d.rubble[i], d.rubble[i+1]); ctx.lineTo(d.rubble[i+2], d.rubble[i+3]); }
+  ctx.stroke();
+
+  // Torches: a warm pool on the floor below, a wide soft glow, and a small flickering flame
+  const ts = dc.pil.filter(p => p.torch && p.x > vx0 - 120 && p.x < vx1 + 120 && p.y + 80 > vy0 && p.y - 80 < vy1);
+  if (ts.length) {
+    const g = decorGradients(th.ember), blob = (grad, x, y, rx, ry, a) => { ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.scale(rx, ry); ctx.fillStyle = grad; ctx.fillRect(-1, -1, 2, 2); ctx.restore(); };
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of ts) {
+      const fl = 1 + 0.12*Math.sin(clock*9.7 + p.ph) + 0.08*Math.sin(clock*17.3 + p.ph*2.1) + 0.05*Math.sin(clock*31 + p.ph*3.7);
+      blob(g.pool, p.x, p.y + 10, 115, 58, 0.14*fl);
+      blob(g.glow, p.x, p.y - 25, 58, 46, 0.36*fl);
+    }
+    const flame = (w, h, col, a) => {
+      ctx.fillStyle = col; ctx.globalAlpha = a; ctx.beginPath();
+      for (const p of ts) {
+        const k = 1 + 0.2*Math.sin(clock*17 + p.ph) + 0.12*Math.sin(clock*29 + p.ph*2.3), x = p.x + 0.9*Math.sin(clock*11 + p.ph), hh = h*k, ww = w*(2 - k*0.8);
+        ctx.moveTo(x, p.y - 21 - hh); ctx.bezierCurveTo(x + ww*1.6, p.y - 21 - hh*0.45, x + ww, p.y - 21, x, p.y - 21); ctx.bezierCurveTo(x - ww, p.y - 21, x - ww*1.6, p.y - 21 - hh*0.45, x, p.y - 21 - hh);
+      }
+      ctx.fill();
+    };
+    flame(3.4, 11, g.ember, 0.85);
+    flame(1.7, 6, g.hot, 0.95);
   }
   ctx.restore();
 }
