@@ -38,7 +38,7 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
 | F1 | Shared leaderboard and co-op play | OPEN | multi-session | Chris's word to start | Chris parked it ("maybe we do that later") when he picked the nine-step V18 plan |
-| F7 | V18 step 8, hand-designed boss fights. First pass (one signature attack per boss, in `js/05-enemies.js` and the `patterns` lists) was with a sub-agent at the Session 6 wrap, not merged. Then phases and arena tricks per boss | IN-PROGRESS | session | Review of the first pass | The last unbuilt step of the V18 plan |
+| F7 | V18 step 8, hand-designed boss fights. First pass (one signature attack per boss: brood, pound, cleave, firewall, breath, pillars; `js/05-enemies.js`) is reviewed, merged on `v18-world` and tested in both views, but held off the public page. Then: bosses rarely use any pattern against a hunter in melee range (the swipe resets the pattern timer), and phases and arena tricks per boss | IN-PROGRESS | session | Chris's word to ship the first pass | Held since 2026-10-11 so the public link does not change while Chris shares it |
 | F9 | 3D view still lacks dodge afterimages, light pillars and the hub backdrop | OPEN | session | Nothing | Left out of the 2026-10-10 effects job and the 2026-10-11 figures job |
 
 ### UX
@@ -70,7 +70,6 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 | G4 | `docs/previews/` (review frames and audio demos) is served on the public site | OPEN | min | Nothing | Harmless; left in place at the Session 4 wrap to keep the links in the docs working |
 | G5 | 3D view shows a plain dark floor for the first seconds of a gate, until the painted floor image has loaded | OPEN | min | Nothing | Seen in the 2026-10-10 camera frames; it was there before the camera job |
 | G6 | ElevenLabs' music terms (elevenlabs.io/music-terms) have not been read in full for this project | OPEN | min | Nothing | Arise is a non-commercial fan game; matters only if it is ever shown or sold beyond that. Noted in `assets/CREDITS.md` |
-| G7 | Stale sub-agent worktrees and branches: seven `worktree-agent-*` branches and folders under `.claude/worktrees/` (two locked) all point at commits already merged; the boss job may add another | OPEN | min | The boss job being reviewed first | Safe to remove with `git worktree remove` (unlock the two first) and `git branch -d` once nothing unmerged is left in them |
 | G8 | `tools/check_names.sh` is run by hand; run it from `tools/stamp.sh` so a duplicate top-level name is caught on every stamp | OPEN | min | Nothing | A duplicate name (`GEAR_COLORS`) stopped the whole 3D renderer loading on 2026-10-11 and was caught only by a browser test |
 
 ### Docs
@@ -85,6 +84,7 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 
 | # | Title | Shipped | Notes |
 |---|---|---|---|
+| G7 | Stale sub-agent worktrees and branches | ✅ DONE 2026-10-11 | All seven `worktree-agent-*` folders and their merged branches were removed at about 21:20 by Session 6; confirmed 2026-10-12 with `git worktree list` (only the main checkout) and `git branch -a` |
 | U3 (2D part) | Dress the 2D rooms | ✅ DONE 2026-10-11 | Stone walls with a lit north face and door posts (worker), then pilasters, wall torches, floor inlays, rubble, cracks and corridor runners from a seeded generator cached as `layout.decor` (sub-agent). The 3D part stays open under U3 |
 | F6 | 3D view: real figures for the hunter, the six enemy kinds, the six bosses and the shadow soldiers | ✅ DONE 2026-10-11 | Built from three.js primitives in `3d/render3d.js`, shared geometry. Still not drawn in 3D: afterimages, light pillars, the hub backdrop, a minimap (U5) |
 | F5 | 3D camera on phones | ✅ DONE 2026-10-11 | Two-finger drag turns, pinch zooms. Checked with fake touch events only, not on a real phone |
