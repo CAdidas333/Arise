@@ -1,5 +1,49 @@
 # Arise — Session Log
 
+## Session 6 — 2026-10-11 (Sunday) — Real dungeons, loot and gear, recorded music, real 3D figures, the story thread and the result card
+
+### Focus
+A renewal of Session 5 that ran from morning to night under free rein. Morning to early evening: free workers (Gemini, through `worker run`) built. From about 19:20, on Chris's order relayed by Houston (spend the remaining weekly Claude usage before the 22:00 reset), Claude sub-agents built in their own worktrees, several at once. The orchestrator wrote the briefs, reviewed, tested in the browser and shipped. 40 commits on `v18-world` since the Session 5 wrap (e2f474e). Everything below is live on the public page unless marked.
+
+### What Changed
+- **V18 step 5, generated dungeons** (free workers, four jobs, each accepted on pass 1). A gate is a generated chain of rooms and corridors (`genLayout`, new `js/03a-layout.js`). One wave per room: walking in shuts the doors (`roomStep`, `js/08-dungeon.js`), clearing opens them. After the last room an exit leads to the boss, fought in the open arena as before (`enterBossArena`). Every position limit goes through one pair of functions (`keepIn`, `inMap`). The minimap follows the hunter and an arrow points to the next door. The 3D view builds the same layout (`rebuildLayout3D`). Endless mode keeps the open arena. Test: `node tools/test_layout.js` prints `PASS 8000`.
+- **Stone walls** in 2D (a worker): dark wall mass, a lit face on north walls, posts at doorways.
+- **Room dressing** in 2D (a Claude sub-agent): pilasters, wall torches, floor inlays, rubble, cracks and corridor runners from a seeded generator cached as `layout.decor`; warning circles are clipped to the floor (closes thread U4).
+- **V18 step 6, loot and gear** (a Claude sub-agent, reviewed by a second one). Gems drop from elites (22 percent) and bosses (always, Rare or better), 1.5 percent from others; three slots (armor, boots, ring) and a 12-item bag; four rarities; capped mods; equip, unequip and sell in the ARMORY tab; saved through `cleanGear`. Test: `node tools/test_gear.js`. The reviewer's one recommendation, a double-click guard so one double click cannot sell two items, was added.
+- **Recorded music** (closes thread F3). After a cost lookup showed ElevenLabs bills API music in dollars ($0.15 a minute), not plan credits, the orchestrator held the first call and asked (decision cards D-0097 and D-0099). Chris approved in chat ("You are approved."). Six takes were made (three tracks, two takes each, 90 seconds each, about $1.35). Chris then said "approved. do it.", which the orchestrator read as "put it in, you pick" and said so. Live picks: hub take 2, fight take 1, boss take 1, chosen from a local audio classifier's labels, NOT by ear. The six files are Chris's; the unpicked takes are in `assets/music/takes/` (ignored by git). `js/02-audio.js` fetches the three files, decodes one when first needed (two kept at once, one on phones), loops with a crossfade and falls back to the synthesised music for a missing file. `tools/el_music.py` is the script. Details in `assets/CREDITS.md`.
+- **3D lane** (a Claude sub-agent): real figures for the hunter, six enemy kinds, six bosses and shadow soldiers, built from three.js primitives with shared geometry; gear gems in rarity colours; two-finger turn and pinch zoom on phones (closes F5 and F6; checked with fake touch events only).
+- **V18 step 7, story thread** (a Claude sub-agent): a one-time opening of five System cards, a chapter card on first entry to each gate, a closing line on first clear; text in the `STORY` table; seen-flags saved in `player.story`.
+- **V18 step 9, shareable result card** (a Claude sub-agent): `js/12a-card.js`; SAVE RESULT CARD on the victory screen and the endless death screen (1200 by 630 PNG, share sheet or download).
+- **Tooling:** `tools/serve.py` (threaded local preview on port 8767, `.claude/launch.json` points at it; closes G2); `tools/check_names.sh` (lists top-level names declared twice); `.claude/worktrees/` and `assets/music/takes/` are ignored by git.
+- **In flight at the wrap, not merged:** one more sub-agent adding one signature attack per boss (a first pass at step 8), only in `js/05-enemies.js` and the `patterns` lists. No "boss" merge had landed on `v18-world` when this was written.
+
+### Decisions Made
+- Free rein still holds (card D-0085). Money is still Chris's call: the music cost was held and asked about, not spent.
+- Generated dungeons: no tile grid, no pathfinding (a locked room is one rectangle, so straight-line chasing still works); room count is waves minus one.
+- Music picks were made without hearing them; Chris can swap by naming the track and take.
+- The art rule (no star symbols, runes, occult or religious imagery) now also covers item names and story text.
+- After 22:00 on 2026-10-11 the build route is back to free workers (`worker run Arise <slug> <brief> --engine auto`).
+
+### Verification
+Layout: `node tools/test_layout.js`; gear: `node tools/test_gear.js`; duplicate top-level names: `tools/check_names.sh`; browser runs of whole gates through the rooms to the boss; captured frames of walls, dressed rooms, gear gems, the 3D figures, a chapter card and the result card (`docs/previews/`). Not tested: anything on a real phone (the two-finger camera used fake touch events; the share sheet and the music memory use are unchecked), the music by ear, and a human play-through for pacing and balance now that gear adds power.
+
+### Faults and near-misses (also in LESSONS.md)
+- Two sub-agents each declared the same top-level constant (`GEAR_COLORS`, in `js/01-data.js` and `3d/render3d.js`). All scripts share one global scope, so the whole 3D renderer failed to load. Caught by the orchestrator's pre-ship browser test; never public.
+- `git add -A` staged the sub-agents' worktrees as embedded repositories. Fixed before any push; the folder is now ignored.
+- Another project's server on `*:8765` answered for `localhost`, so a test loaded the wrong site. Arise now uses port 8767 and `127.0.0.1`.
+- The browser pane served a cached page after a re-stamp, so a test ran old code and "passed".
+- A read-only reader agent ran out of turns before writing anything.
+
+### What's Next (ranked)
+1. Review and ship the boss signature attacks if they are not live, then the rest of step 8 (hand-designed fights).
+2. Chris's ears on the music; swap takes if he says.
+3. A real-phone test and a human play-through (threads E1, E2, E3, E4).
+4. 3D lane leftovers: minimap (U5), afterimages, light pillars, hub backdrop, thicker walls and room dressing in 3D.
+5. A repeatable balance bot in `tools/` (G1).
+6. Parked: shared leaderboard and co-op (F1).
+- Open items and deferred ideas are tracked in `docs/context/OPEN_THREADS.md`; the hand-off is `docs/context/NEXT_SESSION.md`.
+
+---
 ## Session 5 — 2026-10-10 (overnight) — Plain-ring floor mark, the old hunter one switch away, hunter pass 3, and a 3D camera you can turn
 
 ### Focus
