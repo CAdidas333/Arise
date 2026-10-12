@@ -1,7 +1,12 @@
 # Next Session Handoff
 _Written: 2026-10-11 (Sunday evening) at the wrap of Session 6, by Chris Whitney's Claude session_
 
-## Update at 21:25 on 2026-10-11 (read this first)
+## Update at 14:30 on 2026-10-12 (read this first; it replaces the "held" notes below)
+- **The boss signature attacks are public.** Chris said "ship the boss attacks". `main` and `v18-world` are level; public stamp 20261011231255, checked on both pages. Before the ship: `tools/check_names.sh`, `node tools/test_layout.js` (PASS 8000) and `node tools/test_gear.js` passed; in the browser each boss cast its attack three times in both views with no errors, and a dodge, an attack, the Awakening and a hit all worked.
+- Seen in the test window (706 by 848, taller than wide, desktop layout): the boss name and health bar are drawn across the hunter. Not changed; it was like this before the ship.
+- Next step-8 job: bosses rarely use any pattern against a hunter in melee range.
+
+## Update at 21:25 on 2026-10-11
 - **Boss signature attacks are built, merged on `v18-world` and tested, but NOT public.** One new attack per boss (brood, pound, cleave, firewall, breath, pillars; in `js/05-enemies.js`, named last in each boss's `patterns` list). Checked by the orchestrator in both views: each ran three times with no errors, and standing still through three casts cost between 6 and 42 percent of health (all are avoidable). Picture: `docs/previews/step8_death_knight_lanes_v1.jpg`.
 - **Why it is held:** Chris asked at about 21:00 whether he could share the game and was told the link would stay as it is while someone looks at it. `main` (public) is at the result-card build plus the phone pop-up fix, stamp 20261011221249; `v18-world` is ahead of it by the boss attacks and docs. **Ship only when Chris says** (`git branch -f main v18-world && git push origin main`, then check the stamp).
 - Known limit of the boss work: against a hunter who stays in melee range the bosses rarely pick any pattern (an old behaviour: the swipe resets the pattern timer), so the new attacks show up mostly at range. Worth fixing as the next step-8 job.

@@ -38,7 +38,7 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
 | F1 | Shared leaderboard and co-op play | OPEN | multi-session | Chris's word to start | Chris parked it ("maybe we do that later") when he picked the nine-step V18 plan |
-| F7 | V18 step 8, hand-designed boss fights. First pass (one signature attack per boss: brood, pound, cleave, firewall, breath, pillars; `js/05-enemies.js`) is reviewed, merged on `v18-world` and tested in both views, but held off the public page. Then: bosses rarely use any pattern against a hunter in melee range (the swipe resets the pattern timer), and phases and arena tricks per boss | IN-PROGRESS | session | Chris's word to ship the first pass | Held since 2026-10-11 so the public link does not change while Chris shares it |
+| F7 | V18 step 8, hand-designed boss fights. First pass (one signature attack per boss: brood, pound, cleave, firewall, breath, pillars; `js/05-enemies.js`) went **live 2026-10-12** on Chris's word (stamp 20261011231255). Left: bosses rarely use any pattern against a hunter in melee range (the swipe resets the pattern timer), then phases and arena tricks per boss | IN-PROGRESS | session | Nothing | First pass shipped; the melee-range fix is next |
 | F9 | 3D view still lacks dodge afterimages, light pillars and the hub backdrop | OPEN | session | Nothing | Left out of the 2026-10-10 effects job and the 2026-10-11 figures job |
 
 ### UX
