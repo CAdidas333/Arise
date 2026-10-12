@@ -205,6 +205,8 @@ $('extract-btn').addEventListener('click', doExtract);
 $('extract-skip').addEventListener('click', () => { if (pendingExtraction) endExtraction(200); });
 $('victory-btn').addEventListener('click', returnToHub);
 $('death-btn').addEventListener('click', returnToHub);
+$('victory-share').addEventListener('click', () => { if (typeof shareResultCard === 'function') shareResultCard('victory'); });
+$('death-share').addEventListener('click', () => { if (typeof shareResultCard === 'function') shareResultCard('death'); });
 $('boon-cards').addEventListener('click', e => { const c = e.target.closest('[data-boon]'); if (c) chooseBoon(+c.dataset.boon); });
 $('pause-resume').addEventListener('click', () => { if (paused) togglePause(); });
 $('pause-quit').addEventListener('click', () => { if (dungeon && dungeon.endless) highScores.bestFloor = Math.max(highScores.bestFloor, dungeon.wave-1); returnToHub(); });
