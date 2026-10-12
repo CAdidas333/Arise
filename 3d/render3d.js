@@ -67,8 +67,37 @@ window.addEventListener('wheel', e => {
   }
 }, { passive: false });
 
+// Touch: two fingers on the game view turn the camera (drag sideways) and zoom it (pinch).
+// Only touches that began on the canvas count, so the joystick and the action buttons are never read as part of a gesture,
+// and the hunter can keep moving on the joystick while two other fingers turn the view.
+const viewTouch = { ids: null, x: 0, d: 0, told: false };
+const onGameView = t => t.target === _gameCanvas || t.target === renderer.domElement;
+function viewTouchUpdate(e) {
+  let a = null, b = null, n = 0;
+  for (let i = 0; i < e.touches.length; i++) {
+    const t = e.touches[i];
+    if (!onGameView(t)) continue;
+    if (n === 0) a = t; else if (n === 1) b = t;
+    n++;
+  }
+  if (n !== 2 || !canControlCamera()) { viewTouch.ids = null; return; }
+  const x = (a.clientX + b.clientX) / 2, d = Math.max(24, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY));
+  const ids = a.identifier + ':' + b.identifier;
+  if (viewTouch.ids === ids) { // the same two fingers as last time: apply what changed
+    view3D.yaw += (x - viewTouch.x) * 0.008;
+    if (Math.abs(d - viewTouch.d) > 3) { // a few pixels of slack, so a plain sideways drag does not also zoom
+      view3D.dist = Math.max(260, Math.min(900, view3D.dist * viewTouch.d / d));
+      viewTouch.d = d;
+    }
+    if (e.cancelable) e.preventDefault();
+  } else { viewTouch.ids = ids; viewTouch.d = d; }
+  viewTouch.x = x;
+}
+for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) window.addEventListener(type, viewTouchUpdate, { passive: false });
+
 const hintEl = document.querySelector('.hud-hint');
-if (hintEl) hintEl.innerHTML += ' &nbsp;·&nbsp; Z / C TURN CAMERA &nbsp;·&nbsp; V RESET';
+if (hintEl) hintEl.innerHTML += ' &nbsp;·&nbsp; Z / C TURN CAMERA &nbsp;·&nbsp; V RESET'
+  + ((typeof isMobile !== 'undefined' && isMobile) ? ' &nbsp;·&nbsp; TWO FINGERS: TURN, PINCH: ZOOM' : '');
 
 
 // Floor and walls
@@ -175,34 +204,691 @@ function buildFloor(g) {
   });
 }
 
-// Hunter
+// ================================================================
+//  FIGURES — the hunter, the six enemy kinds, the six bosses and the shadow soldiers, all built from primitives
+// ================================================================
+// A figure type is built once as a template: named bones (Groups) carrying unit primitives, each placed, scaled and tagged with
+// a material role. The parts on a bone are then merged into one geometry per role, and every instance is a clone that shares
+// those geometries. Materials come from palettes (role -> material) cached by colour, so a hit flash, an enraged boss or a
+// shadow soldier is a palette swap and never an allocation.
+// Unit space: 1 = the 2D radius (e.size); feet on y = 0; a figure faces +z and its left hand is on +x.
+// Everything sits inside one function so its short helper names (B, P, S...) stay out of the scope the game scripts share.
+// Art rule: plain bodies, armour, blades and flame only. No star shapes, no runes or glyph-like marks, no crosses, no halos,
+// nothing occult or religious. Keep it that way when adding to a figure.
 const hunterGroup = new THREE.Group(); scene.add(hunterGroup);
-hunterGroup.scale.set(1.6, 1.6, 1.6);
-const hunterMat = new THREE.MeshStandardMaterial({
-  color: (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff,
-  emissive: (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff,
-  emissiveIntensity: 0.5, roughness: 0.4
-});
-const hBodyGeom = new THREE.CylinderGeometry(5, 6, 22, 16); hBodyGeom.translate(0, 15, 0);
-hunterGroup.add(new THREE.Mesh(hBodyGeom, hunterMat));
-const hHeadGeom = new THREE.SphereGeometry(5.5, 16, 16); hHeadGeom.translate(0, 31, 0);
-hunterGroup.add(new THREE.Mesh(hHeadGeom, hunterMat));
-const swordPivot = new THREE.Group(); swordPivot.position.set(9, 16, 2); hunterGroup.add(swordPivot);
-const swordGeom = new THREE.BoxGeometry(2, 26, 4); swordGeom.translate(0, 11, 4);
-swordPivot.add(new THREE.Mesh(swordGeom, hunterMat));
+
+const Fig = (function () {
+  const geo = {}, mats = {}, pals = {}, templates = {};
+  const PI = Math.PI, UP = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(), WHITE = new THREE.Color(0xffffff), BLACK = new THREE.Color(0x000000);
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const ease = (dt, rate) => dt > 0 ? Math.min(1, dt * rate) : 1; // how far a smoothed value moves this frame
+
+  // ---- Unit primitives (diameter 1, height 1), made on first use ----
+  const G = (k, make) => geo[k] || (geo[k] = make());
+  const box = () => G('box', () => new THREE.BoxGeometry(1, 1, 1));
+  const sph = () => G('sph', () => new THREE.SphereGeometry(0.5, 12, 8));
+  const dome = () => G('dome', () => new THREE.SphereGeometry(0.5, 12, 4, 0, PI * 2, 0, PI / 2));
+  const cyl = (top = 1, seg = 10) => G('cyl' + top + ':' + seg, () => new THREE.CylinderGeometry(0.5 * top, 0.5, 1, seg)); // top: the upper radius as a share of the lower
+  const cone = (seg = 8) => G('cone' + seg, () => new THREE.ConeGeometry(0.5, 1, seg));
+  const slab = top => G('slab' + top, () => new THREE.CylinderGeometry(0.7071 * top, 0.7071, 1, 4).rotateY(PI / 4)); // square in section, side 1 at the base
+  const torus = (tube = 0.04, arc = PI * 2) => G('tor' + tube + ':' + arc, () => new THREE.TorusGeometry(0.5, tube, 5, 18, arc));
+  // A dragon's wing as a flat fan: four ribs, the skin scalloped between them. s = 1 for the left wing, -1 for the right
+  const WING_RIBS = [[-0.45, 1.5], [0.17, 1.6], [0.79, 1.4], [1.41, 1.05]]; // [angle back from straight out, length]
+  const wingSkin = s => G('wing' + s, () => {
+    const edge = [], v = [];
+    WING_RIBS.forEach(([a, len], i) => {
+      if (i) { const p = WING_RIBS[i - 1], am = (p[0] + a) / 2, lm = (p[1] + len) / 2 * 0.76; edge.push([Math.cos(am) * lm * s, -Math.sin(am) * lm]); }
+      edge.push([Math.cos(a) * len * s, -Math.sin(a) * len]);
+    });
+    for (let i = 0; i + 1 < edge.length; i++) v.push(0, 0, 0, edge[i][0], 0, edge[i][1], edge[i + 1][0], 0, edge[i + 1][1]);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(v), 3)); g.computeVertexNormals();
+    return g;
+  });
+
+  // ---- Building: bones and parts ----
+  function B(parent, name, x, y, z) {
+    const g = new THREE.Group(); g.name = name || ''; g.position.set(x || 0, y || 0, z || 0); parent.add(g); return g;
+  }
+  // One primitive on a bone: size, then position, then an optional turn (radians about x, y, z)
+  function P(bone, geometry, role, sx, sy, sz, x, y, z, rx, ry, rz) {
+    const m = new THREE.Mesh(geometry, null);
+    m.userData.role = role; m.scale.set(sx, sy, sz); m.position.set(x, y, z);
+    if (rx || ry || rz) m.rotation.set(rx || 0, ry || 0, rz || 0);
+    bone.add(m); return m;
+  }
+  // A limb section from a to b; top < 1 tapers it towards b
+  function seg(bone, role, ax, ay, az, bx, by, bz, thick, top) {
+    const m = P(bone, cyl(top || 1, 8), role, thick, 1, thick, (ax + bx) / 2, (ay + by) / 2, (az + bz) / 2);
+    dir.set(bx - ax, by - ay, bz - az); m.scale.y = dir.length(); m.quaternion.setFromUnitVectors(UP, dir.normalize());
+    return m;
+  }
+  function merge(parts) {
+    const list = []; let n = 0;
+    for (const m of parts) {
+      m.updateMatrix();
+      let g = m.geometry.clone().applyMatrix4(m.matrix);
+      if (g.index) g = g.toNonIndexed();
+      list.push(g); n += g.attributes.position.count;
+    }
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3); let o = 0;
+    for (const g of list) { pos.set(g.attributes.position.array, o); nor.set(g.attributes.normal.array, o); o += g.attributes.position.count * 3; }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    return out;
+  }
+  // Merge the parts on every bone into one mesh per material role
+  function bake(root) {
+    const bones = [];
+    root.traverse(o => { if (!o.isMesh) bones.push(o); });
+    for (const bone of bones) {
+      const byRole = {};
+      for (const c of bone.children.slice()) if (c.isMesh) { (byRole[c.userData.role] || (byRole[c.userData.role] = [])).push(c); bone.remove(c); }
+      for (const role in byRole) { const m = new THREE.Mesh(merge(byRole[role]), null); m.userData.role = role; bone.add(m); }
+    }
+    return root;
+  }
+  // Like Object3D.clone(), without a throwaway geometry and material for every mesh
+  function copy(src) {
+    const dst = src.isMesh ? new THREE.Mesh(src.geometry, null) : new THREE.Group();
+    if (src.isMesh) dst.userData.role = src.userData.role;
+    else { dst.name = src.name; dst.rotation.order = src.rotation.order; dst.position.copy(src.position); dst.quaternion.copy(src.quaternion); dst.scale.copy(src.scale); }
+    for (const c of src.children) dst.add(copy(c));
+    return dst;
+  }
+
+  // ---- Materials and palettes ----
+  // flags: 'g' = ghostly (a little see-through, for shadow soldiers), 'd' = both faces drawn (wing skin)
+  function mat(color, glow, power, rough, flags) {
+    const key = color + '|' + (glow || 0) + '|' + (power || 0) + '|' + (rough || 0) + '|' + (flags || '');
+    let m = mats[key];
+    if (!m) {
+      m = mats[key] = new THREE.MeshStandardMaterial({ color, emissive: glow || 0, emissiveIntensity: power || 0, roughness: rough || 0.65, metalness: 0 });
+      if (flags && flags.indexOf('g') >= 0) { m.transparent = true; m.opacity = 0.86; }
+      if (flags && flags.indexOf('d') >= 0) m.side = THREE.DoubleSide;
+      m.userData.shared = true;
+    }
+    return m;
+  }
+  // Light laid on the floor under elites, bosses and shadows; soft = fading to nothing at the rim
+  let glowMap = null;
+  function auraMat(color, opacity, soft) {
+    const key = 'aura|' + color + '|' + opacity + '|' + (soft ? 1 : 0);
+    if (!mats[key]) {
+      if (soft && !glowMap) {
+        const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+        const c2 = cv.getContext('2d'), gr = c2.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.45, '#666666'); gr.addColorStop(1, '#000000');
+        c2.fillStyle = gr; c2.fillRect(0, 0, 64, 64);
+        glowMap = new THREE.CanvasTexture(cv);
+      }
+      mats[key] = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, map: soft ? glowMap : null });
+      mats[key].userData.shared = true;
+    }
+    return mats[key];
+  }
+  const lighten = (hex, k) => new THREE.Color(hex).lerp(WHITE, k).getHex();
+  const darken = (hex, k) => new THREE.Color(hex).lerp(BLACK, k).getHex();
+  // A body colour for lit surfaces: very bright colours are held back, or the lit faces burn out and the shape goes flat
+  const tone = hex => { const c = new THREE.Color(hex), m = Math.max(c.r, c.g, c.b); return m > 0.76 ? c.multiplyScalar(0.76 / m).getHex() : c.getHex(); };
+  function enemyPal(color, elite, wind) { // wind: the pale blink of a wind-up
+    const key = 'e' + color + (elite ? 'E' : '') + (wind ? 'W' : '');
+    if (pals[key]) return pals[key];
+    const c = tone(color), lt = lighten(c, 0.4), leg = darken(c, 0.4), b = wind ? 0xffe0cc : c, eye = elite ? 0xffdd66 : 0xff8844;
+    return (pals[key] = {
+      body: mat(b, b, wind ? 0.6 : 0.14), limb: mat(leg, leg, 0.16), dark: mat(0x15151f), light: mat(lt, lt, 0.12), trim: mat(lt, lt, 0.12), eye: mat(eye, eye, 1.2),
+      elite: mat(0xffcc55, 0xcc8800, 0.5, 0.4), steel: mat(0xc0c5d6, 0x30364a, 0.3, 0.4), glow: mat(lt, c, 1.4), fuse: mat(0xffd27a, 0xff7a11, wind ? 2.2 : 1.3),
+      aura: auraMat(0xffcc66, 0.5),
+    });
+  }
+  function bossPal(color, mode) { // mode: '' | 'W' wind-up blink | 'R' enraged
+    const key = 'b' + color + mode;
+    if (pals[key]) return pals[key];
+    const c = tone(color), lt = lighten(c, 0.4), leg = darken(c, 0.4), hot = mode === 'R';
+    const trim = mat(lt, hot ? 0xff6633 : lt, hot ? 0.35 : 0.12);
+    return (pals[key] = {
+      body: mode === 'W' ? mat(0xffe0cc, 0xffe0cc, 0.6) : mat(c, hot ? 0xff3311 : c, hot ? 0.5 : 0.12),
+      limb: mat(leg, hot ? 0xff3311 : leg, hot ? 0.4 : 0.16), dark: mat(0x0e0e16), light: trim, trim, steel: trim, elite: trim, eye: mat(hot ? 0xffee66 : 0xff3344, hot ? 0xffee66 : 0xff3344, 1.4),
+      flame: mat(0xff5510, 0xff4400, hot ? 1.5 : 1.0), glow: mat(0xff5510, 0xff4400, 1.0), fuse: mat(0xff5510, 0xff4400, 1.0),
+      wing: mat(darken(c, 0.3), hot ? 0xff3311 : c, hot ? 0.4 : 0.1, 0.7, 'd'), aura: auraMat(hot ? 0xff2222 : 0xff4455, 0.6),
+    });
+  }
+  function shadowPal(berserk) { // dark violet, glowing softly, a little see-through; brighter while the legion is unleashed
+    const key = berserk ? 's1' : 's0';
+    if (pals[key]) return pals[key];
+    const edge = mat(berserk ? 0xdd77ff : 0x8855dd, berserk ? 0xdd77ff : 0x8855dd, 0.7, 0.5, 'g'), lit = mat(0xbb88ff, 0xbb66ff, 1.3, 0.5, 'g');
+    return (pals[key] = {
+      body: mat(berserk ? 0x2a0a3e : 0x1a0a2e, 0x8844ff, berserk ? 0.85 : 0.42, 0.6, 'g'), limb: mat(0x140822, 0x6633cc, berserk ? 0.7 : 0.36, 0.6, 'g'), dark: mat(0x0a0414, 0x5522aa, 0.25, 0.6, 'g'),
+      light: edge, trim: edge, steel: edge, elite: edge, eye: mat(berserk ? 0xff66ff : 0xcc99ff, berserk ? 0xff66ff : 0xcc99ff, 1.4),
+      glow: lit, fuse: lit, flame: lit, wing: mat(berserk ? 0x2a0a3e : 0x1a0a2e, 0x8844ff, berserk ? 0.85 : 0.42, 0.6, 'gd'),
+      aura: auraMat(berserk ? 0xcc44ff : 0x8844ff, berserk ? 0.6 : 0.4, true),
+    });
+  }
+  let flashP = null;
+  function flashPal() { // struck: the whole figure goes white for an instant
+    if (!flashP) { const w = mat(0xffffff, 0xffffff, 1); flashP = { body: w, wing: mat(0xffffff, 0xffffff, 1, 0, 'd'), aura: auraMat(0xffffff, 0.5) }; }
+    return flashP;
+  }
+  function setPal(fig, pal) {
+    const ud = fig.userData;
+    if (ud.pal === pal) return;
+    ud.pal = pal;
+    for (const m of ud.meshes) m.material = pal[m.userData.role] || pal.body;
+  }
+
+  // ---- The six enemy kinds ----
+  const KINDS = {
+    // A soldier: horned head, a round shield on the off arm, a heavy chopping blade in the weapon arm
+    melee(root) {
+      const body = B(root, 'body', 0, 0.85, 0), legL = B(root, 'legL', 0.27, 0.85, 0), legR = B(root, 'legR', -0.27, 0.85, 0);
+      for (const leg of [legL, legR]) { P(leg, cyl(0.8), 'limb', 0.36, 0.85, 0.36, 0, -0.42, 0); P(leg, box(), 'limb', 0.36, 0.16, 0.56, 0, -0.77, 0.1); }
+      P(body, cyl(1.4), 'body', 0.74, 1.0, 0.52, 0, 0.5, 0);                       // torso, wider at the shoulders
+      P(body, cyl(), 'dark', 0.82, 0.14, 0.6, 0, 0.06, 0);                         // belt
+      P(body, sph(), 'body', 0.64, 0.62, 0.62, 0, 1.4, 0.03);                      // head
+      for (const s of [1, -1]) {
+        P(body, cone(), 'light', 0.2, 0.52, 0.2, s * 0.27, 1.77, 0, 0, 0, -s * 0.45); // horns
+        P(body, sph(), 'eye', 0.13, 0.13, 0.13, s * 0.14, 1.44, 0.3);
+        P(body, dome(), 'elite', 0.58, 0.46, 0.58, s * 0.56, 0.9, 0);              // elite: gold shoulder plates
+      }
+      P(body, cyl(), 'elite', 0.86, 0.1, 0.64, 0, 0.16, 0);                        // elite: gold belt
+      P(body, cyl(), 'body', 0.26, 0.8, 0.26, 0.6, 0.56, 0.04, -0.2, 0, 0.12);     // off arm
+      P(body, cyl(1, 12), 'light', 0.86, 0.07, 0.86, 0.8, 0.5, 0.16, 0, 0, PI / 2); // round shield
+      P(body, sph(), 'dark', 0.26, 0.26, 0.26, 0.84, 0.5, 0.16);
+      const arm = B(body, 'armR', -0.6, 0.94, 0);
+      P(arm, cyl(), 'body', 0.26, 0.8, 0.26, 0, -0.4, 0); P(arm, sph(), 'dark', 0.3, 0.3, 0.3, 0, -0.84, 0);
+      P(arm, box(), 'steel', 0.07, 0.36, 0.9, 0, -0.84, 0.6); P(arm, cone(4), 'steel', 0.07, 0.34, 0.36, 0, -0.84, 1.22, PI / 2); // the blade and its point
+    },
+    // An archer: hooded and slim, a quiver on the back, a bow held out in front
+    ranged(root) {
+      const body = B(root, 'body', 0, 0.9, 0), legL = B(root, 'legL', 0.2, 0.9, 0), legR = B(root, 'legR', -0.2, 0.9, 0);
+      for (const leg of [legL, legR]) { P(leg, cyl(0.8), 'limb', 0.28, 0.9, 0.28, 0, -0.45, 0); P(leg, box(), 'limb', 0.28, 0.14, 0.5, 0, -0.83, 0.09); }
+      P(body, cyl(1.25), 'body', 0.6, 0.95, 0.44, 0, 0.48, 0);                     // slim torso
+      P(body, cyl(0.55), 'body', 0.98, 0.36, 0.74, 0, 0.86, 0);                    // short mantle over the shoulders
+      P(body, sph(), 'body', 0.62, 0.62, 0.64, 0, 1.36, 0);                        // hood
+      P(body, cone(), 'body', 0.46, 0.5, 0.46, 0, 1.68, -0.14, -0.6, 0, 0);        // its peak, tipped back
+      P(body, sph(), 'dark', 0.46, 0.46, 0.4, 0, 1.33, 0.16);                      // the face in shadow
+      for (const s of [1, -1]) { P(body, sph(), 'eye', 0.11, 0.11, 0.11, s * 0.11, 1.37, 0.35); P(body, dome(), 'elite', 0.42, 0.34, 0.46, s * 0.38, 0.98, 0); }
+      P(body, cyl(), 'elite', 0.66, 0.1, 0.5, 0, 0.1, 0);
+      P(body, cyl(), 'dark', 0.22, 0.78, 0.22, -0.14, 0.6, -0.34, 0, 0, 0.4);      // quiver across the back
+      P(body, cyl(), 'trim', 0.26, 0.08, 0.26, -0.29, 0.96, -0.34, 0, 0, 0.4);
+      P(body, cyl(), 'body', 0.2, 0.62, 0.2, -0.42, 0.62, -0.06, 0.5, 0, 0);       // draw arm, elbow back
+      seg(body, 'body', 0.4, 0.86, 0.02, 0.44, 0.84, 0.66, 0.2);                   // bow arm, reaching forward
+      const bow = B(body, 'bow', 0.44, 0.84, 0.72);
+      P(bow, torus(0.06, PI), 'trim', 1.7, 0.9, 1, 0, 0, 0, 0, PI / 2, PI / 2);    // the bow: tips up and down, belly forward
+      P(bow, cyl(1, 4), 'light', 0.03, 1.7, 0.03, 0, 0, 0);                        // string
+      const arrow = B(bow, 'arrow', 0, 0, 0);
+      P(arrow, cyl(1, 4), 'light', 0.04, 0.95, 0.04, 0, 0, 0.32, PI / 2); P(arrow, cone(4), 'steel', 0.12, 0.22, 0.12, 0, 0, 0.88, PI / 2);
+    },
+    // A caster: robe to the floor, hooded, hands raised under an orb that floats in front
+    caster(root) {
+      const body = B(root, 'body', 0, 0, 0), orb = B(root, 'orb', 0, 1.62, 0.98), orbit = B(orb, 'orbit', 0, 0, 0);
+      P(body, cyl(0.42), 'body', 1.3, 1.8, 1.3, 0, 0.9, 0);                        // robe
+      P(body, cyl(), 'trim', 1.36, 0.1, 1.36, 0, 0.06, 0);                         // hem
+      P(body, cyl(0.6), 'trim', 1.0, 0.3, 0.9, 0, 1.78, 0);                        // mantle
+      P(body, sph(), 'body', 0.74, 0.74, 0.76, 0, 2.2, -0.02);                     // hood
+      P(body, sph(), 'dark', 0.54, 0.54, 0.46, 0, 2.17, 0.18);
+      for (const s of [1, -1]) {
+        P(body, sph(), 'eye', 0.11, 0.11, 0.11, s * 0.12, 2.2, 0.4);
+        seg(body, 'body', s * 0.42, 1.72, 0.05, s * 0.34, 1.4, 0.72, 0.26, 1.5);   // sleeves, wide at the cuff
+        P(body, sph(), 'dark', 0.2, 0.2, 0.2, s * 0.34, 1.38, 0.76);
+      }
+      P(body, torus(0.07), 'elite', 0.8, 0.8, 1, 0, 1.96, 0, PI / 2);              // elite: gold collar and hem
+      P(body, cyl(), 'elite', 1.4, 0.1, 1.4, 0, 0.2, 0);
+      P(orb, sph(), 'glow', 0.44, 0.44, 0.44, 0, 0, 0);
+      for (let i = 0; i < 3; i++) P(orbit, sph(), 'glow', 0.1, 0.1, 0.1, Math.cos(i * 2.094) * 0.42, 0, Math.sin(i * 2.094) * 0.42);
+    },
+    // A charger: low and four-legged, a wedge head with tusks, plates down the spine
+    charger(root) {
+      const body = B(root, 'body', 0, 0.78, 0), legs = [B(root, 'legsA', 0, 0, 0), B(root, 'legsB', 0, 0, 0)];
+      P(body, sph(), 'body', 0.95, 0.85, 1.75, 0, 0, -0.1);                        // barrel
+      P(body, sph(), 'body', 1.08, 1.02, 1.0, 0, 0.1, 0.45);                       // heavy shoulders
+      P(body, cone(), 'body', 0.66, 0.9, 0.6, 0, 0, 1.2, PI / 2);                  // wedge head
+      P(body, box(), 'dark', 0.36, 0.1, 0.5, 0, -0.2, 1.1);                        // jaw
+      for (const s of [1, -1]) { P(body, cone(), 'light', 0.13, 0.5, 0.13, s * 0.3, 0.1, 1.28, 1.0); P(body, sph(), 'eye', 0.12, 0.12, 0.12, s * 0.18, 0.14, 1.05); }
+      [0.58, 0.5, 0.45, 0.38].forEach((y, i) => { P(body, cone(4), 'trim', 0.14, 0.34, 0.34, 0, y, 0.45 - i * 0.4); P(body, cone(4), 'elite', 0.2, 0.42, 0.4, 0, y + 0.03, 0.45 - i * 0.4); });
+      P(body, torus(0.08), 'elite', 1.1, 1.04, 1, 0, 0.08, 0.8);                   // elite: gold collar (and gold spine plates)
+      P(body, cone(), 'dark', 0.2, 0.75, 0.2, 0, 0.2, -1.2, -1.2);                 // tail
+      [[1, 0.55], [-1, 0.55], [1, -0.65], [-1, -0.65]].forEach(([s, z], i) => {
+        const bone = legs[(i === 0 || i === 3) ? 0 : 1];                           // diagonal pairs step together
+        P(bone, cyl(1.3), 'body', 0.3, 0.72, 0.3, s * 0.37, 0.36, z); P(bone, box(), 'dark', 0.32, 0.12, 0.42, s * 0.37, 0.06, z + 0.06);
+      });
+    },
+    // A bomber: a round body on stubby legs, a strap round the middle, a fuse on top
+    bomber(root) {
+      const body = B(root, 'body', 0, 1.0, 0), legL = B(root, 'legL', 0.36, 0, 0), legR = B(root, 'legR', -0.36, 0, 0);
+      for (const leg of [legL, legR]) { P(leg, cyl(), 'limb', 0.3, 0.4, 0.3, 0, 0.2, 0); P(leg, box(), 'limb', 0.34, 0.12, 0.5, 0, 0.06, 0.1); }
+      P(body, sph(), 'body', 1.7, 1.6, 1.7, 0, 0, 0);
+      P(body, torus(0.035), 'dark', 1.74, 1.74, 2.2, 0, 0, 0, PI / 2);             // strap
+      for (const s of [1, -1]) { P(body, sph(), 'eye', 0.22, 0.22, 0.22, s * 0.3, 0.22, 0.74); P(body, sph(), 'body', 0.34, 0.34, 0.34, s * 0.88, -0.12, 0.1); }
+      P(body, cyl(), 'dark', 0.42, 0.2, 0.42, 0, 0.84, 0);                         // cap
+      P(body, cyl(1, 5), 'trim', 0.07, 0.42, 0.07, 0.07, 1.1, 0, 0, 0, -0.35);     // fuse
+      P(body, torus(0.05), 'elite', 1.6, 1.6, 1.6, 0, 0.32, 0, PI / 2); P(body, torus(0.05), 'elite', 1.6, 1.6, 1.6, 0, -0.32, 0, PI / 2); // elite: gold bands
+      P(B(body, 'spark', 0.15, 1.3, 0), sph(), 'fuse', 0.24, 0.24, 0.24, 0, 0, 0);
+    },
+    // A brute: wide and heavy, a small head sunk between plated shoulders, fists down by the knees
+    brute(root) {
+      const body = B(root, 'body', 0, 0.7, 0), legL = B(root, 'legL', 0.42, 0.7, 0), legR = B(root, 'legR', -0.42, 0.7, 0);
+      for (const leg of [legL, legR]) { P(leg, cyl(), 'limb', 0.5, 0.7, 0.5, 0, -0.35, 0); P(leg, box(), 'limb', 0.55, 0.18, 0.75, 0, -0.61, 0.1); }
+      P(body, cyl(1.45), 'body', 1.25, 1.15, 0.95, 0, 0.55, 0);                    // torso, spreading to the shoulders
+      P(body, cyl(), 'dark', 1.32, 0.16, 1.0, 0, 0.08, 0);                         // belt
+      P(body, box(), 'elite', 0.3, 0.22, 0.1, 0, 0.08, 0.5);                       // elite: gold buckle
+      P(body, sph(), 'body', 1.9, 0.72, 1.05, 0, 1.12, 0);                         // shoulder mass
+      P(body, sph(), 'body', 0.52, 0.52, 0.52, 0, 1.42, 0.2);                      // head
+      P(body, box(), 'dark', 0.36, 0.1, 0.12, 0, 1.28, 0.4);                       // jaw line
+      for (const s of [1, -1]) {
+        P(body, sph(), 'eye', 0.11, 0.11, 0.11, s * 0.12, 1.47, 0.43);
+        P(body, dome(), 'trim', 0.76, 0.6, 0.78, s * 0.92, 1.16, 0);               // shoulder plates
+        P(body, dome(), 'elite', 0.86, 0.72, 0.88, s * 0.92, 1.18, 0);             // elite: gold over them
+        const arm = B(body, s > 0 ? 'armL' : 'armR', s * 1.02, 1.1, 0);
+        P(arm, cyl(0.85), 'body', 0.46, 0.75, 0.46, 0, -0.38, 0); P(arm, cyl(0.72), 'body', 0.54, 0.62, 0.54, 0, -0.98, 0); P(arm, sph(), 'dark', 0.62, 0.6, 0.62, 0, -1.34, 0.02);
+      }
+    },
+  };
+  const KIND_SCALE = { melee: 1, ranged: 1, caster: 1, charger: 1, bomber: 1, brute: 0.9 };
+  const WIND = { melee: 0.32, ranged: 0.4, charger: 0.6, bomber: 0.55, brute: 0.85, caster: 0.5 }; // wind-up length per kind, from the AI
+
+  // ---- The six bosses ----
+  const BOSSES = {
+    // A spider: a great banded abdomen, a small head with fangs and six eyes, eight legs spread wide
+    'Spider Queen'(root) {
+      const body = B(root, 'body', 0, 0.8, 0.3), sets = [B(root, 'legsA', 0, 0, 0.3), B(root, 'legsB', 0, 0, 0.3)]; // set forward, so the whole animal sits over its spot
+      P(body, sph(), 'body', 1.75, 1.4, 1.95, 0, 0.22, -0.8);
+      for (const [z, k] of [[-0.3, 0.86], [-0.8, 1.0], [-1.3, 0.84]]) P(body, torus(0.03), 'dark', 1.77 * k, 1.42 * k, 2.5, 0, 0.22, z);
+      P(body, sph(), 'body', 0.98, 0.82, 1.0, 0, 0, 0.5);                          // head and chest
+      P(body, cone(), 'dark', 0.3, 0.45, 0.3, 0, 0.3, -1.85, -1.9);                // spinneret
+      for (const s of [1, -1]) P(body, cone(), 'light', 0.15, 0.42, 0.15, s * 0.17, -0.3, 0.93, PI); // fangs
+      for (let i = 0; i < 3; i++) for (let r = 0; r < 2; r++) P(body, sph(), 'eye', 0.12, 0.12, 0.12, (i - 1) * 0.2, 0.25 - r * 0.16, 0.9 + r * 0.09 - Math.abs(i - 1) * 0.05);
+      for (let i = 0; i < 4; i++) for (const s of [1, -1]) {
+        const bone = sets[(i + (s > 0 ? 0 : 1)) % 2], hz = 0.75 - i * 0.2, fz = [1.55, 0.7, -0.25, -1.3][i]; // neighbouring legs step in turn
+        const kx = s * (1.15 + i * 0.05), ky = 1.5 - i * 0.05, kz = hz + (fz - hz) * 0.45, fx = s * (1.8 + i * 0.03);
+        seg(bone, 'body', s * 0.38, 0.85, hz, kx, ky, kz, 0.2); seg(bone, 'body', kx, ky, kz, fx, 0, fz, 0.16, 0.5);
+        P(bone, sph(), 'light', 0.22, 0.22, 0.22, kx, ky, kz);
+      }
+    },
+    // An orc: barrel chest, plated shoulders, tusks, fists like boulders
+    'Orc Chieftain'(root) {
+      const body = B(root, 'body', 0, 0.82, 0), legL = B(root, 'legL', 0.4, 0.82, 0), legR = B(root, 'legR', -0.4, 0.82, 0);
+      for (const leg of [legL, legR]) { P(leg, cyl(1.25), 'limb', 0.5, 0.82, 0.52, 0, -0.41, 0); P(leg, box(), 'limb', 0.56, 0.2, 0.82, 0, -0.72, 0.1); }
+      P(body, cyl(), 'dark', 1.34, 0.3, 1.04, 0, 0.1, 0);                          // belt
+      P(body, box(), 'dark', 0.5, 0.55, 0.1, 0, -0.25, 0.5);                       // cloth hanging from it
+      P(body, cyl(1.45), 'body', 1.2, 0.9, 0.95, 0, 0.6, 0);                       // belly
+      P(body, sph(), 'body', 1.85, 1.2, 1.3, 0, 1.05, 0.04);                       // barrel chest
+      P(body, sph(), 'body', 0.72, 0.7, 0.72, 0, 1.78, 0.22);                      // head, low between the shoulders
+      P(body, box(), 'body', 0.56, 0.3, 0.42, 0, 1.56, 0.36);                      // heavy jaw
+      P(body, box(), 'dark', 0.6, 0.1, 0.16, 0, 1.9, 0.5);                         // brow
+      for (const s of [1, -1]) {
+        P(body, sph(), 'eye', 0.12, 0.12, 0.12, s * 0.15, 1.82, 0.54);
+        P(body, cone(), 'light', 0.13, 0.32, 0.13, s * 0.27, 1.63, 0.6, 0.1, 0, -s * 0.32); // tusks
+        P(body, dome(), 'light', 0.98, 0.78, 1.0, s * 1.0, 1.3, 0);                // shoulder plates, dark-rimmed
+        P(body, cyl(1, 12), 'dark', 1.04, 0.1, 1.06, s * 1.0, 1.3, 0);
+        const arm = B(body, s > 0 ? 'armL' : 'armR', s * 1.06, 1.22, 0);
+        P(arm, cyl(0.9), 'body', 0.52, 0.85, 0.52, 0, -0.42, 0); P(arm, cyl(0.8), 'body', 0.58, 0.7, 0.58, 0, -1.1, 0);
+        P(arm, cyl(), 'dark', 0.64, 0.24, 0.64, 0, -1.2, 0); P(arm, sph(), 'body', 0.74, 0.7, 0.74, 0, -1.62, 0.02);
+      }
+    },
+    // A knight: a ragged cloak to the ground, a tall helm with a visor slit, a greatsword carried low at the side
+    'Death Knight'(root) {
+      const body = B(root, 'body', 0, 0, 0);
+      for (const s of [1, -1]) {
+        P(body, cyl(), 'dark', 0.34, 0.36, 0.4, s * 0.26, 0.18, 0.05);             // boots under the cloak
+        P(body, cone(), 'light', 0.5, 0.62, 0.56, s * 0.72, 1.84, 0, 0, 0, -s * PI / 2); // pauldrons, pointing outward
+        P(body, sph(), 'eye', 0.09, 0.09, 0.09, s * 0.11, 2.32, 0.39);
+      }
+      P(body, cyl(0.58), 'body', 1.75, 1.62, 1.5, 0, 1.03, 0);                     // cloak
+      for (let i = 0; i < 9; i++) { const a = i / 9 * PI * 2; P(body, cone(4), 'body', 0.5, 0.34, 0.5, Math.sin(a) * 0.74, 0.15, Math.cos(a) * 0.63, PI); } // its ragged hem
+      P(body, slab(1.6), 'dark', 0.26, 1.3, 0.2, 0, 1.12, 0.5, -0.19);             // dark armour where the cloak parts
+      P(body, cyl(), 'dark', 0.5, 0.2, 0.5, 0, 1.92, 0);                           // gorget
+      P(body, sph(), 'body', 0.72, 1.02, 0.76, 0, 2.36, 0);                        // tall helm
+      P(body, box(), 'dark', 0.5, 0.15, 0.14, 0, 2.32, 0.33);                      // visor slit
+      P(body, cyl(1, 12), 'light', 0.84, 0.05, 0.8, 0, 2.5, -0.1, 0, 0, PI / 2);   // crest over the top and back of the helm
+      const arm = B(body, 'armR', -0.6, 1.74, 0.08), sw = B(arm, 'sword', -0.12, -0.5, 0.42);
+      seg(arm, 'body', 0, 0, 0, -0.12, -0.5, 0.42, 0.28); P(arm, sph(), 'dark', 0.32, 0.32, 0.32, -0.12, -0.5, 0.42);
+      dir.set(0.4, -0.72, 0.56).normalize(); sw.quaternion.setFromUnitVectors(UP, dir); // the blade slants down to the ground ahead
+      P(sw, cyl(1, 6), 'light', 0.1, 0.46, 0.1, 0, -0.08, 0);                      // grip
+      P(sw, sph(), 'light', 0.17, 0.17, 0.17, 0, -0.34, 0);                        // pommel
+      for (const s of [1, -1]) P(sw, box(), 'light', 0.3, 0.08, 0.1, s * 0.16, 0.2, 0, 0, 0, s * 0.5); // swept guard
+      P(sw, box(), 'light', 0.22, 1.25, 0.05, 0, 0.855, 0); P(sw, cone(4), 'light', 0.22, 0.3, 0.05, 0, 1.63, 0); // blade and point
+      P(sw, box(), 'dark', 0.05, 1.05, 0.065, 0, 0.8, 0);                          // fuller
+    },
+    // A burning king in armour: layered shoulder guards with flame on them, a plain crown of straight tines
+    'Demon Lord'(root) {
+      const body = B(root, 'body', 0, 0.78, 0), legL = B(root, 'legL', 0.3, 0.78, 0), legR = B(root, 'legR', -0.3, 0.78, 0);
+      for (const leg of [legL, legR]) { P(leg, cyl(1.2), 'limb', 0.4, 0.78, 0.42, 0, -0.39, 0); P(leg, box(), 'limb', 0.44, 0.18, 0.7, 0, -0.69, 0.1); }
+      P(body, cyl(0.62), 'body', 1.5, 0.62, 1.1, 0, 0.22, 0);                      // armoured skirt
+      P(body, cyl(), 'dark', 1.0, 0.18, 0.8, 0, 0.56, 0);                          // belt
+      P(body, cyl(1.75), 'body', 0.98, 0.95, 0.7, 0, 1.08, 0);                     // breastplate, wide at the shoulders
+      P(body, sph(), 'body', 0.7, 0.7, 0.7, 0, 1.9, 0.04);                         // head
+      P(body, box(), 'dark', 0.36, 0.13, 0.1, 0, 1.74, 0.33);                      // mouth
+      P(body, box(), 'dark', 0.56, 0.15, 0.1, 0, 1.95, 0.27);                      // a dark band the eyes burn in
+      for (let i = 0; i < 4; i++) P(body, box(), 'light', 0.05, 0.07, 0.05, -0.12 + i * 0.08, 1.77, 0.37); // teeth
+      for (const s of [1, -1]) {
+        P(body, box(), 'eye', 0.2, 0.07, 0.08, s * 0.16, 1.95, 0.31, 0, 0, s * 0.4); // slanted eyes
+        for (let k = 0; k < 3; k++) P(body, dome(), 'light', 0.8 - k * 0.06, 0.42, 0.86 - k * 0.06, s * (0.86 + k * 0.15), 1.5 - k * 0.15, 0); // three shoulder guards, stepping down and out
+        const arm = B(body, s > 0 ? 'armL' : 'armR', s * 1.0, 1.3, 0);
+        P(arm, cyl(0.9), 'body', 0.38, 0.8, 0.38, 0, -0.45, 0); P(arm, cyl(), 'dark', 0.42, 0.2, 0.42, 0, -0.8, 0); P(arm, sph(), 'body', 0.5, 0.5, 0.5, 0, -1.0, 0.03);
+        const fl = B(body, s > 0 ? 'flameL' : 'flameR', s * 0.95, 1.7, -0.05);     // tongues of flame on the shoulder
+        for (let i = 0; i < 3; i++) { const h = i === 1 ? 0.85 : 0.55; P(fl, cone(6), 'flame', 0.3, h, 0.3, (i - 1) * 0.26, h / 2, 0, 0, 0, -(i - 1) * 0.18); }
+      }
+      P(body, cyl(1, 12), 'light', 0.68, 0.1, 0.68, 0, 2.07, 0.04);                // crown: a band...
+      for (let i = 0; i < 7; i++) { const a = i / 7 * PI * 2, h = i === 0 ? 0.38 : i % 2 ? 0.26 : 0.18; P(body, cone(4), 'light', 0.13, h, 0.13, Math.sin(a) * 0.31, 2.1 + h / 2, 0.04 + Math.cos(a) * 0.31); } // ...and straight tines, the front one tallest
+    },
+    // A dragon: long neck and tail, four legs, wings spread wide
+    'Ancient Dragon'(root) {
+      const body = B(root, 'body', 0, 0.9, 0), legs = [B(root, 'legsA', 0, 0, 0), B(root, 'legsB', 0, 0, 0)];
+      P(body, sph(), 'body', 1.0, 0.95, 2.0, 0, 0, -0.1);                          // trunk
+      P(body, sph(), 'body', 1.12, 1.08, 1.05, 0, 0.06, 0.5);                      // chest
+      P(body, sph(), 'light', 0.72, 0.5, 1.6, 0, -0.3, 0.05);                      // pale belly
+      for (let i = 0; i < 4; i++) P(body, cone(4), 'light', 0.12, 0.32, 0.3, 0, 0.6 - i * 0.05, 0.45 - i * 0.4); // ridge down the back
+      [[1, 0.62], [-1, 0.62], [1, -0.72], [-1, -0.72]].forEach(([s, z], i) => {
+        const bone = legs[(i === 0 || i === 3) ? 0 : 1];
+        P(bone, cyl(1.5), 'body', 0.36, 0.9, 0.42, s * 0.52, 0.45, z); P(bone, box(), 'dark', 0.42, 0.14, 0.6, s * 0.52, 0.07, z + 0.1);
+      });
+      const neck = B(body, 'neck', 0, 0.3, 0.85), head = B(neck, 'head', 0, 1.02, 0.52);
+      seg(neck, 'body', 0, -0.1, -0.1, 0, 0.5, 0.32, 0.56, 0.8); seg(neck, 'body', 0, 0.45, 0.28, 0, 1.0, 0.5, 0.46, 0.85);
+      for (let i = 0; i < 3; i++) P(neck, cone(4), 'light', 0.1, 0.24, 0.22, 0, 0.3 + i * 0.3, -0.14 + i * 0.16, -0.5);
+      P(head, sph(), 'body', 0.52, 0.46, 0.72, 0, 0.14, 0.2);                      // skull
+      P(head, cyl(0.6), 'body', 0.36, 0.62, 0.3, 0, 0.08, 0.72, PI / 2);           // snout
+      P(head, box(), 'dark', 0.26, 0.07, 0.6, 0, -0.1, 0.62);                      // jaw
+      for (const s of [1, -1]) {
+        P(head, box(), 'eye', 0.06, 0.13, 0.12, s * 0.24, 0.2, 0.34);              // slit eyes
+        P(head, cone(6), 'light', 0.14, 0.8, 0.14, s * 0.2, 0.42, -0.28, -1.15, 0, -s * 0.25); // horns swept back
+        const wing = B(body, s > 0 ? 'wingL' : 'wingR', s * 0.38, 0.42, 0.3);
+        P(wing, wingSkin(s), 'wing', 1, 1, 1, 0, 0, 0);
+        WING_RIBS.forEach(([a, len], i) => seg(wing, 'light', 0, 0, 0, Math.cos(a) * len * s, 0.01, -Math.sin(a) * len, i ? 0.05 : 0.09, 0.5));
+      }
+      const tail = B(body, 'tail', 0, 0.05, -0.95), tail2 = B(tail, 'tail2', 0, -0.2, -0.72);
+      seg(tail, 'body', 0, 0, 0.1, 0, -0.2, -0.75, 0.5, 0.65);
+      seg(tail2, 'body', 0, 0, 0.05, 0, -0.32, -0.8, 0.34, 0.5); P(tail2, cone(6), 'light', 0.22, 0.5, 0.22, 0, -0.42, -1.02, -1.95);
+    },
+    // A plain stone colossus on a plinth: squared shoulders, arms hanging straight, a tall flat-topped headdress.
+    // The face is a brow bar, two eye slits and a short mouth line, and nothing else. No wings, no halo, no marks or signs.
+    'Statue of God'(root) {
+      const body = B(root, 'body', 0, 0, 0), eyes = B(body, 'eyes', 0, 2.3, 0.31);
+      P(body, box(), 'body', 2.2, 0.28, 1.5, 0, 0.14, 0); P(body, box(), 'body', 1.7, 0.1, 1.15, 0, 0.33, 0); // plinth
+      P(body, slab(1.27), 'body', 1.1, 1.5, 0.7, 0, 1.13, 0);                      // the body: a block widening to squared shoulders
+      for (const s of [1, -1]) { P(body, box(), 'body', 0.26, 1.26, 0.38, s * 0.85, 1.25, 0); P(eyes, box(), 'eye', 0.15, 0.045, 0.04, s * 0.17, 0, 0); } // arms hanging straight; eye slits
+      P(body, box(), 'body', 0.4, 0.18, 0.4, 0, 1.96, 0);                          // neck
+      P(body, box(), 'body', 0.7, 0.46, 0.6, 0, 2.27, 0);                          // face block
+      P(body, slab(1.43), 'body', 0.7, 0.5, 0.6, 0, 2.75, 0);                      // headdress, flaring to a flat top
+      P(body, box(), 'dark', 0.5, 0.08, 0.04, 0, 2.4, 0.31);                       // brow bar
+      P(body, box(), 'dark', 0.28, 0.03, 0.04, 0, 2.13, 0.31);                     // mouth line
+      for (let i = 0; i < 4; i++) { const x = -0.3 + i * 0.2; P(body, box(), 'light', 0.03, 1.15, 0.03, x * 1.1, 1.15, 0.407, 0.063, 0, -x * 0.12); } // straight folds down the front
+      P(body, box(), 'dark', 0.025, 0.36, 0.03, 0.18, 2.76, 0.372, 0.254, 0, 0.45); // hairline cracks: single straight lines, apart from each other
+      P(body, box(), 'dark', 0.022, 0.4, 0.03, 0.85, 1.4, 0.195, 0, 0, 0.5);
+      P(body, box(), 'dark', 0.022, 0.3, 0.03, -0.55, 0.15, 0.755, 0, 0, 1.2);
+    },
+  };
+  const BOSS_SCALE = { 'Spider Queen': 1, 'Orc Chieftain': 0.85, 'Death Knight': 0.9, 'Demon Lord': 0.9, 'Ancient Dragon': 1, 'Statue of God': 0.88 };
+
+  // ---- Motion. b = the figure's bones; A = { t: its own clock, ph + amp: stride, wind: 0..1 winding up, strike: 1..0 just struck, dash } ----
+  const S = Math.sin, C = Math.cos;
+  const walk = (b, A, sw, bob) => { // two-legged gait and the bounce that goes with it
+    const w = S(A.ph) * sw * A.amp;
+    b.legL.rotation.x = -w; b.legR.rotation.x = w;
+    b.body.position.y = b.body.userData.y0 + S(A.t * 5) * bob + Math.abs(C(A.ph)) * bob * 1.6 * A.amp;
+    return w;
+  };
+  const trot = (b, A, reach, lift) => { // four legs: diagonal pairs swap
+    const w = S(A.ph) * A.amp, c = C(A.ph) * A.amp;
+    b.legsA.position.z = w * reach; b.legsB.position.z = -w * reach;
+    b.legsA.position.y = Math.max(0, c) * lift; b.legsB.position.y = Math.max(0, -c) * lift;
+  };
+  const ANIM = {
+    melee(b, A) {
+      const w = walk(b, A, 0.6, 0.025);
+      b.body.rotation.x = 0.08 * A.amp - 0.15 * A.wind + 0.3 * A.strike;
+      b.armR.rotation.x = -0.55 + w * 0.5 - 2.0 * A.wind + 1.3 * A.strike;       // raise high, then chop
+    },
+    ranged(b, A) {
+      walk(b, A, 0.55, 0.02);
+      b.body.rotation.x = 0.05 * A.amp - 0.1 * A.wind;
+      b.bow.rotation.x = -0.25 * A.wind; b.arrow.visible = A.wind > 0;            // an arrow on the string while drawing
+    },
+    caster(b, A) {
+      b.body.position.y = 0.1 + S(A.t * 2.4) * 0.06; b.body.rotation.x = 0.04 * A.amp - 0.06 * A.wind;
+      b.orb.position.y = b.orb.userData.y0 + 0.1 + S(A.t * 3) * 0.08 + A.wind * 0.35;
+      const k = 1 + S(A.t * 5) * 0.07 + A.wind * 0.7; b.orb.scale.set(k, k, k);
+      b.orbit.rotation.y = A.t * 3;
+    },
+    charger(b, A) {
+      trot(b, A, 0.22, 0.12);
+      b.body.position.y = b.body.userData.y0 + S(A.t * 5) * 0.02 - 0.12 * A.wind;
+      b.body.position.z = -0.18 * A.wind + 0.12 * A.dash;                         // draws back, then throws itself forward
+      b.body.rotation.x = -0.16 * A.wind + 0.14 * A.dash;
+      if (A.dash) { b.legsA.position.z = 0.3; b.legsB.position.z = -0.3; b.legsA.position.y = b.legsB.position.y = 0.1; }
+    },
+    bomber(b, A) {
+      const w = S(A.ph) * A.amp, p = 1 + 0.1 * S(A.t * (A.wind > 0 ? 40 : 10)), f = 1 + 0.35 * S(A.t * 14) + 2.2 * A.wind;
+      b.legL.position.z = w * 0.16; b.legR.position.z = -w * 0.16;
+      b.body.rotation.z = w * 0.09; b.body.scale.set(p, p, p);                    // swells as it is about to burst
+      b.spark.scale.set(f, f, f);
+    },
+    brute(b, A) {
+      const w = walk(b, A, 0.4, 0.015), up = A.wind * A.wind * (3 - 2 * A.wind), sway = S(A.t * 2) * 0.06;
+      b.body.rotation.x = 0.05 - 0.16 * up + 0.3 * A.strike;
+      b.armL.rotation.x = w * 0.5 + sway - 2.7 * up + 0.5 * A.strike; b.armR.rotation.x = -w * 0.5 - sway - 2.7 * up + 0.5 * A.strike; // both fists overhead, then down
+      b.armL.rotation.z = 0.12; b.armR.rotation.z = -0.12;
+    },
+    'Spider Queen'(b, A) {
+      const w = A.t * 3 + A.ph, s = S(w), c = C(w);
+      b.legsA.rotation.y = s * 0.07; b.legsB.rotation.y = -s * 0.07;
+      b.legsA.position.y = Math.max(0, c) * 0.05; b.legsB.position.y = Math.max(0, -c) * 0.05;
+      b.body.position.y = b.body.userData.y0 + S(A.t * 2) * 0.04 - 0.1 * A.wind;
+      b.body.rotation.x = -0.14 * A.wind + 0.1 * A.dash;
+    },
+    'Orc Chieftain'(b, A) {
+      const w = walk(b, A, 0.45, 0.015), br = S(A.t * 2.2);
+      b.body.rotation.x = 0.06 - 0.16 * A.wind + 0.22 * A.dash;
+      b.armL.rotation.x = w * 0.6 + br * 0.05 - 2.3 * A.wind; b.armR.rotation.x = -w * 0.6 - br * 0.05 - 2.3 * A.wind;
+      b.armL.rotation.z = 0.16 + br * 0.03; b.armR.rotation.z = -0.16 - br * 0.03;
+    },
+    'Death Knight'(b, A) {
+      const s = S(A.t * 1.4);
+      b.body.rotation.z = s * 0.02; b.body.rotation.x = 0.03 + 0.05 * A.amp + 0.2 * A.dash - 0.08 * A.wind;
+      b.body.position.y = 0.03 + S(A.t * 2.4) * 0.03;
+      b.armR.rotation.x = s * 0.05 - 1.5 * A.wind;                                // lifts the greatsword to strike
+    },
+    'Demon Lord'(b, A) {
+      const w = walk(b, A, 0.4, 0.015), br = S(A.t * 2);
+      b.body.rotation.x = 0.04 - 0.12 * A.wind + 0.2 * A.dash;
+      b.armL.rotation.x = w * 0.5 - 1.6 * A.wind; b.armR.rotation.x = -w * 0.5 - 1.6 * A.wind;
+      b.armL.rotation.z = 0.14 + br * 0.03; b.armR.rotation.z = -0.14 - br * 0.03;
+      b.flameL.rotation.z = S(A.t * 7) * 0.14; b.flameR.rotation.z = S(A.t * 7 + 2) * 0.14;
+      b.flameL.scale.y = 1 + 0.18 * S(A.t * 11) + 0.6 * A.wind; b.flameR.scale.y = 1 + 0.18 * S(A.t * 11 + 1.7) + 0.6 * A.wind;
+    },
+    'Ancient Dragon'(b, A) {
+      const beat = S(A.t * 2) * 0.14 + 0.25 * A.wind;
+      trot(b, A, 0.2, 0.08);
+      b.body.position.y = b.body.userData.y0 + S(A.t * 1.6) * 0.03;
+      b.wingL.rotation.z = 0.38 + beat; b.wingR.rotation.z = -0.38 - beat;
+      b.neck.rotation.y = S(A.t * 1.1) * 0.14; b.neck.rotation.x = S(A.t * 0.8) * 0.05 - 0.2 * A.wind + 0.3 * A.dash;
+      b.head.rotation.x = 0.3 + 0.25 * A.wind;
+      b.tail.rotation.y = S(A.t * 1.5) * 0.22; b.tail2.rotation.y = S(A.t * 1.5 - 0.9) * 0.3;
+    },
+    'Statue of God'(b, A) {
+      b.body.rotation.z = S(A.t * 0.7) * 0.008; b.body.position.y = Math.abs(S(A.ph * 0.5)) * 0.02 * A.amp;
+      b.eyes.scale.y = 1 + 0.35 * S(A.t * 2.5) + A.wind;                          // only the eyes stir
+    },
+  };
+
+  // ---- Templates and instances ----
+  const auraRing = new THREE.RingGeometry(1.4, 1.5, 40); auraRing.rotateX(-PI / 2);
+  const auraDisc = new THREE.PlaneGeometry(3.6, 3.6); auraDisc.rotateX(-PI / 2);
+  const keyFor = (kind, name) => kind === 'boss' ? 'boss:' + (BOSSES[name] ? name : 'Orc Chieftain') : (KINDS[kind] ? kind : 'melee');
+  function template(key) {
+    if (templates[key]) return templates[key];
+    const boss = key.slice(0, 5) === 'boss:', name = boss ? key.slice(5) : key;
+    const root = new THREE.Group(), inner = B(root, '', 0, 0, 0);
+    inner.scale.setScalar((boss ? BOSS_SCALE[name] : KIND_SCALE[name]) || 1);
+    (boss ? BOSSES : KINDS)[name](inner);
+    bake(root);
+    root.userData.h = new THREE.Box3().setFromObject(root).max.y;
+    root.userData.anim = name;
+    return (templates[key] = root);
+  }
+  // aura: 'ring' (elite, boss) or 'disc' (shadow) laid on the floor under the figure
+  function make(key, aura, elite) {
+    const t = template(key), fig = copy(t), meshes = [], bones = {};
+    fig.traverse(o => {
+      if (o.isMesh) { meshes.push(o); if (o.userData.role === 'elite') o.visible = !!elite; }
+      else if (o.name) { bones[o.name] = o; o.userData.y0 = o.position.y; }
+    });
+    if (aura) { const a = new THREE.Mesh(aura === 'ring' ? auraRing : auraDisc, null); a.userData.role = 'aura'; a.position.y = 0.03; fig.add(a); meshes.push(a); }
+    fig.userData = { meshes, bones, pal: null, pals: null, h: t.userData.h, anim: ANIM[t.userData.anim], phase: 0, amp: 0, lx: NaN, ly: 0, dx: 0, dy: 0, wound: false, cast: 0 };
+    return fig;
+  }
+  // Legs follow the ground actually covered, so feet never slide
+  function stride(ud, x, y, size, dt) {
+    let d = 0;
+    if (ud.lx === ud.lx) { ud.dx = x - ud.lx; ud.dy = y - ud.ly; d = Math.hypot(ud.dx, ud.dy); if (d > size * 3) d = 0; ud.phase += d / size * 2.1; }
+    ud.lx = x; ud.ly = y;
+    ud.amp += ((d > 0.01 ? 1 : 0) - ud.amp) * ease(dt, 9);
+    return d;
+  }
+  function turn(o, target, k) { let d = target - o.rotation.y; d -= Math.round(d / (PI * 2)) * PI * 2; o.rotation.y += d * k; }
+  const A = { t: 0, ph: 0, amp: 0, wind: 0, strike: 0, dash: 0 };
+
+  function forEnemy(e) {
+    const boss = !!e.isBoss, col = e.color || '#ffffff';
+    const fig = make(keyFor(boss ? 'boss' : e.kind, (e.def && e.def.name) || e.name), (boss || e.elite) ? 'ring' : null, e.elite);
+    fig.userData.pals = boss ? [bossPal(col, ''), bossPal(col, 'W'), bossPal(col, 'R')] : [enemyPal(col, e.elite, false), enemyPal(col, e.elite, true)];
+    return fig;
+  }
+  function enemy(fig, e, dt, now) {
+    const ud = fig.userData, sz = e.size || 14, grow = e.spawnT > 0 ? Math.max(0, 1 - e.spawnT / 0.55) : 1, k = sz * (0.5 + 0.5 * grow);
+    const blink = (e.state === 'wind' || e.state === 'cwind') && S(now * 45) > 0;
+    setPal(fig, e.hitFlash > 0 ? flashPal() : ud.pals[blink ? 1 : (e.isBoss && e.phase === 2) ? 2 : 0]);
+    fig.scale.set(k, k, k);
+    fig.position.set(e.x, -(1 - grow) * ud.h * k, e.y);                            // spawning: it rises out of the floor
+    if (e.facing && (e.facing.x || e.facing.y)) fig.rotation.y = Math.atan2(e.facing.x, e.facing.y);
+    stride(ud, e.x, e.y, sz, dt);
+    A.t = e.animT || 0; A.ph = ud.phase; A.amp = ud.amp; A.wind = 0; A.strike = 0; A.dash = (e.state === 'dash' || e.state === 'cdash') ? 1 : 0;
+    if (e.isBoss) { ud.cast += (((e.state === 'cast' || e.state === 'cwind' || e.state === 'spiral') ? 1 : 0) - ud.cast) * ease(dt, 7); A.wind = ud.cast; }
+    else if (e.state === 'wind') { A.wind = 1 - clamp01(e.st / (WIND[e.kind] || 0.5)); ud.wound = true; }
+    else if (ud.wound) { // just after the blow: the AI's cooldown tells how long ago it landed
+      const s = e.kind === 'brute' ? (e.cd - 2.1) / 0.3 : e.kind === 'melee' ? (e.cd - 0.7) / 0.3 : 0;
+      if (s > 0) A.strike = Math.min(1, s); else ud.wound = false;
+    }
+    ud.anim(ud.bones, A);
+  }
+  function forShadow(s) { return make(keyFor(s.kind, s.name), 'disc', s.grade === 'Elite'); }
+  // fx, fy: the way the hunter faces, which a shadow standing in formation copies
+  function shadow(fig, s, dt, berserk, fx, fy) {
+    const ud = fig.userData, r = (s.kind === 'boss' ? 28 : s.grade === 'Elite' ? 16 : 12) * (s.atkT > 0 ? 1.15 : 1);
+    setPal(fig, shadowPal(berserk));
+    fig.scale.set(r, r, r); fig.position.set(s.x, 0, s.y);
+    const d = stride(ud, s.x, s.y, r, dt);
+    let tx = fx, ty = fy;
+    if (s.facing && s.facing.y) { tx = s.facing.x; ty = s.facing.y; }              // fighting: it faces its target
+    else if (d > 0.6) { tx = ud.dx; ty = ud.dy; }                                  // falling in: it faces the way it walks
+    if (tx || ty) turn(fig, Math.atan2(tx, ty), ease(dt, 10));
+    A.t = s.animT || 0; A.ph = ud.phase; A.amp = ud.amp; A.wind = 0; A.dash = 0; A.strike = s.atkT > 0 ? Math.min(1, s.atkT / 0.18) : 0;
+    ud.anim(ud.bones, A);
+  }
+
+  // ---- The hunter: one figure with materials of its own (it is tinted as a whole), in the units of the 2D drawing (48 tall) ----
+  const CYAN = (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : '#00d4ff';
+  const HUE = { vest: 0x2b2a58, trim: 0x3d3c78, pants: 0x32325a, boot: 0x15131f, sole: 0x262438, skin: 0x54407a, wrap: 0x7a72b4, wrapLine: 0x3f3a6c, hair: 0x0d0915, strap: 0x0c0a16, pommel: 0x6b4a3a, steel: 0xd4d6ea };
+  const HM = {}, HB = {};
+  for (const k in HUE) HM[k] = new THREE.MeshStandardMaterial({ color: HUE[k], roughness: 0.7 });
+  HM.glow = new THREE.MeshBasicMaterial({ color: CYAN });                           // the zip line
+  HM.eye = new THREE.MeshBasicMaterial({ color: 0xaaeeff });
+  HM.blade = new THREE.MeshStandardMaterial({ color: 0xd4d6ea, roughness: 0.3, emissive: 0xaaddff, emissiveIntensity: 0.35 });
+  HM.edge = new THREE.MeshBasicMaterial({ color: 0xaaddff });                       // the line of light down each blade
+  (function buildHunter() {
+    const hb = (parent, name, x, y, z) => (HB[name] = B(parent, name, x, y, z));
+    const hip = hb(hunterGroup, 'hip', 0, 18.4, 0), chest = hb(hip, 'chest', 0, 2.2, 0), head = hb(chest, 'head', 0, 22.9, 0);
+    P(hip, cyl(1.08), 'pants', 7.4, 3.4, 5.2, 0, 0.4, 0);
+    P(hip, cyl(), 'strap', 8.3, 1.5, 5.9, 0, 1.9, 0);                              // belt and buckle
+    P(hip, box(), 'steel', 1.3, 1.5, 0.5, 1.0, 1.9, 2.9);
+    P(chest, cyl(1.36), 'vest', 7.6, 13.6, 5.0, 0, 6.8, 0);                        // combat vest
+    P(chest, cyl(1.18), 'vest', 5.4, 3.8, 5.4, 0, 15.3, -0.2);                     // high collar
+    P(chest, cyl(), 'skin', 2.6, 4, 2.6, 0, 16.5, 0);                              // neck
+    P(chest, box(), 'glow', 0.6, 13, 0.4, 0, 6.9, 3.08, 0.066);                    // glowing zip line, up the vest and the collar
+    P(chest, box(), 'glow', 0.6, 3.4, 0.4, 0, 15.3, 2.86, 0.13);
+    for (const s of [1, -1]) {
+      P(chest, sph(), 'vest', 4.6, 3.6, 5.2, s * 4.6, 12.6, 0);                    // shoulder of the vest
+      P(chest, box(), 'trim', 2.6, 2.6, 0.6, s * 2.2, 10, 2.85); P(chest, box(), 'trim', 2.5, 2.2, 0.6, s * 2.1, 3.6, 2.4); // pockets
+      P(head, box(), 'eye', 1.8, 0.8, 0.6, s * 1.8, 0.2, 4.2);                     // glowing eyes
+      const L = s > 0 ? 'L' : 'R';
+      const arm = hb(chest, 'arm' + L, s * 5.7, 12.6, 0), fore = hb(arm, 'fore' + L, 0, -7, 0), sw = hb(fore, 'sword' + L, 0, -6.9, 0);
+      arm.rotation.order = 'YXZ';
+      P(arm, sph(), 'skin', 3.8, 3.8, 3.8, 0, 0, 0); P(arm, cyl(1.15), 'skin', 3.2, 7, 3.2, 0, -3.5, 0);
+      P(fore, cyl(1.1), 'wrap', 3.0, 6.5, 3.0, 0, -3.25, 0);                       // wrapped forearm
+      for (let i = 1; i <= 3; i++) P(fore, cyl(), 'wrapLine', 3.25, 0.4, 3.25, 0, -1.6 * i, 0, 0, 0, 0.12);
+      P(fore, sph(), 'skin', 2.9, 2.9, 2.9, 0, -6.9, 0);                           // hand
+      P(sw, cyl(1, 6), 'strap', 0.95, 3.4, 0.95, 0, -0.3, 0);                      // a short sword: grip, pommel, oval guard, blade and point
+      P(sw, sph(), 'pommel', 1.5, 1.5, 1.5, 0, -2.3, 0);
+      P(sw, sph(), 'strap', 4.2, 1.0, 1.8, 0, 1.7, 0);
+      P(sw, box(), 'blade', 1.9, 16, 0.5, 0, 10.2, 0); P(sw, cone(4), 'blade', 1.9, 5, 0.5, 0, 20.7, 0);
+      P(sw, box(), 'edge', 0.35, 15, 0.62, 0, 10, 0);
+      const leg = hb(hip, 'leg' + L, s * 2.3, 0, 0), shin = hb(leg, 'shin' + L, 0, -9, 0);
+      P(leg, cyl(0.86), 'pants', 4.7, 9.4, 4.9, 0, -4.5, 0);                       // baggy trousers...
+      P(shin, sph(), 'pants', 5.2, 5.6, 5.4, 0, -2.2, 0);                          // ...bloused over the boot top
+      P(shin, cyl(0.92), 'boot', 3.3, 5.6, 3.5, 0, -6.2, 0); P(shin, cyl(), 'sole', 3.8, 0.9, 4.0, 0, -4.4, 0);
+      P(shin, box(), 'boot', 3.3, 2.3, 6.6, 0, -8.25, 1.5); P(shin, box(), 'sole', 3.5, 0.6, 6.8, 0, -9.15, 1.5);
+    }
+    P(head, sph(), 'skin', 9.0, 9.4, 9.0, 0, 0, 0);
+    P(head, sph(), 'hair', 10.0, 8.6, 10.2, 0, 1.3, -0.9);                         // hair, and its spikes: [x, y, z, length, tilt forward, tilt sideways]
+    for (const [x, y, z, h, rx, rz] of [[0, 5.6, -0.6, 4.6, -0.25, 0], [-1.6, 4.9, 2.6, 3.8, 0.75, 0.25], [1.9, 4.8, 2.3, 3.4, 0.7, -0.35], [4.3, 3.4, -0.6, 3.8, -0.1, -1.0], [-4.3, 3.4, -0.6, 3.8, -0.1, 1.0],
+      [2.7, 4.6, -3.2, 4.2, -0.8, -0.5], [-2.7, 4.6, -3.2, 4.2, -0.8, 0.5], [0, 3.4, -4.9, 4.6, -1.2, 0], [0, 0.2, -5.3, 3.8, -1.75, 0]]) P(head, cone(6), 'hair', 2.6, h, 2.6, x, y, z, rx, 0, rz);
+    bake(hunterGroup);
+    hunterGroup.traverse(o => { if (o.isMesh) o.material = HM[o.userData.role]; });
+    hunterGroup.scale.setScalar(1.25);
+  })();
+
+  // 0 = as he is, 1 = struck (red for an instant), 2 = awakened (violet). The blades take the colour of the weapon carried.
+  let tintNow = -1, bladeNow = '';
+  function tintHunter(state, blade) {
+    if (state !== tintNow) {
+      tintNow = state;
+      const glow = state === 1 ? 0xff2222 : state === 2 ? 0xbb66ff : CYAN;
+      for (const k in HUE) { const m = HM[k]; m.emissive.set(state ? glow : HUE[k]); m.emissiveIntensity = state === 1 ? 0.9 : state === 2 ? 0.55 : 0.45; }
+      HM.glow.color.set(glow); HM.eye.color.set(state === 1 ? 0xff5555 : state === 2 ? 0xff66ff : 0xaaeeff);
+    }
+    if (blade !== bladeNow) { bladeNow = blade; HM.edge.color.set(blade); HM.blade.emissive.set(blade); }
+  }
+  // Pose: swings are positive forwards. l/r = left/right; A arm, Y arm sweep, E elbow, W wrist (blade angle), L leg
+  const HP = { lA: 0.2, rA: 0.1, lY: 0, rY: 0, lE: 0.7, rE: 0.7, lW: 1.5, rW: 1.5, lL: 0, rL: 0, lean: 0, bob: 0, twist: 0 }, HT = Object.assign({}, HP);
+  const knee = a => 0.12 + (a < 0 ? -a * 0.9 : a * 0.5);
+  function poseHunter(p, dt) {
+    const t = p.animT || 0, T = HT;
+    const anim = p.atkT > 0 ? (p.anim === 'dash' ? 'dash' : 'attack') : p.dodgeT > 0 ? 'dash' : p.moving ? 'run' : 'idle';
+    T.lY = T.rY = T.twist = 0;
+    if (anim === 'run') {
+      const w = S(t * 13);
+      T.lA = w * 0.7; T.rA = -w * 0.7; T.lL = -w * 0.65; T.rL = w * 0.65; T.lE = T.rE = 0.9; T.lW = T.rW = 1.6; T.lean = 0.16; T.bob = -Math.abs(w) * 1.3;
+    } else if (anim === 'attack') { // a level cut across the front, in the direction the game sweeps its slash arc; the twin blades take turns
+      const k = p.atkDur ? clamp01(1 - p.atkT / p.atkDur) : 0, d = p.atkDir < 0 ? -1 : 1, yaw = d * (0.5 - k) * 2.5;
+      T.twist = yaw * 0.4; T.lean = 0.2 * (1 - k); T.bob = -0.8; T.lL = 0.45 * d; T.rL = -0.4 * d;
+      if (d > 0) { T.lA = 1.4; T.lY = yaw; T.lE = 0.12; T.lW = 2.75; T.rA = -0.5; T.rE = 0.9; T.rW = 1.4; }
+      else { T.rA = 1.4; T.rY = yaw; T.rE = 0.12; T.rW = 2.75; T.lA = -0.5; T.lE = 0.9; T.lW = 1.4; }
+    } else if (anim === 'dash') { // a dodge or a dash strike: bent low, arms and blades swept back
+      T.lA = T.rA = -1.0; T.lE = T.rE = 0.25; T.lW = T.rW = 2.6; T.lL = 0.75; T.rL = -0.5; T.lean = 0.5; T.bob = -2;
+    } else { // standing: breathing, both blades held forward, one higher than the other (upright, a blade crosses the face from some angles)
+      const b = S(t * 1.5) * 0.05;
+      T.lA = 0.22 + b; T.rA = 0.12 - b; T.lE = 0.75; T.rE = 0.6; T.lW = 1.95; T.rW = 2.3; T.lL = 0.17; T.rL = -0.13; T.lean = 0.03; T.bob = S(t * 2) * 0.5;
+    }
+    const k = dt > 0 ? 1 - Math.exp(-dt * 26) : 1;
+    for (const key in T) HP[key] += (T[key] - HP[key]) * k;
+    HB.hip.position.y = 18.4 + HP.bob; HB.hip.rotation.x = HP.lean; HB.chest.rotation.y = HP.twist;
+    HB.armL.rotation.set(-HP.lA, HP.lY, 0.1); HB.armR.rotation.set(-HP.rA, HP.rY, -0.1);
+    HB.foreL.rotation.x = -HP.lE; HB.foreR.rotation.x = -HP.rE; HB.swordL.rotation.x = HP.lW; HB.swordR.rotation.x = HP.rW;
+    HB.legL.rotation.x = -HP.lL; HB.legR.rotation.x = -HP.rL; HB.shinL.rotation.x = knee(HP.lL); HB.shinR.rotation.x = knee(HP.rL);
+  }
+
+  return { forEnemy, enemy, forShadow, shadow, tintHunter, poseHunter, turn, ease };
+})();
 
 // Shared geometries
-const geoSphere = new THREE.SphereGeometry(1, 16, 16), geoCone = new THREE.ConeGeometry(1, 2, 16);
-const geoCharger = new THREE.ConeGeometry(1, 2, 16); geoCharger.rotateX(Math.PI / 2);
-const geoBox = new THREE.BoxGeometry(1.8, 1.8, 1.8), geoIcosa = new THREE.IcosahedronGeometry(1, 0);
-const geoOcta = new THREE.OctahedronGeometry(1, 0), geoDodeca = new THREE.DodecahedronGeometry(1, 0);
-const geoRing = new THREE.RingGeometry(1.1, 1.4, 32); geoRing.rotateX(-Math.PI / 2);
 const geoProjectile = new THREE.SphereGeometry(1, 10, 10), geoOrb = new THREE.SphereGeometry(6, 12, 12);
-const geoRemnant = new THREE.ConeGeometry(7, 14, 12);
+const geoGear = new THREE.OctahedronGeometry(8, 0), geoRemnant = new THREE.ConeGeometry(7, 14, 12);
+const GEAR_COLORS = [0xcfd8e3, 0x4aa8ff, 0xbb66ff, 0xffcc33]; // by rarity
 
 // Entity tracking maps
 const enemyMeshes = new Map(), shadowMeshes = new Map(), projectileMeshes = new Map();
 const orbMeshes = new Map(), remnantMeshes = new Map(), telegraphMeshes = new Map();
+const seenFigures = new Set(); // the enemies, then the shadows, drawn this frame; reused so a frame allocates nothing for them
 
 function disposeNode(node) {
   scene.remove(node);
@@ -224,23 +910,6 @@ function pruneMap(map, activeSet) {
   for (const [obj, mesh] of map) {
     if (!activeSet.has(obj)) { disposeNode(mesh); map.delete(obj); }
   }
-}
-
-function createMeshForKind(kind, isBoss, color) {
-  const mat = new THREE.MeshStandardMaterial({ color: color || 0xffffff, roughness: 0.5 });
-  if (isBoss) {
-    const group = new THREE.Group();
-    const body = new THREE.Mesh(geoDodeca, mat);
-    const ringMat = new THREE.MeshBasicMaterial({ color: color || 0xff4455, side: THREE.DoubleSide });
-    const ring = new THREE.Mesh(geoRing, ringMat); ring.position.y = 1;
-    group.add(body); group.add(ring);
-    group.userData = { isBoss: true, body, ring, mat, ringMat };
-    return group;
-  }
-  const geoms = { ranged: geoCone, charger: geoCharger, bomber: geoIcosa, brute: geoBox, caster: geoOcta, boss: geoDodeca };
-  const mesh = new THREE.Mesh(geoms[kind] || geoSphere, mat);
-  mesh.userData = { mat };
-  return mesh;
 }
 
 const raycaster = new THREE.Raycaster();
@@ -289,6 +958,10 @@ function draw() {
     if (keys['z']) view3D.yaw -= 1.8 * dt;
     if (keys['c']) view3D.yaw += 1.8 * dt;
   }
+  // Phones hide the hint line, so say once per visit how the view turns
+  if (!viewTouch.told && typeof isMobile !== 'undefined' && isMobile && typeof toast === 'function') {
+    viewTouch.told = true; toast('TWO FINGERS: TURN THE VIEW · PINCH: ZOOM', 'blue', 4500);
+  }
 
   // Camera
   const camX = (typeof camera !== 'undefined' && camera) ? camera.x : 0;
@@ -316,79 +989,44 @@ function draw() {
   // Hunter
   if (typeof player !== 'undefined' && player) {
     hunterGroup.position.set(player.x, 0, player.y);
-    if (player.facing && (player.facing.x || player.facing.y)) {
-      hunterGroup.rotation.y = Math.atan2(player.facing.x, player.facing.y);
-    }
-    let hc = (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff;
-    if (player.hitFlash > 0) hc = 0xff2222;
-    else if (player.ultT > 0) hc = 0xbb66ff;
-    hunterMat.color.set(hc); hunterMat.emissive.set(hc);
-    hunterMat.emissiveIntensity = (player.hitFlash > 0 || player.ultT > 0) ? 0.9 : 0.45;
-
-    if (player.atkT > 0) {
-      const p = player.atkDur ? Math.max(0, Math.min(1, 1 - player.atkT / player.atkDur)) : 0;
-      swordPivot.rotation.set(0.3, -1.2 + p * 2.443, -0.3);
-    } else {
-      swordPivot.rotation.set(-0.3, 0, 0);
-    }
+    if (player.facing && (player.facing.x || player.facing.y)) Fig.turn(hunterGroup, Math.atan2(player.facing.x, player.facing.y), Fig.ease(dt, 22));
+    const ult = player.ultT > 0;
+    Fig.tintHunter(player.hitFlash > 0 ? 1 : ult ? 2 : 0,
+      ult ? '#dd88ff' : ((typeof WEAPONS !== 'undefined' && WEAPONS[player.weapon]) ? WEAPONS[player.weapon].color : '#aaddff'));
+    Fig.poseHunter(player, dt);
     hunterGroup.visible = !(dungeon.state === 'dead');
     hunterLight.position.set(player.x, 30, player.y);
-    hunterLight.color.set(player.ultT > 0 ? 0xbb66ff : ((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff));
+    hunterLight.color.set(ult ? 0xbb66ff : ((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff));
   } else {
     hunterGroup.visible = false;
   }
 
   // Enemies
-  const activeEnemies = new Set();
+  const gameClock = typeof clock !== 'undefined' ? clock : now / 1000;
+  seenFigures.clear();
   for (const e of (enemies || [])) {
     if (!e || e.alive === false) continue;
-    activeEnemies.add(e);
+    seenFigures.add(e);
     let m = enemyMeshes.get(e);
-    if (!m) { m = createMeshForKind(e.kind, e.isBoss, e.color); scene.add(m); enemyMeshes.set(e, m); }
-    const sz = e.size || 14, grow = e.spawnT > 0 ? Math.max(0.01, 1 - e.spawnT / 0.55) : 1, s = sz * grow;
-    const mat = m.userData.mat;
-    mat.color.set(e.color || 0xffffff);
-    if (e.hitFlash > 0) { mat.emissive.set(0xffffff); mat.emissiveIntensity = 1.0; }
-    else if (e.elite) { mat.emissive.set(0xffaa00); mat.emissiveIntensity = 0.6; }
-    else { mat.emissive.set(0x000000); mat.emissiveIntensity = 0; }
-
-    if (e.isBoss) {
-      m.position.set(e.x, 0, e.y);
-      m.userData.body.position.set(0, s + 4, 0); m.userData.body.scale.set(s, s, s);
-      m.userData.ring.scale.set(s, s, s); m.userData.ringMat.color.set(e.color || 0xff4455);
-    } else {
-      let py = s;
-      if (e.kind === 'caster') { py = s + 12 + Math.sin(clock * 4 + e.x) * 4; m.rotation.y = clock * 1.5; }
-      else if (e.kind === 'brute') { py = s * 0.9; }
-      else if (e.kind === 'charger' && e.facing) { m.rotation.y = Math.atan2(e.facing.x, e.facing.y); }
-      else if (e.kind === 'bomber') {
-        const bs = s * (1 + 0.18 * Math.sin(clock * 10));
-        m.position.set(e.x, bs, e.y); m.scale.set(bs, bs, bs); continue;
-      }
-      m.position.set(e.x, py, e.y); m.scale.set(s, s, s);
-    }
+    if (!m) { m = Fig.forEnemy(e); scene.add(m); enemyMeshes.set(e, m); }
+    Fig.enemy(m, e, dt, gameClock);
   }
-  pruneMap(enemyMeshes, activeEnemies);
+  pruneMap(enemyMeshes, seenFigures);
 
   // Shadows
-  const activeShadows = new Set();
+  seenFigures.clear();
   if (player && player.shadows) {
     const isLegion = typeof legionTimer !== 'undefined' && legionTimer > 0;
+    const fx = player.facing ? player.facing.x : 0, fy = player.facing ? player.facing.y : 1;
     for (const s of player.shadows) {
       if (!s || !s.active) continue;
-      activeShadows.add(s);
+      seenFigures.add(s);
       let m = shadowMeshes.get(s);
-      if (!m) { m = createMeshForKind(s.kind || 'melee', false, 0x1a052e); scene.add(m); shadowMeshes.set(s, m); }
-      const rad = s.kind === 'boss' ? 28 : (s.size || 14);
-      m.userData.mat.color.set(0x1a052e); m.userData.mat.emissive.set(0x8844ff);
-      m.userData.mat.emissiveIntensity = isLegion ? 1.4 : 0.6;
-      m.scale.set(rad, rad, rad);
-      let py = s.kind === 'caster' ? rad + 12 : s.kind === 'brute' ? rad * 0.9 : rad;
-      m.position.set(s.x, py, s.y);
-      if (s.facing) m.rotation.y = Math.atan2(s.facing.x, s.facing.y);
+      if (!m) { m = Fig.forShadow(s); scene.add(m); shadowMeshes.set(s, m); }
+      Fig.shadow(m, s, dt, isLegion, fx, fy);
     }
   }
-  pruneMap(shadowMeshes, activeShadows);
+  pruneMap(shadowMeshes, seenFigures);
 
   // Projectiles
   const activeProj = new Set();
@@ -403,17 +1041,19 @@ function draw() {
   }
   pruneMap(projectileMeshes, activeProj);
 
-  // Orbs
+  // Orbs: gold, health, and gear (an octahedron in the colour of its rarity, turning slowly)
   const activeOrbs = new Set();
   for (const o of (orbs || [])) {
     activeOrbs.add(o);
     let m = orbMeshes.get(o);
-    const col = o.type === 'gold' ? 0xffcc00 : 0x44ff66;
+    const gear = o.type === 'gear';
+    const col = gear ? (GEAR_COLORS[o.item ? o.item.rarity : 0] || GEAR_COLORS[0]) : o.type === 'gold' ? 0xffcc00 : 0x44ff66;
     if (!m) {
-      m = new THREE.Mesh(geoOrb, new THREE.MeshBasicMaterial({ color: col }));
+      m = new THREE.Mesh(gear ? geoGear : geoOrb, new THREE.MeshBasicMaterial({ color: col }));
       scene.add(m); orbMeshes.set(o, m);
     }
-    m.material.color.set(col); m.position.set(o.x, 8, o.y);
+    m.material.color.set(col); m.position.set(o.x, gear ? 12 + Math.sin(gameClock * 4 + o.x) * 2 : 8, o.y);
+    if (gear) m.rotation.y = gameClock * 2;
   }
   pruneMap(orbMeshes, activeOrbs);
 
