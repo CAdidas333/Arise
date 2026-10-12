@@ -1,6 +1,13 @@
 # Next Session Handoff
 _Written: 2026-10-11 (Sunday evening) at the wrap of Session 6, by Chris Whitney's Claude session_
 
+## Update at 21:25 on 2026-10-11 (read this first)
+- **Boss signature attacks are built, merged on `v18-world` and tested, but NOT public.** One new attack per boss (brood, pound, cleave, firewall, breath, pillars; in `js/05-enemies.js`, named last in each boss's `patterns` list). Checked by the orchestrator in both views: each ran three times with no errors, and standing still through three casts cost between 6 and 42 percent of health (all are avoidable). Picture: `docs/previews/step8_death_knight_lanes_v1.jpg`.
+- **Why it is held:** Chris asked at about 21:00 whether he could share the game and was told the link would stay as it is while someone looks at it. `main` (public) is at the result-card build, stamp 20261011205713; `v18-world` is ahead of it by the boss attacks and docs. **Ship only when Chris says** (`git branch -f main v18-world && git push origin main`, then check the stamp).
+- Known limit of the boss work: against a hunter who stays in melee range the bosses rarely pick any pattern (an old behaviour: the swipe resets the pattern timer), so the new attacks show up mostly at range. Worth fixing as the next step-8 job.
+- Worth Chris's eye, against his art rule: at small size the Death Knight's upright greatsword with its guard can read as a cross (the 2D boss look from Session 5; visible in the lanes picture). Not changed.
+- Chris was advised to play one gate himself before sharing: nothing from today has been played by a human hand or tried on a real phone, and the music was picked without hearing it.
+
 ## Where we left off
 Session 6 turned the gates into real dungeons and put most of the rest of V18 on the public game. Everything in the "Tell Chris" list below is live at https://cadidas333.github.io/Arise/ and in the 3D view at `/3d/`. `main` and `v18-world` were level before the wrap docs; the orchestrator moves `main` after them. There are 15 scripts in `js/` now (`js/03a-layout.js` and `js/12a-card.js` are new). The one open job is V18 step 8, first pass: a sub-agent was adding one signature attack per boss (only `js/05-enemies.js` and the `patterns` lists). When this was written no "boss" merge had landed on `v18-world`, so treat it as **not done, waiting for review**. Check `git log --oneline` and `git branch -a` (a `worktree-agent-*` branch or a `.claude/worktrees/` folder may hold it) before you start it again.
 
