@@ -174,7 +174,7 @@ function setMusic(mode) { if (mode === musicMode) return; musicMode = mode; musi
 
 function musicTick() {
   if (!AC) return;
-  trkTick();
+  reapPlayers(); trkTick();
   if (musicMode === 'off' || musicBuf[musicMode] || AC.state !== 'running') return; // a decoded track plays its mode instead of the sequencer
   const M = MUSIC[musicMode], stepDur = 60/M.bpm/4;
   if (nextStepT < AC.currentTime) nextStepT = AC.currentTime + 0.05;
@@ -185,8 +185,14 @@ function musicTick() {
 // Every track is an AudioBufferSource on the AudioContext clock, so pause (AC.suspend) stops it too. They are not seamless loops:
 // about 2.5 s before the end the next copy starts, and the two crossfade with equal-power curves (each copy has its own gain node).
 // Path: source -> copy gain (loop crossfade) -> player bus (mode fade) -> trkVol (intensity) -> musicGain (volume slider).
+// Memory: at start-up only the compressed files are fetched and kept (about 2 MB each). A mode is decoded (about 35 MB) the first time it is
+// asked for, and the synthesiser plays until that finishes. At most 2 decoded tracks are kept (1 on a phone); the least recently used one that
+// is not playing or fading out is dropped, and decoded again from the kept bytes if it is wanted later.
 const MUSIC_FILES = { hub:'assets/music/hub.mp3', battle:'assets/music/fight.mp3', boss:'assets/music/boss.mp3' };
-const musicBuf = {}; // decoded tracks by mode; only modes that loaded fine are here
+const musicRaw = {};  // compressed file bytes by mode, once fetched (never decoded in place: decodeAudioData gets a copy)
+const musicBuf = {};  // decoded tracks by mode, only the ones currently kept
+const musicUsed = {}, musicFail = {};  // last-used stamp by mode; modes whose decode failed (they stay on the synthesiser)
+let decoding = null, players = [], useSeq = 0, evictDue = false; // decoding: the mode being decoded now; players: tracks playing or still fading out
 
 // Equal-power fade of a gain param (sine in, cosine out) as 12 linear ramps. Only touches events from t0 on, so it can interrupt another fade.
 function fadeParam(p, to, dur, t0 = AC.currentTime, from = p.value) {
@@ -194,22 +200,68 @@ function fadeParam(p, to, dur, t0 = AC.currentTime, from = p.value) {
   for (let i = 1; i <= 12; i++) { const x = i/12; p.linearRampToValueAtTime(to >= from ? from + (to-from)*Math.sin(x*Math.PI/2) : to + (from-to)*Math.cos(x*Math.PI/2), t0 + dur*x); }
 }
 
+// Fetch the three files and keep their bytes; decoding waits until a mode is asked for (see decodeMusic)
 function loadMusic() {
   try {
     // fetch() fails when the game is opened straight from disk (file://); then those modes simply keep the synthesised music
     Promise.all(Object.keys(MUSIC_FILES).map(mode => fetch(MUSIC_FILES[mode])
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
-      .then(b => AC.decodeAudioData(b))
-      .then(buf => { if (!(buf.duration >= 3)) throw new Error('too short'); musicBuf[mode] = buf; syncMusic(); return null; })
+      .then(b => { if (!b.byteLength) throw new Error('empty'); musicRaw[mode] = b; syncMusic(); return null; })
       .catch(e => mode + ' (' + ((e && e.message) || e) + ')')
     )).then(miss => { miss = miss.filter(Boolean); if (miss.length) console.info('Music: no recorded track for ' + miss.join(', ') + '; the synthesised music plays there'); });
   } catch (e) { console.info('Music: recorded tracks unavailable, the synthesised music plays'); }
+}
+
+// Decode one mode's track from its kept bytes. Only one decode runs at a time (a second request is picked up when the first ends, if its mode
+// is still the wanted one), so a burst of mode switches cannot pile up decoded audio. A failed decode is not tried again.
+function decodeMusic(mode) {
+  if (!AC || decoding || !musicRaw[mode] || musicBuf[mode] || musicFail[mode]) return;
+  decoding = mode;
+  let p;
+  try { p = AC.decodeAudioData(musicRaw[mode].slice(0)); } catch (e) { p = Promise.reject(e); } // decodeAudioData detaches what it is given, so it gets a copy
+  p.then(buf => {
+    if (!(buf.duration >= 3)) throw new Error('too short');
+    decoding = null; musicBuf[mode] = buf;
+    evictMusic(); // a track for a mode that is no longer current is kept only if it fits the cap
+    syncMusic();  // switches over from the synthesiser if this mode is the current one
+  }).catch(e => {
+    decoding = null; musicFail[mode] = true;
+    console.info('Music: could not decode the ' + mode + ' track (' + ((e && e.message) || e) + '); the synthesised music plays there');
+    syncMusic(); // let the current mode start its own decode now
+  });
+}
+
+// Most decoded tracks kept at once: 2, or 1 on a phone. isMobile is defined in a later script, so it is read only now, at run time.
+function musicCap() { try { return typeof isMobile !== 'undefined' && isMobile ? 1 : 2; } catch (e) { return 2; } }
+
+// Drop the least recently used decoded tracks above the cap, never the current mode or one that is still playing or fading out
+function evictMusic() {
+  const cap = musicCap(), held = Object.keys(musicBuf);
+  evictDue = false;
+  while (held.length > cap) {
+    const free = held.filter(m => m !== musicMode && !players.some(P => P.mode === m)).sort((a, b) => (musicUsed[a] || 0) - (musicUsed[b] || 0));
+    if (!free.length) { evictDue = true; return; } // all the rest are in use: look again when a fade has finished
+    delete musicBuf[free[0]]; held.splice(held.indexOf(free[0]), 1);
+  }
+}
+
+// Forget players whose sources have all stopped, so their AudioBuffer can be freed, then apply the cap
+function reapPlayers() {
+  for (let i = players.length - 1; i >= 0; i--) {
+    const P = players[i];
+    if (!P.dead || (P.live.size && AC.currentTime < P.freeAt + 0.2)) continue; // still playing, or still fading out
+    players.splice(i, 1); evictDue = true;
+    try { P.live.forEach(v => { v.src.disconnect(); v.vg.disconnect(); }); P.bus.disconnect(); } catch (e) {}
+    P.live.clear(); P.buf = null;
+  }
+  if (evictDue) evictMusic();
 }
 
 // Make what is audible match musicMode and which tracks have decoded. Safe to call at any time (mode change, a track finishing decoding).
 function syncMusic() {
   if (!AC || !trkVol) return;
   try {
+    if (musicMode !== 'off') { musicUsed[musicMode] = ++useSeq; decodeMusic(musicMode); } // first request of a mode starts its decode (no-op if decoded)
     const want = musicBuf[musicMode] ? musicMode : null;
     if (trk && trk.mode !== want) retireTrack(trk, musicMode === 'off' ? 0.6 : 0.8);
     if (want && !trk) startTrack(want);
@@ -218,7 +270,7 @@ function syncMusic() {
     if (target !== synthT) { synthT = target; fadeParam(synthBus.gain, target, 0.8); }
   } catch (e) { // never leave the game silent: drop the track for this mode and fall back to the sequencer
     console.info('Music: recorded track failed, the synthesised music plays');
-    musicBuf[musicMode] = null; synthT = 1;
+    delete musicBuf[musicMode]; musicFail[musicMode] = true; synthT = 1;
     try { if (trk) retireTrack(trk, 0.1); } catch (e2) { trk = null; }
     try { synthBus.gain.cancelScheduledValues(0); synthBus.gain.value = 1; } catch (e2) {}
   }
@@ -227,7 +279,7 @@ function syncMusic() {
 function startTrack(mode) {
   const buf = musicBuf[mode], P = { mode, buf, bus:AC.createGain(), live:new Set(), last:null, nextT:0, dead:false, xf:Math.min(2.5, buf.duration/4) };
   P.bus.gain.value = 0; P.bus.connect(trkVol); fadeParam(P.bus.gain, 1, 0.8);
-  trk = P; trkCopy(P, AC.currentTime + 0.03, 0);
+  players.push(P); trk = P; trkCopy(P, AC.currentTime + 0.03, 0);
 }
 
 // Start one copy of the track at AudioContext time t; the previous copy fades out under it over xf seconds
@@ -238,14 +290,14 @@ function trkCopy(P, t, xf) {
     fadeParam(vg.gain, 1, xf, t, 0); fadeParam(P.last.vg.gain, 0, xf, t, 1);
     try { P.last.src.stop(t + xf + 0.05); } catch (e) {}
   }
-  src.onended = () => { P.live.delete(v); try { src.disconnect(); vg.disconnect(); if (P.dead && !P.live.size) P.bus.disconnect(); } catch (e) {} };
+  src.onended = () => { P.live.delete(v); try { src.disconnect(); vg.disconnect(); } catch (e) {} };
   src.start(t); P.live.add(v); P.last = v; P.nextT = v.end - P.xf;
 }
 
 function retireTrack(P, dur) {
   if (trk === P) trk = null;
-  P.dead = true; fadeParam(P.bus.gain, 0, dur);
-  P.live.forEach(v => { try { v.src.stop(AC.currentTime + dur + 0.05); } catch (e) {} });
+  P.dead = true; P.freeAt = AC.currentTime + dur + 0.05; fadeParam(P.bus.gain, 0, dur);
+  P.live.forEach(v => { try { v.src.stop(P.freeAt); } catch (e) {} });
 }
 
 // Runs on the 25 ms timer, on resume and when the tab is seen again. Decides by the AudioContext clock, so a late timer only starts the next copy late.
@@ -266,7 +318,8 @@ function trkTick() {
 }
 
 function musicState() {
-  return { mode:musicMode, loaded:{ hub:!!musicBuf.hub, battle:!!musicBuf.battle, boss:!!musicBuf.boss }, playing:trk ? 'file' : musicMode === 'off' ? 'off' : 'synth' };
+  return { mode:musicMode, loaded:{ hub:!!musicRaw.hub, battle:!!musicRaw.battle, boss:!!musicRaw.boss }, // loaded = the file was fetched
+    decoded:{ hub:!!musicBuf.hub, battle:!!musicBuf.battle, boss:!!musicBuf.boss }, playing:trk ? 'file' : musicMode === 'off' ? 'off' : 'synth' };
 }
 
 function playStep(M, step, t, sd) {
