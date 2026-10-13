@@ -479,6 +479,8 @@
   #extract-info { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:3px; color:rgba(255,255,255,0.45); margin:-24px 0 26px; }
   #victory-grade { font-family:'Orbitron',monospace; font-weight:900; font-size:96px; line-height:1; margin-bottom:14px; text-shadow:0 0 40px currentColor; animation:boonIn 0.5s ease-out 0.3s both; }
   #death-stats { color:rgba(255,255,255,0.45); font-size:14px; letter-spacing:2px; margin:-20px 0 30px; text-align:center; }
+  .touch-btn.potion { position:relative; color:#ff7788; border-color:rgba(255,119,136,0.5); } .touch-btn.potion.empty { opacity:0.35; } /* the healing potion: same colour as the count in the stat row, with how many are left */
+  .touch-btn.potion b { position:absolute; right:-4px; bottom:-4px; min-width:17px; height:17px; line-height:17px; padding:0 3px; box-sizing:border-box; font-family:'Orbitron',monospace; font-size:10px; font-weight:700; color:#fff; background:#b03048; border-radius:9px; text-align:center; }
   .touch-btn.ult { border-color:rgba(187,102,255,0.5); } .touch-btn.ult.ready { box-shadow:0 0 18px rgba(187,102,255,0.9); background:rgba(136,68,255,0.3); }
   #tbtn-arise { position:absolute; left:50%; bottom:calc(120px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); width:auto; height:auto; border-radius:4px; padding:10px 22px; font-family:'Orbitron',monospace; font-size:13px; letter-spacing:5px; color:#bb88ff; border-color:#8844ff; display:none; }
   @media (max-width: 768px) {
@@ -578,7 +580,7 @@
   <div class="touch-btn" id="tbtn-arise">ARISE</div>
   <div class="touch-btn-zone">
     <div class="touch-btn-row">
-      <div class="touch-btn touch-btn-sm" id="tbtn-potion">✚</div>
+      <div class="touch-btn touch-btn-sm potion" id="tbtn-potion">✚<b id="tbtn-potion-n"></b></div>
       <div class="touch-btn touch-btn-sm ult" id="tbtn-ult">👁️</div>
     </div>
     <div class="touch-btn-row">
@@ -640,20 +642,20 @@
 </div>
 
 <!-- Classic scripts sharing one scope, loaded in order. tools/stamp.sh refreshes ?v= so browsers never mix old and new files. -->
-<script src="js/01-data.js?v=20261012194442"></script>
-<script src="js/02-audio.js?v=20261012194442"></script>
-<script src="js/03-state.js?v=20261012194442"></script>
-<script src="js/03a-layout.js?v=20261012194442"></script>
-<script src="js/04-player-fx.js?v=20261012194442"></script>
-<script src="js/05-enemies.js?v=20261012194442"></script>
-<script src="js/06-combat.js?v=20261012194442"></script>
-<script src="js/07-skills-shadows.js?v=20261012194442"></script>
-<script src="js/08-dungeon.js?v=20261012194442"></script>
-<script src="js/09-ui.js?v=20261012194442"></script>
-<script src="js/10-actions.js?v=20261012194442"></script>
+<script src="js/01-data.js?v=20261012210231"></script>
+<script src="js/02-audio.js?v=20261012210231"></script>
+<script src="js/03-state.js?v=20261012210231"></script>
+<script src="js/03a-layout.js?v=20261012210231"></script>
+<script src="js/04-player-fx.js?v=20261012210231"></script>
+<script src="js/05-enemies.js?v=20261012210231"></script>
+<script src="js/06-combat.js?v=20261012210231"></script>
+<script src="js/07-skills-shadows.js?v=20261012210231"></script>
+<script src="js/08-dungeon.js?v=20261012210231"></script>
+<script src="js/09-ui.js?v=20261012210231"></script>
+<script src="js/10-actions.js?v=20261012210231"></script>
 <script src="3d/vendor/three.min.js"></script>
-<script src="3d/render3d.js?v=20261012194442"></script>
-<script src="js/12a-card.js?v=20261012194442"></script>
-<script src="js/13-loop.js?v=20261012194442"></script>
+<script src="3d/render3d.js?v=20261012210231"></script>
+<script src="js/12a-card.js?v=20261012210231"></script>
+<script src="js/13-loop.js?v=20261012210231"></script>
 </body>
 </html>

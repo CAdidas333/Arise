@@ -57,7 +57,11 @@ function killEnemy(e, o = {}) {
   // Gear: a boss always drops one item, Rare or better; an elite often does; anything else rarely
   if (Math.random() < (e.isBoss ? 1 : e.elite ? 0.22 : 0.015)) dropGear(e.x, e.y, e.isBoss ? 2 : e.elite ? 1 : 0);
   // A fallen enemy sometimes leaves a shadow behind — walk over and say the word
-  if (!e.isBoss && remnants.length < 4 && (e.elite || Math.random() < 0.05)) remnants.push({ x:e.x, y:e.y, name:e.baseName, kind:e.kind, damage:e.damage, color:e.color, size:e.size, elite:e.elite, t:0, dur:14 });
+  if (!e.isBoss && remnants.length < 4 && (e.elite || Math.random() < 0.05)) {
+    remnants.push({ x:e.x, y:e.y, name:e.baseName, kind:e.kind, damage:e.damage, color:e.color, size:e.size, elite:e.elite, t:0, dur:14 });
+    // Until the hunter has raised one this way, say how it is done: once a gate
+    if (!player.story.arose && !run.ariseHint) { run.ariseHint = true; toast(isMobile ? 'A SHADOW LINGERS — WALK TO IT AND TAP ARISE' : 'A SHADOW LINGERS — STAND ON IT AND PRESS E', 'purple', 5000); }
+  }
   const { x, y } = e;
   if (e.kind === 'bomber' && !e.detonated) { e.detonated = true; const dmg = e.damage*1.6; after(0.06, () => explodeAt(x, y, 95, dmg, false)); }
   if (bn('nova')) after(0.08, () => {

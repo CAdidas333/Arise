@@ -44,7 +44,7 @@ function updateHUD() {
     if (k.h !== h) { k.h = h; k.ov.style.height = h; }
     if (k.n !== n) { k.n = n; k.num.textContent = n; }
   }
-  if (isMobile) { setC('tbtn-ult', 'ready', player.ult >= 100); setD('tbtn-arise', dungeon.state === 'fight' && !!nearRemnant(), 'flex'); }
+  if (isMobile) { setT('tbtn-potion-n', player.potions); setC('tbtn-potion', 'empty', player.potions <= 0); setC('tbtn-ult', 'ready', player.ult >= 100); setD('tbtn-arise', dungeon.state === 'fight' && !!nearRemnant(), 'flex'); }
 }
 
 // ================================================================

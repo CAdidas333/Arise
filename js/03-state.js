@@ -51,7 +51,7 @@ function saveGame() {
     v:VERSION, spv:2, name:player.name, level:player.level, xp:player.xp, rank:player.rank,
     stats:{...player.stats}, statPoints:player.statPoints, skillPoints:player.skillPoints, tree:{...player.tree},
     weapon:player.weapon, gold:player.gold, potions:player.potions, cleared:{...player.cleared},
-    gear:{...player.gear}, bag:[...player.bag], story:{ opening:!!player.story.opening, gates:{...player.story.gates} },
+    gear:{...player.gear}, bag:[...player.bag], story:{ opening:!!player.story.opening, gates:{...player.story.gates}, arose:!!player.story.arose },
     shadows:player.shadows.map(s => ({ name:s.name, kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })),
     questProgress:{...questProgress}, questDate, highScores:{...highScores},
     questsCompleted:DAILY_QUESTS.filter(q => q.completed).map(q => q.id),
@@ -100,6 +100,7 @@ function loadGame() {
   const sd = d.story && typeof d.story === 'object' ? d.story : {};
   player.story.opening = sd.opening === true || player.level > 1 || GATE_DEFS.some(g => player.cleared[g.id]);
   for (const g of GATE_DEFS) if (sd.gates && sd.gates[g.id] === true) player.story.gates[g.id] = true;
+  player.story.arose = sd.arose === true;
   if (d.settings) Object.assign(settings, d.settings);
   if (!AIM_MODES.includes(settings.aim)) settings.aim = 'auto';
   if (settings.hunter !== 'classic') settings.hunter = 'new';
