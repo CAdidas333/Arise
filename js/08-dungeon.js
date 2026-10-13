@@ -16,7 +16,7 @@ function startDungeon(gateDef, endless = false) {
   particles = []; texts = []; rings = []; arcs = []; ghosts = []; bolts = [];
   run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0, loot:[] };
   dungeon = { gate:endless ? endlessGate(1) : gateDef, wave:1, maxWaves:endless ? Infinity : gateDef.waves, state:'fight', wait:0, bossRef:null, endless, scale:1, introT:0, alive:0, picks:[] };
-  Object.assign(player, { x:0, y:0, hp:player.maxHp, mp:player.maxMp, cds:{}, ult:0, ultT:0, inv:0, combo:0, comboWin:0, dodgeCd:0, dodgeT:0, atkT:0, perfect:false, hitFlash:0 });
+  Object.assign(player, { x:0, y:0, hp:player.maxHp, mp:player.maxMp, cds:{}, ult:0, ultT:0, inv:0, combo:0, comboWin:0, dodgeCd:0, dodgeT:0, atkT:0, perfect:false, hitFlash:0, target:null, counterT:0 });
   comboCount = 0; comboTimer = 0; legionTimer = 0; lastPlayerAttackTime = -99; lastMoveTime = gameTime; lastMovePos = { x:0, y:0 };
   camera.x = 0; camera.y = 0; camera.focus = null; camera.zoom = baseZoom()*1.3; camera.targetZoom = baseZoom();
   timeScale = 1; slowT = 0; hitStop = 0; paused = false;

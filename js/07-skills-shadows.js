@@ -12,12 +12,31 @@ const liveEnemies = () => enemies.filter(e => e.alive && e.spawnT <= 0);
 let lastWarn = 0;
 function warn(msg) { if (clock - lastWarn > 1.2) { lastWarn = clock; toast(msg, 'red', 1100); playSfx('deny'); } }
 
-// Touch has no cursor — snap attacks onto the nearest enemy instead
+const LOCK_RANGE = 260, LOCK_KEEP = 340;
+const COUNTER_WINDOW = 1.6; // how long a perfect dodge leaves the counter strike open
+// Lock-on: the hunter squares up to the nearest enemy. Returns the enemy he faces, or null.
+function lockTarget() {
+  if (mouseAiming() || !dungeon) { player.target = null; return null; }
+  const range = e => e.isBoss ? 420 : LOCK_RANGE, keep = e => e.isBoss ? 520 : LOCK_KEEP;
+  const edge = e => dist(player.x, player.y, e.x, e.y) - e.size;
+  const cur = player.target;
+  if (cur && cur.alive && cur.spawnT <= 0 && edge(cur) <= keep(cur)) { // stay on the current target while it is close, unless another enemy is far nearer
+    let best = null, bestD = edge(cur)*0.6;
+    for (const e of enemies) { if (e === cur || !e.alive || e.spawnT > 0) continue; const d = edge(e); if (d < bestD && d <= range(e)) { best = e; bestD = d; } }
+    player.target = best || cur; return player.target;
+  }
+  let best = null, bestD = Infinity;
+  for (const e of enemies) { if (!e.alive || e.spawnT > 0) continue; const d = edge(e); if (d <= range(e) && d < bestD) { best = e; bestD = d; } }
+  player.target = best; return best;
+}
+// Touch has no cursor — face the locked enemy, or snap attacks onto the nearest one instead
 function aimAssist() {
   if (!isMobile) return;
-  let t = null, td = 240;
-  for (const e of enemies) { if (!e.alive || e.spawnT > 0) continue; const d = dist(player.x, player.y, e.x, e.y) - e.size; if (d < td) { t = e; td = d; } }
-  if (t) { const dx = t.x-player.x, dy = t.y-player.y, d = Math.hypot(dx,dy) || 1; player.facing = { x:dx/d, y:dy/d }; }
+  const t = player.target || null;
+  if (t) { const dx = t.x-player.x, dy = t.y-player.y, d = Math.hypot(dx,dy) || 1; player.facing = { x:dx/d, y:dy/d }; return; }
+  let near = null, td = 240;
+  for (const e of enemies) { if (!e.alive || e.spawnT > 0) continue; const d = dist(player.x, player.y, e.x, e.y) - e.size; if (d < td) { near = e; td = d; } }
+  if (near) { const dx = near.x-player.x, dy = near.y-player.y, d = Math.hypot(dx,dy) || 1; player.facing = { x:dx/d, y:dy/d }; }
 }
 const movePlayerTo = (x, y) => { const p = keepIn(x, y, 20); player.x = p.x; player.y = p.y; };
 
@@ -35,22 +54,38 @@ function useSkill(sd) {
 
   switch (sd.type) {
     case 'melee': {
-      const step = player.comboWin > 0 ? player.combo : 0, fin = step === 2;
+      const counter = player.counterT > 0;
+      let cfx = fx, cfy = fy, cang = ang;
+      if (counter) { // a perfect dodge opens a closing counter strike
+        player.counterT = 0;
+        if (player.target && dist(player.x, player.y, player.target.x, player.target.y) - player.target.size <= 260) {
+          const t = player.target, tdx = t.x-player.x, tdy = t.y-player.y, tl = Math.hypot(tdx,tdy) || 1;
+          cfx = tdx/tl; cfy = tdy/tl; cang = Math.atan2(cfy, cfx); player.facing = { x:cfx, y:cfy };
+          const close = Math.max(0, tl - t.size - 40); // step to just short of the enemy's edge
+          movePlayerTo(player.x + cfx*close, player.y + cfy*close);
+        }
+      }
+      const step = player.comboWin > 0 ? player.combo : 0, fin = counter || step === 2;
       player.combo = (step+1) % 3; player.comboWin = fin ? 0 : 0.75;
       player.cds.slash = (fin ? 0.46 : 0.26) * (1 - Math.min(0.3, player.stats.AGI*0.002));
       player.anim = 'attack'; player.atkDur = fin ? 0.3 : 0.19; player.atkT = player.atkDur; player.atkDir = step === 1 ? -1 : 1;
       const reach = fin ? 124 : 90, span = fin ? Math.PI*1.3 : Math.PI*0.85;
-      movePlayerTo(player.x + fx*(fin ? 26 : 10), player.y + fy*(fin ? 26 : 10));
-      arcs.push({ x:player.x, y:player.y-14, a:ang, r:reach, span, dir:player.atkDir, t:0, dur:fin ? 0.26 : 0.17, color:wc, w:fin ? 30 : 18 });
+      movePlayerTo(player.x + cfx*(fin ? 26 : 10), player.y + cfy*(fin ? 26 : 10));
+      arcs.push({ x:player.x, y:player.y-14, a:cang, r:reach, span, dir:player.atkDir, t:0, dur:fin ? 0.26 : 0.17, color:wc, w:fin ? 30 : 18 });
       let hits = 0;
       for (const e of liveEnemies()) {
         const ex = e.x-player.x, ey = e.y-player.y, ed = Math.hypot(ex, ey);
         if (ed > reach+e.size) continue;
-        if (ed < 32+e.size || Math.abs(angDiff(Math.atan2(ey,ex), ang)) < span/2) { damageEnemy(e, dmg*(fin ? 1.7 : 1), { kb:fin ? 520 : 150 }); hits++; }
+        if (ed < 32+e.size || Math.abs(angDiff(Math.atan2(ey,ex), cang)) < span/2) {
+          damageEnemy(e, dmg*(counter ? 2.2 : fin ? 1.7 : 1), { kb:fin ? 520 : 150, stun:counter ? 1.0 : undefined });
+          if (counter && e.isBoss && (e.staggerCd || 0) <= 0) { e.stun = Math.max(e.stun, 0.7); e.staggerCd = 4; } // a boss is too heavy to launch, so it buckles instead
+          hits++;
+        }
       }
       if (hits) { hitstop(fin ? 0.07 : 0.03); shake(fin ? 9 : 3.5); }
-      if (player.ultT > 0) projectiles.push({ x:player.x+fx*30, y:player.y-12+fy*30, vx:fx*820, vy:fy*820, damage:dmg*0.8, size:fin ? 46 : 30, color:'#bb66ff', life:0.55, fromEnemy:false, hit:new Set(), crescent:true, a:ang });
-      playSfx(fin ? 'slash3' : 'slash', 1 + step*0.15);
+      if (counter) { floatText(player.x, player.y-56, 'COUNTER', '#ffd866', 20); hitstop(0.09); shake(10); flash('#ffffff', 0.15); playSfx('slash3'); }
+      if (player.ultT > 0) projectiles.push({ x:player.x+cfx*30, y:player.y-12+cfy*30, vx:cfx*820, vy:cfy*820, damage:dmg*0.8, size:fin ? 46 : 30, color:'#bb66ff', life:0.55, fromEnemy:false, hit:new Set(), crescent:true, a:cang });
+      if (!counter) playSfx(fin ? 'slash3' : 'slash', 1 + step*0.15);
       break;
     }
     case 'dash': {
@@ -126,7 +161,10 @@ function castUlt() {
 function dodge() {
   if (!canAct() || player.dodgeCd > 0) return;
   let dx = moveDir.x, dy = moveDir.y;
-  if (!dx && !dy) { dx = player.facing.x; dy = player.facing.y; }
+  if (!dx && !dy) { // no input: a backstep away from the locked enemy, else a step forward
+    if (player.target) { const bdx = player.x-player.target.x, bdy = player.y-player.target.y, b = Math.hypot(bdx,bdy) || 1; dx = bdx/b; dy = bdy/b; }
+    else { dx = player.facing.x; dy = player.facing.y; }
+  }
   player.ddx = dx; player.ddy = dy; player.dodgeT = 0.2; player.ghostAcc = 0;
   player.inv = Math.max(player.inv, 0.32); player.dodgeCd = 0.85 * (1 - 0.06*tr('swift'));
   player.perfectUsed = false; playSfx('dash');

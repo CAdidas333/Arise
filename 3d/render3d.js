@@ -485,7 +485,7 @@ const Fig = (function () {
     },
   };
   const KIND_SCALE = { melee: 1, ranged: 1, caster: 1, charger: 1, bomber: 1, brute: 0.9 };
-  const WIND = { melee: 0.32, ranged: 0.4, charger: 0.6, bomber: 0.55, brute: 0.85, caster: 0.5 }; // wind-up length per kind, from the AI
+  const WIND = { melee: 0.45, ranged: 0.4, charger: 0.6, bomber: 0.55, brute: 0.85, caster: 0.5 }; // wind-up length per kind, from the AI
 
   // ---- The six bosses ----
   const BOSSES = {
@@ -1160,6 +1160,31 @@ function drawFx3D() {
           ctx.stroke();
         }
       }
+    }
+
+    // 3b. The floor mark under the enemy the hunter has squared up to
+    if (typeof player !== 'undefined' && player && player.target && player.target.alive) {
+      const t = player.target, markR = (t.size || 14) + 10;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(0,212,255,0.55)';
+      ctx.lineWidth = 2;
+      let ok = true;
+      const pts = [];
+      for (let i = 0; i < 40; i++) {
+        const ang = (i / 40) * Math.PI * 2;
+        const pt = toScreen(t.x + Math.cos(ang) * markR, t.y + Math.sin(ang) * markR, 2);
+        if (!pt) { ok = false; break; }
+        pts.push(pt);
+      }
+      if (ok && pts.length > 0) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.closePath();
+        ctx.stroke();
+      }
+      ctx.globalCompositeOperation = 'lighter';
     }
 
     // 4. Slash arcs

@@ -173,7 +173,8 @@ function tabControls() {
     + '<h3>Settings</h3>' + (isMobile ? '' : `<div class="stat-row"><span class="stat-name">Aim</span><button class="sys-btn" data-act="aim">${settings.aim.toUpperCase()}</button></div><div style="font-size:12px;color:rgba(255,255,255,0.45);padding:4px 0 8px">${aimText}</div>`)
     + (window.mouseWorld3D ? '' : `<div class="stat-row"><span class="stat-name">Hunter look</span><button class="sys-btn" data-act="look">${settings.hunter === 'classic' ? 'CLASSIC' : 'NEW'}</button></div><div style="font-size:12px;color:rgba(255,255,255,0.45);padding:4px 0 8px">${settings.hunter === 'classic' ? 'The original stick-figure hunter.' : 'The hunter with a full body.'}</div>`)
     + slider('music', 'Music') + slider('sfx', 'Sound effects')
-    + '<h3>Good to know</h3><div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6">Keep moving: standing still makes every hit hurt more.<br>Your shadows only fight while you do.<br>The third slash in a row is the big one.</div>';
+    + '<h3>Good to know</h3><div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6">Keep moving: standing still makes every hit hurt more.<br>Your shadows only fight while you do.<br>The third slash in a row is the big one.</div>'
+    + k('Square up', 'Near an enemy the hunter faces it on his own: move to circle it or step back') + k('Counter', 'Dodge an attack at the last moment, then attack');
   return `<div class="two-col"><div>${left}</div><div>${right}</div></div>`;
 }
 

@@ -29,7 +29,7 @@ function keepRange(e, dt, d, ux, uy, want) {
 const AI = {
   melee(e, dt, d, ux, uy) {
     if (e.state === 'wind') { e.st -= dt; if (e.st <= 0) { e.state = 'chase'; e.cd = 1.0; arcs.push({ x:e.x, y:e.y, a:Math.atan2(uy,ux), r:e.size+26, span:1.9, dir:1, t:0, dur:0.16, color:'#ff7755', w:9 }); if (d < e.size+40) hurtPlayer(e.damage); } return; }
-    if (d > e.size+22) mv(e, ux, uy, e.speed, dt); else if (e.cd <= 0) { e.state = 'wind'; e.st = 0.32; }
+    if (d > e.size+22) mv(e, ux, uy, e.speed, dt); else if (e.cd <= 0) { e.state = 'wind'; e.st = 0.45; ring(e.x, e.y, '#ff7755', e.size+34, e.size+6, 0.45, 3); }
   },
   ranged(e, dt, d, ux, uy) {
     if (e.state === 'wind') { e.st -= dt; if (e.st <= 0) { e.state = 'chase'; e.cd = rand(2,2.8); shoot(e, Math.atan2(uy,ux), 280, e.damage*0.8, 5, '#ff8844'); playSfx('shoot'); } return; }
@@ -218,6 +218,7 @@ function updateEnemies(dt) {
     if (e.hitFlash > 0) e.hitFlash -= dt;
     e.animT += dt;
     if (e.kx || e.ky) { e.x += e.kx*dt; e.y += e.ky*dt; const k = Math.pow(0.002, dt); e.kx *= k; e.ky *= k; if (Math.abs(e.kx)+Math.abs(e.ky) < 6) e.kx = e.ky = 0; }
+    if (e.isBoss && e.staggerCd > 0) e.staggerCd -= dt; // a boss buckling from a counter recovers on its own clock, even while stunned
     if (e.stun > 0) { e.stun -= dt; clampArena(e); continue; }
     const dx = player.x-e.x, dy = player.y-e.y, d = Math.hypot(dx,dy) || 1, ux = dx/d, uy = dy/d;
     if (e.state === 'chase') e.facing = { x:ux, y:uy };

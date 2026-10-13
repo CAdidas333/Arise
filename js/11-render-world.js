@@ -990,6 +990,10 @@ function drawEnemy(e) {
   const sz = e.size, grow = e.spawnT > 0 ? 1 - e.spawnT/0.55 : 1;
   const wind = e.state === 'wind' || e.state === 'cwind';
   const col = e.hitFlash > 0 ? '#ffffff' : wind && Math.sin(clock*45) > 0 ? '#ffe0cc' : e.color;
+  if (player && e === player.target) { // the floor mark under the enemy the hunter has squared up to
+    ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(0,212,255,0.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(e.x, e.y, sz + 10, (sz + 10)*0.45, 0, 0, TAU); ctx.stroke();
+  }
   ctx.globalAlpha = grow*0.4; ctx.fillStyle = '#000';
   ctx.beginPath(); ctx.ellipse(e.x, e.y + sz*0.85, sz*0.95, sz*0.32, 0, 0, TAU); ctx.fill();
   if (e.elite || e.isBoss) { // aura
