@@ -242,15 +242,18 @@ function spendTree(api, p) {
 
 // Play one run. `gate` is the gate to start (ignored by the game in endless mode, which
 // opens its own first gate); `cap` is the hard in-game time limit in seconds.
-function sim(api, gate, skill, seed, endless, cap) {
+// `keep` (optional) is a hunter to carry on with instead of a fresh one at the gate's level: used to play a whole career.
+function sim(api, gate, skill, seed, endless, cap, keep) {
   api.reseed(seed);
   api.resetWorld();
   const rng = makeRng(seed * 7919 + Math.round(skill * 1000));
 
-  const p = api.createPlayer('Bot');
+  const p = keep || api.createPlayer('Bot');
   api.player = p;
   p.story.opening = true;
-  if (endless) {
+  if (keep) {
+    api.autoAssign(); spendTree(api, p);
+  } else if (endless) {
     p.level = 1; p.statPoints = 0; p.skillPoints = 0; p.tree = {};
   } else {
     p.level = gate.reqLevel;
@@ -422,7 +425,8 @@ function main() {
   console.log(`TOTAL to fill every skill node: ${treeTotal} points — a hunter earns that at level ${treeLevel} (one point every 2 levels)`);
 }
 
-try {
+module.exports = { sim, spendTree, createGame, GATE_CAP };
+if (require.main === module) try {
   main();
   process.exitCode = 0;
 } catch (err) {

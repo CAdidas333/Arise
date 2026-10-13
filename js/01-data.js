@@ -8,7 +8,8 @@ const COLORS = { bg:'#06060c', primary:'#00d4ff', secondary:'#2244ff', accent:'#
 const RANKS = ['E','D','C','B','A','S'];
 const RANK_LEVELS = [1,10,25,45,70,100];
 // Quadratic early, cubic late, and a steep soft cap past the S-rank threshold
-const xpNeed = L => Math.floor((80 + 40*L + 2.2*L*L + 0.008*L*L*L) * (1 + Math.max(0, L-100)*0.08));
+// XP_PACE 2 (2026-10-12): at 1 a bot filled the whole skill tree in 17 gate runs, about 14 minutes of fighting; at 2 it takes about 31 runs and 24 minutes (node tools/balance_bot.js)
+const XP_PACE = 2, xpNeed = L => Math.floor(XP_PACE * (80 + 40*L + 2.2*L*L + 0.008*L*L*L) * (1 + Math.max(0, L-100)*0.08));
 const TAU = Math.PI*2;
 
 const SKILL_DEFS = [
