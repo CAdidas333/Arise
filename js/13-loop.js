@@ -24,9 +24,14 @@ function updatePlayer(dt) {
   // Track movement — standing still gets punished
   if (dist(player.x, player.y, lastMovePos.x, lastMovePos.y) > 15) { lastMovePos = { x:player.x, y:player.y }; lastMoveTime = gameTime; }
 
-  // Facing: the direction you move (keys / joystick), or the pointer when mouse aim is active
-  if (!mouseAiming()) { if (player.moving && (!isMobile || player.atkT <= 0)) player.facing = { x:dx, y:dy }; }
+  // Facing: the direction you move (keys / joystick), the enemy the hunter has squared up to, or the pointer when mouse aim is active
+  if (!mouseAiming()) {
+    const t = lockTarget();
+    if (t) { const tdx = t.x-player.x, tdy = t.y-player.y, tl = Math.hypot(tdx,tdy) || 1; player.facing = { x:tdx/tl, y:tdy/tl }; }
+    else if (player.moving && (!isMobile || player.atkT <= 0)) player.facing = { x:dx, y:dy };
+  }
   else {
+    player.target = null; // mouse aim takes over: no lock, no mark
     const m = mouseWorld(), mdx = m.x - player.x, mdy = m.y - (player.y-12), ml = Math.hypot(mdx, mdy);
     if (ml > 30) player.facing = { x:mdx/ml, y:mdy/ml }; else if (player.moving) player.facing = { x:dx, y:dy };
   }
@@ -38,6 +43,10 @@ function updatePlayer(dt) {
   if (player.hitFlash > 0) player.hitFlash -= dt;
   if (player.dodgeCd > 0) player.dodgeCd -= dt;
   if (player.comboWin > 0) { player.comboWin -= dt; if (player.comboWin <= 0) player.combo = 0; }
+  if (player.counterT > 0) { // the opening a perfect dodge leaves: pulse a ring until it closes
+    const before = player.counterT; player.counterT = Math.max(0, before - dt);
+    if (Math.ceil(before/0.25) !== Math.ceil(player.counterT/0.25)) ring(player.x, player.y, '#ffd866', 26, 40, 0.25, 2);
+  }
   for (const id in player.cds) if (player.cds[id] > 0) player.cds[id] -= dt;
   if (player.ultT > 0) {
     player.ultT -= dt;

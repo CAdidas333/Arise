@@ -94,8 +94,8 @@ function hurtPlayer(dmg) {
 }
 
 function perfectDodge() {
-  slowmo(0.3, 0.5); player.perfect = true; gainUlt(8);
-  floatText(player.x, player.y-56, 'PERFECT DODGE', COLORS.primary, 18);
+  slowmo(0.3, 0.5); player.perfect = true; gainUlt(8); player.counterT = COUNTER_WINDOW;
+  floatText(player.x, player.y-56, 'PERFECT DODGE — STRIKE!', COLORS.primary, 18);
   ring(player.x, player.y, COLORS.primary, 10, 130, 0.35, 4); playSfx('perfect');
 }
 
