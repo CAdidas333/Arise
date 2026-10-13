@@ -1027,7 +1027,7 @@ function drawEnemy(e) {
 }
 
 function drawShadowSoldier(s) {
-  const berserk = legionTimer > 0, boss = s.kind === 'boss';
+  const berserk = legionTimer > 0 || (player && player.ultT > 0), boss = s.kind === 'boss';
   let r = boss ? 28 : s.grade === 'Elite' ? 16 : 12;
   if (s.atkT > 0) r *= 1.15;
   ctx.globalAlpha = berserk ? 0.35 : 0.2; ctx.fillStyle = berserk ? '#cc44ff' : COLORS.accent;

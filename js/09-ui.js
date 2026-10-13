@@ -146,15 +146,19 @@ function tabTree() {
 }
 
 function tabShadows() {
-  const cap = armyCap(), ranked = [...player.shadows].sort((a,b) => b.damage - a.damage);
-  let h = `<h3>Shadow Army — ${Math.min(ranked.length, cap)} / ${cap} deployed</h3>`;
+  const ranked = [...player.shadows].sort((a,b) => b.damage - a.damage);
+  const roles = shadowRole(ranked, armyCap(), legionTimer > 0, player.ultT > 0);
+  const nEscort = roles.filter(r => r.role === 'escort').length;
+  const nLegion = roles.filter(r => r.role === 'legion').length;
+  const nReserve = roles.filter(r => r.role === 'reserve').length;
+  let h = `<h3>Shadow Army — ${nEscort} escort · ${nLegion} answer the call · ${nReserve} in reserve</h3>`;
   if (!ranked.length) return h + '<div style="color:rgba(255,255,255,0.35);font-size:14px;line-height:1.7">No shadows extracted yet.<br>Slain enemies sometimes leave a shadow behind — stand over it and press <b style="color:#bb88ff">E</b> to say the word.<br>Bosses can always be extracted. You get three attempts.</div>';
   h += '<div class="two-col" style="gap:0 22px">';
-  ranked.forEach((s, i) => {
-    h += `<div class="shadow-item" style="opacity:${i < cap ? 1 : 0.4}"><div class="shadow-icon" style="color:${s.color}">☠</div><div><div class="shadow-name">${esc(s.name)}<span class="grade" style="color:${GRADE_COLOR[s.grade] || '#9988bb'}">${(s.grade || 'Soldier').toUpperCase()}</span></div>
-      <div class="shadow-level">DMG ${fmtNum(shadowDmg(s))} — ${i < cap ? 'DEPLOYED' : 'RESERVE'}</div></div></div>`;
+  roles.forEach(({ shadow: s, role }) => {
+    h += `<div class="shadow-item" style="opacity:${role === 'reserve' ? 0.4 : 1}"><div class="shadow-icon" style="color:${s.color}">☠</div><div><div class="shadow-name">${esc(s.name)}<span class="grade" style="color:${GRADE_COLOR[s.grade] || '#9988bb'}">${(s.grade || 'Soldier').toUpperCase()}</span></div>
+      <div class="shadow-level">DMG ${fmtNum(shadowDmg(s))} — ${role.toUpperCase()}</div></div></div>`;
   });
-  return h + '</div><div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:1px">Shadows grow with your level. The strongest take the field; raise the cap in the Monarch branch.</div>';
+  return h + '</div><div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:1px">Three shadows walk with you. Arise: Legion calls the strongest for a short time. The Awakening calls every shadow you own.</div>';
 }
 
 function tabControls() {

@@ -26,7 +26,7 @@ function useSkill(sd) {
   if (sd.type === 'ult') { castUlt(); return; }
   if ((player.cds[sd.id] || 0) > 0) return;
   if (player.mp < sd.manaCost) { warn('NOT ENOUGH MANA'); return; }
-  if (sd.type === 'legion' && !player.shadows.some(s => s.active)) { warn('NO SHADOWS TO COMMAND'); return; }
+  if (sd.type === 'legion' && !player.shadows.length) { warn('NO SHADOWS TO COMMAND'); return; }
   aimAssist();
   const fx = player.facing.x, fy = player.facing.y, ang = Math.atan2(fy, fx);
   const dmg = pDamage() * sd.damage, wc = player.ultT > 0 ? '#bb66ff' : WEAPONS[player.weapon].color;
@@ -101,10 +101,10 @@ function useSkill(sd) {
     }
     case 'legion': {
       legionTimer = LEGION_DURATION + 3*tr('march');
-      player.cds.legion = (sd.cooldown - 3*tr('march')) * cdMult();
+      player.cds.legion = legionTimer + (sd.cooldown - 3*tr('march')) * cdMult();
       playSfx('legion'); toast('ARISE — SHADOW LEGION UNLEASHED', 'purple', 3000, true); say('legion', true, 0.4);
       flash('#8844ff', 0.5); shake(15); arisePillar(player.x, player.y, true);
-      player.shadows.forEach(s => { if (s.active) arisePillar(s.x, s.y); });
+      syncShadowField();
       break;
     }
   }
@@ -119,7 +119,7 @@ function castUlt() {
   ring(player.x, player.y, '#bb66ff', 20, 460, 0.6, 14); ring(player.x, player.y, '#ffffff', 10, 300, 0.4, 5);
   projectiles = projectiles.filter(p => !p.fromEnemy);
   for (const e of liveEnemies()) if (dist(player.x, player.y, e.x, e.y) < 440) damageEnemy(e, pDamage()*1.5, { kb:760, stun:1.0 });
-  if (player.shadows.some(s => s.active)) legionTimer = Math.max(legionTimer, player.ultT);
+  syncShadowField();
   toast("MONARCH'S AWAKENING", 'purple', 2600, true);
 }
 
@@ -135,24 +135,55 @@ function dodge() {
 // ================================================================
 //  SHADOW ARMY
 // ================================================================
+const ESCORT_SIZE = 3;
 const shadowDmg = s => s.damage * (1 + 0.03*player.level) * (1 + 0.12*tr('might')) * (1 + 0.25*bn('tide'));
 
-// The strongest shadows up to the army cap take the field
-function deployShadows() {
-  const ranked = [...player.shadows].sort((a,b) => b.damage - a.damage), cap = armyCap();
-  player.shadows.forEach(s => {
-    const on = ranked.indexOf(s) < cap;
-    if (on && !s.active) { s.x = player.x + rand(-50,50); s.y = player.y + rand(20,70); s.attackCd = 0; }
-    s.active = on;
+// Pure: the weakest of the deployed set escort, the strongest answer the Legion call, the rest wait in reserve
+function shadowRole(sortedRoster, cap, inLegion, inUlt) {
+  const dep = Math.min(sortedRoster.length, cap);
+  const escortCount = Math.min(dep, ESCORT_SIZE);
+  const escortStart = dep - escortCount;
+  return sortedRoster.map((s, i) => {
+    const role = i >= dep ? 'reserve' : i >= escortStart ? 'escort' : 'legion';
+    const active = role === 'escort' || (role === 'legion' && (inLegion || inUlt)) || inUlt || ((s.lingerT || 0) > 0);
+    return { shadow: s, role, active };
   });
 }
+
+function deployShadows() {
+  const ranked = [...player.shadows].sort((a,b) => b.damage - a.damage);
+  shadowRole(ranked, armyCap(), legionTimer > 0, player.ultT > 0).forEach(r => { r.shadow.role = r.role; });
+  syncShadowField();
+}
+
+function syncShadowField() {
+  if (!player || !player.shadows) return;
+  const ranked = [...player.shadows].sort((a,b) => b.damage - a.damage);
+  let pillars = 0;
+  shadowRole(ranked, armyCap(), legionTimer > 0, player.ultT > 0).forEach(({ shadow: s, role, active: want }) => {
+    s.role = role;
+    const was = !!s.active;
+    if (!was && want) {
+      const a = rand(0, TAU), r = rand(60, 140);
+      const p = keepIn(player.x + Math.cos(a)*r, player.y + Math.sin(a)*r, 14);
+      s.x = p.x; s.y = p.y; s.attackCd = 0;
+      if (pillars < 8) { arisePillar(s.x, s.y); pillars++; }
+      else { ring(s.x, s.y, COLORS.accent, 6, 50, 0.3, 3); spawnBurst(s.x, s.y, COLORS.accent, 8, 160); }
+    } else if (was && !want) {
+      ring(s.x, s.y, '#8844ff', 8, 30, 0.25, 2);
+      for (let i = 0; i < 4; i++) spawnParticle(s.x + rand(-6,6), s.y + rand(-6,6), '#8844ff', { vx:rand(-25,25), vy:rand(-35,10), size:rand(2,4), life:0.35 });
+    }
+    s.active = want;
+  });
+}
+
 function shadowKindFor(name) {
   for (const g of GATE_DEFS) if (g.boss && g.boss.name === name) return 'boss';
   for (const g of GATE_DEFS) for (const e of g.enemies || []) if (e.name === name) return e.kind;
   return 'melee';
 }
 function addShadow(s) {
-  const ns = { ...s, active:false, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 } };
+  const ns = { ...s, active:false, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 }, lingerT:3 };
   player.shadows.push(ns);
   if (player.shadows.length > 40) { let wi = 0; player.shadows.forEach((x,i) => { if (x.damage < player.shadows[wi].damage) wi = i; }); player.shadows.splice(wi, 1); }
   deployShadows(); ns.x = s.x; ns.y = s.y;
@@ -173,11 +204,13 @@ function tryArise() {
 }
 
 function updateShadows(dt) {
+  player.shadows.forEach(s => { if (s.lingerT > 0) s.lingerT -= dt; });
+  syncShadowField();
   const alive = liveEnemies();
   // Shadows only attack if the player is actively fighting AND moving, OR legion mode is active
   const playerEngaged = (gameTime - lastPlayerAttackTime) < SHADOW_IDLE_TIMEOUT;
   const playerMoving = (gameTime - lastMoveTime) < STATIONARY_TIMEOUT;
-  const berserk = legionTimer > 0;
+  const berserk = legionTimer > 0 || player.ultT > 0;
   const canAttack = ((playerEngaged && playerMoving) || berserk) && alive.length > 0;
   if (legionTimer > 0) legionTimer -= dt;
   const active = player.shadows.filter(s => s.active), total = active.length;
