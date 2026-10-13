@@ -83,9 +83,9 @@ function useSkill(sd) {
         }
       }
       if (hits) { hitstop(fin ? 0.07 : 0.03); shake(fin ? 9 : 3.5); }
-      if (counter) { floatText(player.x, player.y-56, 'COUNTER', '#ffd866', 20); hitstop(0.09); shake(10); flash('#ffffff', 0.15); playSfx('slash3'); }
+      if (counter && hits) { floatText(player.x, player.y-56, 'COUNTER', '#ffd866', 20); hitstop(0.09); shake(10); flash('#ffffff', 0.15); } // a counter that hits nothing is just a big swing
       if (player.ultT > 0) projectiles.push({ x:player.x+cfx*30, y:player.y-12+cfy*30, vx:cfx*820, vy:cfy*820, damage:dmg*0.8, size:fin ? 46 : 30, color:'#bb66ff', life:0.55, fromEnemy:false, hit:new Set(), crescent:true, a:cang });
-      if (!counter) playSfx(fin ? 'slash3' : 'slash', 1 + step*0.15);
+      playSfx(fin ? 'slash3' : 'slash', 1 + step*0.15);
       break;
     }
     case 'dash': {
@@ -167,7 +167,7 @@ function dodge() {
   }
   player.ddx = dx; player.ddy = dy; player.dodgeT = 0.2; player.ghostAcc = 0;
   player.inv = Math.max(player.inv, 0.32); player.dodgeCd = 0.85 * (1 - 0.06*tr('swift'));
-  player.perfectUsed = false; playSfx('dash');
+  player.perfectUsed = false; player.dodgeAt = gameTime; player.dodgeX = player.x; player.dodgeY = player.y; playSfx('dash');
 }
 
 // ================================================================

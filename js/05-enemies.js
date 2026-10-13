@@ -28,7 +28,7 @@ function keepRange(e, dt, d, ux, uy, want) {
 
 const AI = {
   melee(e, dt, d, ux, uy) {
-    if (e.state === 'wind') { e.st -= dt; if (e.st <= 0) { e.state = 'chase'; e.cd = 1.0; arcs.push({ x:e.x, y:e.y, a:Math.atan2(uy,ux), r:e.size+26, span:1.9, dir:1, t:0, dur:0.16, color:'#ff7755', w:9 }); if (d < e.size+40) hurtPlayer(e.damage); } return; }
+    if (e.state === 'wind') { e.st -= dt; if (e.st <= 0) { e.state = 'chase'; e.cd = 1.0; arcs.push({ x:e.x, y:e.y, a:Math.atan2(uy,ux), r:e.size+26, span:1.9, dir:1, t:0, dur:0.16, color:'#ff7755', w:9 }); if (d < e.size+40) hurtPlayer(e.damage); else slipped((x, y) => dist(x, y, e.x, e.y) < e.size+40); } return; }
     if (d > e.size+22) mv(e, ux, uy, e.speed, dt); else if (e.cd <= 0) { e.state = 'wind'; e.st = 0.45; ring(e.x, e.y, '#ff7755', e.size+34, e.size+6, 0.45, 3); }
   },
   ranged(e, dt, d, ux, uy) {
@@ -249,12 +249,14 @@ function updateTelegraphs(dt) {
       if (g.friendly) {
         for (const en of enemies) if (en.alive && en.spawnT <= 0 && dist(g.x, g.y, en.x, en.y) < g.r+en.size) damageEnemy(en, g.dmg, { shadow:true, crit:false, kb:200, ox:g.x, oy:g.y });
       } else if (dist(g.x, g.y, player.x, player.y) < g.r+8) hurtPlayer(g.dmg);
+      else if (g.dmg) slipped((x, y) => dist(g.x, g.y, x, y) < g.r+8);
       if (g.land) g.land();
     } else if (g.dmg) { // a lane that hurts (the line warnings of dashes carry no damage of their own)
       const px = player.x-g.x, py = player.y-g.y, along = px*g.ax + py*g.ay, across = Math.abs(py*g.ax - px*g.ay);
       for (let s = 80; s < g.len; s += 260) spawnBurst(g.x + g.ax*s, g.y + g.ay*s, g.color, 4, 260);
       shake(5); playSfx('explode');
       if (along > -8 && along < g.len+8 && across < g.w/2+8) hurtPlayer(g.dmg);
+      else slipped((x, y) => { const qx = x-g.x, qy = y-g.y, al = qx*g.ax + qy*g.ay; return al > -8 && al < g.len+8 && Math.abs(qy*g.ax - qx*g.ay) < g.w/2+8; });
     }
   }
   telegraphs = live;

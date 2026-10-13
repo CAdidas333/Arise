@@ -93,6 +93,12 @@ function hurtPlayer(dmg) {
   return true;
 }
 
+// A dodge begun in the last 0.3 seconds that carried the hunter out of a hit that would have landed is a perfect dodge too.
+// wasHit(x, y): would the attack have hit a hunter standing there?
+function slipped(wasHit) {
+  if (player.perfectUsed || gameTime - (player.dodgeAt ?? -9) > 0.3 || !wasHit(player.dodgeX, player.dodgeY)) return;
+  player.perfectUsed = true; perfectDodge();
+}
 function perfectDodge() {
   slowmo(0.3, 0.5); player.perfect = true; gainUlt(8); player.counterT = COUNTER_WINDOW;
   floatText(player.x, player.y-56, 'PERFECT DODGE — STRIKE!', COLORS.primary, 18);
