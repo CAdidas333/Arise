@@ -1016,7 +1016,7 @@ function draw() {
   // Shadows
   seenFigures.clear();
   if (player && player.shadows) {
-    const isLegion = typeof legionTimer !== 'undefined' && legionTimer > 0;
+    const isLegion = (typeof legionTimer !== 'undefined' && legionTimer > 0) || (player.ultT > 0);
     const fx = player.facing ? player.facing.x : 0, fy = player.facing ? player.facing.y : 1;
     for (const s of player.shadows) {
       if (!s || !s.active) continue;

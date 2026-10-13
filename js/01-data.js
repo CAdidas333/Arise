@@ -16,8 +16,8 @@ const SKILL_DEFS = [
   { id:'dash_strike', name:'Dash Strike', icon:'💨', key:'2', unlockLevel:3, cooldown:3, manaCost:15, damage:2.2, desc:'Blink forward, cutting everything in your path', range:200, type:'dash' },
   { id:'shadow_strike', name:'Shadow Strike', icon:'🗡️', key:'3', unlockLevel:6, cooldown:5, manaCost:25, damage:3.2, desc:'Teleport behind the enemy nearest your aim', range:440, type:'teleport' },
   { id:'rulers', name:"Ruler's Domain", icon:'👑', key:'4', unlockLevel:10, cooldown:12, manaCost:50, damage:4.0, desc:'Drag enemies in, then detonate', range:210, type:'aoe' },
-  { id:'legion', name:'Arise: Legion', icon:'☠️', key:'5', unlockLevel:1, cooldown:30, manaCost:40, damage:0, desc:'Shadow army goes berserk (12s)', type:'legion' },
-  { id:'ult', name:"Monarch's Awakening", icon:'👁️', key:'R', unlockLevel:15, cooldown:0, manaCost:0, damage:0, desc:'Full gauge: become the Shadow Monarch', type:'ult' },
+  { id:'legion', name:'Arise: Legion', icon:'☠️', key:'5', unlockLevel:1, cooldown:30, manaCost:40, damage:0, desc:'Call your army to the field (12s). They fight berserk, then return to the shadows', type:'legion' },
+  { id:'ult', name:"Monarch's Awakening", icon:'👁️', key:'R', unlockLevel:15, cooldown:0, manaCost:0, damage:0, desc:'Full gauge: become the Shadow Monarch and call every shadow you own', type:'ult' },
 ];
 const SKILL = Object.fromEntries(SKILL_DEFS.map(s => [s.id, s]));
 
@@ -97,7 +97,7 @@ const TREE = [
     { id:'domain', name:"Ruler's Authority", max:3, desc:"Ruler's Domain +20% radius and damage per rank" },
     { id:'leech', name:'Bloodlust', max:3, desc:'Heal 1% of damage dealt per rank' } ] },
   { id:'monarch', name:'MONARCH', color:'#bb66ff', nodes:[
-    { id:'army', name:'Shadow Army', max:5, desc:'+2 deployed shadows per rank' },
+    { id:'army', name:'Shadow Army', max:5, desc:'+2 shadows answer the Legion call per rank' },
     { id:'might', name:'Shadow Might', max:5, desc:'+12% shadow damage per rank' },
     { id:'march', name:"Legion's March", max:3, desc:'Arise: Legion lasts +3s and recharges 3s faster per rank' },
     { id:'sovereign', name:'Shadow Sovereign', max:3, desc:'Awakening charges 15% faster and lasts +2s per rank' } ] },
