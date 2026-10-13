@@ -138,30 +138,30 @@ function dodge() {
 const ESCORT_SIZE = 3;
 const shadowDmg = s => s.damage * (1 + 0.03*player.level) * (1 + 0.12*tr('might')) * (1 + 0.25*bn('tide'));
 
-function shadowRole(sortedRoster, cap) {
+// Pure: the weakest of the deployed set escort, the strongest answer the Legion call, the rest wait in reserve
+function shadowRole(sortedRoster, cap, inLegion, inUlt) {
   const dep = Math.min(sortedRoster.length, cap);
   const escortCount = Math.min(dep, ESCORT_SIZE);
   const escortStart = dep - escortCount;
   return sortedRoster.map((s, i) => {
     const role = i >= dep ? 'reserve' : i >= escortStart ? 'escort' : 'legion';
-    return { shadow: s, role };
+    const active = role === 'escort' || (role === 'legion' && (inLegion || inUlt)) || inUlt || ((s.lingerT || 0) > 0);
+    return { shadow: s, role, active };
   });
 }
 
 function deployShadows() {
   const ranked = [...player.shadows].sort((a,b) => b.damage - a.damage);
-  const roles = shadowRole(ranked, armyCap());
-  roles.forEach(r => { r.shadow.role = r.role; });
+  shadowRole(ranked, armyCap(), legionTimer > 0, player.ultT > 0).forEach(r => { r.shadow.role = r.role; });
   syncShadowField();
 }
 
 function syncShadowField() {
   if (!player || !player.shadows) return;
-  const inUlt = player.ultT > 0, inLegion = legionTimer > 0;
+  const ranked = [...player.shadows].sort((a,b) => b.damage - a.damage);
   let pillars = 0;
-  player.shadows.forEach(s => {
-    const role = s.role || 'reserve';
-    const want = role === 'escort' || (role === 'legion' && (inLegion || inUlt)) || inUlt || ((s.lingerT || 0) > 0);
+  shadowRole(ranked, armyCap(), legionTimer > 0, player.ultT > 0).forEach(({ shadow: s, role, active: want }) => {
+    s.role = role;
     const was = !!s.active;
     if (!was && want) {
       const a = rand(0, TAU), r = rand(60, 140);
