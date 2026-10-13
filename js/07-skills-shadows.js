@@ -183,7 +183,7 @@ function shadowKindFor(name) {
   return 'melee';
 }
 function addShadow(s) {
-  const ns = { ...s, active:false, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 }, lingerT:3 };
+  const ns = { ...s, active:true, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 }, lingerT:3 }; // on the field where it rose for 3 seconds, then it follows its role
   player.shadows.push(ns);
   if (player.shadows.length > 40) { let wi = 0; player.shadows.forEach((x,i) => { if (x.damage < player.shadows[wi].damage) wi = i; }); player.shadows.splice(wi, 1); }
   deployShadows(); ns.x = s.x; ns.y = s.y;
