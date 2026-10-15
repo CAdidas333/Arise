@@ -111,7 +111,9 @@ function bolt(x1, y1, x2, y2, color) {
   bolts.push({ pts, t:0, dur:0.2, color });
 }
 // A pillar of shadow — used for every "Arise"
+let pillarFx = [];
 function arisePillar(x, y, big = false) {
+  pillarFx.push({ x, y, big, t:0, dur:big ? 1.1 : 0.8 });
   ring(x, y, COLORS.accent, 8, big ? 220 : 110, 0.6, big ? 8 : 5);
   for (let i = 0; i < (big ? 70 : 28); i++) spawnParticle(x+rand(-22,22), y+rand(-10,10), i%3 ? COLORS.accent : '#220044', { vx:rand(-30,30), vy:rand(-520,-120), size:rand(3,9), life:rand(0.5,1.2), type:i%3?'glow':'smoke', drag:0.8 });
 }
@@ -127,7 +129,7 @@ function updateFx(dt) {
   }
   particles.length = n;
   const tick = arr => { let m = 0; for (let i = 0; i < arr.length; i++) { const o = arr[i]; o.t += dt; if (o.t < o.dur) arr[m++] = o; } arr.length = m; };
-  tick(rings); tick(arcs); tick(ghosts); tick(bolts);
+  tick(rings); tick(arcs); tick(ghosts); tick(bolts); tick(pillarFx);
   for (const t of texts) { t.x += t.vx*dt; t.y += t.vy*dt; t.vy += 110*dt; }
   tick(texts);
   if (screenFlash.alpha > 0) screenFlash.alpha -= dt*1.4;

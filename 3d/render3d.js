@@ -16,6 +16,7 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); scene.add(ambientLig
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.8); dirLight.position.set(0, 1000, 500); scene.add(dirLight);
 const hunterLight = new THREE.PointLight((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff, 1.8, 650); scene.add(hunterLight);
 const camera3D = new THREE.PerspectiveCamera(50, 1, 10, 6000); scene.add(camera3D);
+const hubImg3D = new Image(); hubImg3D.src = 'assets/bg/hub.webp';
 
 // Orbit camera. The defaults reproduce the old fixed view exactly: 500 units away, 36.87 degrees up, looking along -z.
 const view3D = window.view3D = { yaw: 0, pitch: Math.atan2(300, 400), dist: 500, drag: null };
@@ -188,12 +189,35 @@ function rebuildLayout3D(line) {
   em.position.set(L.exit.x, 75, L.exit.y); floorGroup.add(em); layoutMeshes.push(em);
 }
 
+const floorTexCache = {};
+function warmFloor(url) {
+  if (floorTexCache[url]) return;
+  new THREE.TextureLoader().load(url, (tex) => {
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    floorTexCache[url] = tex;
+  });
+}
+if (typeof GATE_DEFS !== 'undefined') {
+  GATE_DEFS.forEach(g => warmFloor('assets/floors/' + (g.floor || g.id) + '.webp'));
+}
+
 function buildFloor(g) {
   currentGate = g;
   floorMaterial.map = null; floorMaterial.color.set(0x111118); floorMaterial.needsUpdate = true;
   const url = 'assets/floors/' + (g.floor || g.id) + '.webp';
+  if (floorTexCache[url]) {
+    const tex = floorTexCache[url];
+    floorTexture = tex;
+    const w = typeof arenaW !== 'undefined' ? arenaW : 1400;
+    const h = typeof arenaH !== 'undefined' ? arenaH : 1000;
+    if (typeof layout !== 'undefined' && layout) tex.repeat.set(1, 1); else tex.repeat.set(w / 384, h / 384);
+    tex.needsUpdate = true;
+    floorMaterial.map = tex; floorMaterial.color.set(0xffffff); floorMaterial.needsUpdate = true;
+    return;
+  }
   new THREE.TextureLoader().load(url, (tex) => {
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    floorTexCache[url] = tex;
     floorTexture = tex;
     const w = typeof arenaW !== 'undefined' ? arenaW : 1400;
     const h = typeof arenaH !== 'undefined' ? arenaH : 1000;
@@ -1117,6 +1141,11 @@ function drawFx3D() {
   ctx.clearRect(0, 0, w, h);
 
   if (typeof gameState === 'undefined' || gameState !== 'DUNGEON' || typeof dungeon === 'undefined' || !dungeon) {
+    try {
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.fillStyle = COLORS.bg; ctx.fillRect(0, 0, w, h);
+      drawPortal(hubImg3D.complete && hubImg3D.naturalWidth ? hubImg3D : null);
+      drawMotes(COLORS.primary, COLORS.accent, 0);
+    } catch (e) {}
     return;
   }
 
@@ -1160,6 +1189,64 @@ function drawFx3D() {
           ctx.stroke();
         }
       }
+    }
+
+    // 3a. Dodge afterimages
+    if (typeof ghosts !== 'undefined' && ghosts) {
+      for (const g of ghosts) {
+        const p0 = toScreen(g.x, g.y, 0), p1 = toScreen(g.x, g.y, 75);
+        if (!p0 || !p1) continue;
+        const hh = p0[1] - p1[1];
+        if (hh <= 0) continue;
+        const a = (1 - g.t / g.dur) * 0.4;
+        ctx.fillStyle = '#00d4ff';
+        // A faint wider glow first (same shapes, radii x1.6, alpha x0.35)
+        ctx.globalAlpha = a * 0.35;
+        ctx.beginPath(); ctx.ellipse(p0[0], p0[1] - hh * 0.42, hh * 0.17 * 1.6, hh * 0.34 * 1.6, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(p0[0], p0[1] - hh * 0.86, hh * 0.11 * 1.6, 0, Math.PI * 2); ctx.fill();
+        // Body and head
+        ctx.globalAlpha = a;
+        ctx.beginPath(); ctx.ellipse(p0[0], p0[1] - hh * 0.42, hh * 0.17, hh * 0.34, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(p0[0], p0[1] - hh * 0.86, hh * 0.11, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // 3c. Arise light pillars
+    if (typeof pillarFx !== 'undefined' && pillarFx) {
+      for (const pl of pillarFx) {
+        const hgt = pl.big ? 380 : 240;
+        const width = (pl.big ? 70 : 40) * pxPer(pl.x, pl.y);
+        const p0 = toScreen(pl.x, pl.y, 0), p1 = toScreen(pl.x, pl.y, hgt);
+        if (!p0 || !p1) continue;
+        const dx = p1[0] - p0[0], dy = p1[1] - p0[1];
+        const len = Math.hypot(dx, dy);
+        if (len < 1e-3) continue;
+        const s = Math.sin(Math.PI * pl.t / pl.dur);
+        if (s <= 0) continue;
+
+        ctx.save();
+        ctx.translate(p0[0], p0[1]);
+        ctx.rotate(Math.atan2(dx, -dy));
+
+        const g1 = ctx.createLinearGradient(0, 0, 0, -len);
+        g1.addColorStop(0, COLORS.accent);
+        g1.addColorStop(1, 'rgba(136,68,255,0)');
+        ctx.globalAlpha = 0.55 * s;
+        ctx.fillStyle = g1;
+        ctx.fillRect(-width / 2, -len, width, len);
+
+        const g2 = ctx.createLinearGradient(0, 0, 0, -len);
+        g2.addColorStop(0, '#ddbbff');
+        g2.addColorStop(1, 'rgba(221,187,255,0)');
+        ctx.globalAlpha = 0.7 * s;
+        ctx.fillStyle = g2;
+        const cw = width * 0.28;
+        ctx.fillRect(-cw / 2, -len, cw, len);
+
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
     }
 
     // 3b. The floor mark under the enemy the hunter has squared up to
@@ -1356,6 +1443,10 @@ function drawFx3D() {
       }
       ctx.textAlign = 'left'; ctx.globalAlpha = 1;
     }
+
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    drawMinimap();
 
     // 9. Screen flash
     if (typeof screenFlash !== 'undefined' && screenFlash && screenFlash.alpha > 0) {
