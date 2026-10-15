@@ -316,13 +316,13 @@ function bossPhaseMove(e, ph) {
       e.st = 1.0;
       break;
     }
-    case 'Statue of God': { // ph 2: sweeping gaze clock hand; ph 3: twin opposing gazes
+    case 'Statue of God': { // ph 2: a cold eye-beam sweeps round like a clock hand; ph 3: two opposite beams. One beam at a time, never a fan of rays (art rule)
       const a0 = Math.atan2(player.y - e.y, player.x - e.x) - e.strafe*0.6, s = e.strafe;
       for (let i = 0; i < 24; i++) after(i*0.15, () => {
         if (!e.alive) return;
         const a = a0 + s*i/24*TAU;
-        lane(e, e.x, e.y, Math.cos(a), Math.sin(a), 1700, 80, 0.5, e.damage*0.9, '#ffcc55');
-        if (ph === 3) lane(e, e.x, e.y, Math.cos(a + Math.PI), Math.sin(a + Math.PI), 1700, 80, 0.5, e.damage*0.9, '#ffcc55');
+        lane(e, e.x, e.y, Math.cos(a), Math.sin(a), 1700, 80, 0.4, e.damage*0.9, '#9fdcff');
+        if (ph === 3) lane(e, e.x, e.y, Math.cos(a + Math.PI), Math.sin(a + Math.PI), 1700, 80, 0.4, e.damage*0.9, '#9fdcff');
       });
       e.st = 1.0;
       break;

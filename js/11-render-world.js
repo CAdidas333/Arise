@@ -1100,7 +1100,7 @@ function drawZone(z) {
       ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, TAU); ctx.stroke();
     } else if (z.kind === 'rubble') {
       ctx.fillStyle = '#8a7a66'; ctx.globalAlpha = 0.22*a; disc(z.x, z.y, z.r);
-      ctx.fillStyle = '#3a332b'; ctx.globalAlpha = 0.8*a;
+      ctx.fillStyle = '#b3a38c'; ctx.globalAlpha = 0.55*a;
       for (let i = 0; i < 6; i++) {
         const ang = h(i+10)*TAU, d = h(i+20)*0.8*z.r;
         disc(z.x + Math.cos(ang)*d, z.y + Math.sin(ang)*d, 4 + h(i)*5);
