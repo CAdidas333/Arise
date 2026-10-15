@@ -18,7 +18,7 @@ const clampArena = e => { const p = keepIn(e.x, e.y, e.size); e.x = p.x; e.y = p
 const mv = (e, ux, uy, spd, dt) => { e.x += ux*spd*dt; e.y += uy*spd*dt; };
 const telegraph = o => telegraphs.push(Object.assign({ t:0 }, o));
 let zones = [];
-const addZone = o => { if (zones.length < 90) zones.push(Object.assign({ t:0, tick:0, slow:0, dps:0 }, o)); };
+const addZone = o => { if (zones.length < 120) zones.push(Object.assign({ t:0, tick:0, slow:0, dps:0 }, o)); };
 function inZone(z, x, y, pad = 0) {
   if (z.type === 'circle') return dist(z.x, z.y, x, y) < z.r + pad;
   const px = x - z.x, py = y - z.y, along = px*z.ax + py*z.ay, across = Math.abs(py*z.ax - px*z.ay);
@@ -94,12 +94,21 @@ const AI = {
 
 // --- BOSSES: pattern-driven, enrage at half health ---
 function bossAI(e, dt, d, ux, uy) {
-  const P2 = e.phase === 2;
+  const P2 = e.phase >= 2;
   if (!P2 && e.hp < e.maxHp*0.5) {
     e.phase = 2; e.speed *= 1.25; e.state = 'cast'; e.st = 1.0; e.cd = 0.6;
     toast(`${e.name.toUpperCase()} IS ENRAGED`, 'red', 2600, true); say('boss_enraged', true); playSfx('boss');
     ring(e.x, e.y, COLORS.danger, e.size, 520, 0.7, 10); shake(20); flash('#ff2222', 0.35); slowmo(0.35, 0.5);
     projectiles = projectiles.filter(p => !p.fromEnemy);
+    after(0.6, () => { if (e.alive && e.phase === 2) bossPhaseMove(e, 2); });
+    return;
+  }
+  if (e.phase === 2 && e.hp < e.maxHp*0.25) {
+    e.phase = 3; e.speed *= 1.1; e.state = 'cast'; e.st = 1.0; e.cd = 0.6;
+    toast(`${e.name.toUpperCase()} — LAST STAND`, 'red', 2600, true); playSfx('boss');
+    ring(e.x, e.y, COLORS.danger, e.size, 640, 0.8, 12); shake(24); flash('#ff2222', 0.4); slowmo(0.35, 0.5);
+    projectiles = projectiles.filter(p => !p.fromEnemy);
+    after(0.6, () => { if (e.alive && e.phase === 3) bossPhaseMove(e, 3); });
     return;
   }
   e.mcd -= dt;
@@ -126,7 +135,7 @@ function bossAI(e, dt, d, ux, uy) {
     case 'leap': { // in the air towards the pound's mark, timed to come down as it lands
       const lx = e.lx-e.x, ly = e.ly-e.y, l = Math.hypot(lx, ly);
       if (l > 2) mv(e, lx/l, ly/l, Math.min(l/dt, l/Math.max(e.st, dt)), dt);
-      e.st -= dt; if (e.st <= 0) { if (e.step < (P2 ? 4 : 3)) bossPound(e); else endPattern(e); }
+      e.st -= dt; if (e.st <= 0) { if (e.step < (e.poundN || 3)) bossPound(e); else endPattern(e); }
       break;
     }
   }
@@ -140,21 +149,32 @@ function bossCharge(e) {
 function bossPound(e) {
   const i = Math.min(e.step++, 2), dur = 0.8 + i*0.12, dx = player.x-e.x, dy = player.y-e.y, d = Math.hypot(dx,dy) || 1, hop = Math.min(d, 420);
   e.state = 'leap'; e.st = dur; e.lx = e.x + dx/d*hop; e.ly = e.y + dy/d*hop; e.facing = { x:dx/d, y:dy/d };
-  telegraph({ type:'circle', x:e.lx, y:e.ly, r:110 + i*30, dur, dmg:e.damage*(1.1 + i*0.15), color:'#ff7733', owner:e });
+  const zone = e.phase >= 2 ? { kind:'rubble', dur:6, slow:0.3 } : undefined;
+  telegraph({ type:'circle', x:e.lx, y:e.ly, r:110 + i*30, dur, dmg:e.damage*(1.1 + i*0.15), color:'#ff7733', owner:e, zone });
   playSfx('tele');
 }
 // A lane that hurts when it lands, trimmed so the warning never runs off the arena floor
-function lane(e, x, y, ax, ay, len, w, dur, dmg, color) {
+function lane(e, x, y, ax, ay, len, w, dur, dmg, color, zone) {
   let t0 = 0, t1 = len;
   for (const [p, a, h] of [[x, ax, arenaW/2], [y, ay, arenaH/2]]) {
     if (Math.abs(a) < 1e-6) { if (Math.abs(p) > h) return; continue; }
     const ta = (-h-p)/a, tb = (h-p)/a; t0 = Math.max(t0, Math.min(ta, tb)); t1 = Math.min(t1, Math.max(ta, tb));
   }
-  if (t1 > t0) telegraph({ type:'line', x:x+ax*t0, y:y+ay*t0, ax, ay, len:t1-t0, w, dur, dmg, color, owner:e });
+  if (t1 > t0) telegraph({ type:'line', x:x+ax*t0, y:y+ay*t0, ax, ay, len:t1-t0, w, dur, dmg, color, owner:e, zone });
+}
+function bossBrood(e, n, every) {
+  const R = n*32, cx = player.x, cy = player.y, a0 = rand(0,TAU), def = dungeon.gate.enemies[0];
+  for (let i = 0; i < n; i++) {
+    const x = cx + Math.cos(a0 + i/n*TAU)*R, y = cy + Math.sin(a0 + i/n*TAU)*R;
+    const zone = (!every && (i % 2 !== 0)) ? { kind:'web', dur:7, slow:0.45 } : undefined;
+    telegraph({ type:'circle', x, y, r:60, dur:1.4, dmg:e.damage*0.7, color:'#cc77cc', owner:e, zone,
+      land() { if ((every || i % 2 === 0) && dist(cx, cy, player.x, player.y) < R+10) spawnQueue.push({ t:0, def, x, y, o:{ scale:dungeon.scale } }); } });
+  }
+  playSfx('tele'); e.st = 1.5;
 }
 function startPattern(e, d, ux, uy) {
   let p = pick(e.patterns); if (p === e.lastP) p = e.patterns[(e.patterns.indexOf(p)+1) % e.patterns.length];
-  e.lastP = p; const P2 = e.phase === 2;
+  e.lastP = p; const P2 = e.phase >= 2, P3 = e.phase === 3;
   e.state = 'cast'; e.st = 0.6;
   switch (p) {
     case 'burst': {
@@ -179,21 +199,14 @@ function startPattern(e, d, ux, uy) {
       ring(e.x, e.y, COLORS.accent, e.size, 200, 0.5, 5); e.st = 0.8; break;
     }
     // --- Signature attacks, one per boss, built from the same warnings and shots as the rest ---
-    case 'brood': { // Spider Queen: a ring of eggs closes round the hunter; step out through a gap or the whole clutch hatches
-      const n = P2 ? 7 : 6, R = n*32, cx = player.x, cy = player.y, a0 = rand(0,TAU), def = dungeon.gate.enemies[0];
-      for (let i = 0; i < n; i++) {
-        const x = cx + Math.cos(a0 + i/n*TAU)*R, y = cy + Math.sin(a0 + i/n*TAU)*R;
-        telegraph({ type:'circle', x, y, r:60, dur:1.4, dmg:e.damage*0.7, color:'#cc77cc', owner:e,
-          land() { if (i % 2 === 0 && dist(cx, cy, player.x, player.y) < R+10) spawnQueue.push({ t:0, def, x, y, o:{ scale:dungeon.scale } }); } }); // every other egg hatches: about as many as her summon
-      }
-      playSfx('tele'); e.st = 1.5; break;
-    }
-    case 'pound': e.step = 0; bossPound(e); break;
+    case 'brood': bossBrood(e, P2 ? 7 : 6, false); break;
+    case 'pound': e.poundN = P2 ? 4 : 3; e.step = 0; bossPound(e); break;
     case 'cleave': { // Death Knight: long parallel sword lanes down the arena, then another set through the gaps of the first
       const bx = e.x - ux*200, by = e.y - uy*200, nx = -uy, ny = ux, sets = P2 ? 3 : 2;
+      const bzone = e.phase >= 2 ? { kind:'blood', dur:2.5, dps:e.damage*0.5 } : undefined;
       const cut = s => {
         if (!e.alive) return;
-        for (let k = -3; k <= 3; k++) { const o = (k + (s % 2)*0.5)*230; lane(e, bx + nx*o, by + ny*o, ux, uy, 2000, 86, 0.9 + Math.abs(k)*0.06, e.damage*1.3, '#aa55ff'); }
+        for (let k = -3; k <= 3; k++) { const o = (k + (s % 2)*0.5)*230; lane(e, bx + nx*o, by + ny*o, ux, uy, 2000, 86, 0.9 + Math.abs(k)*0.06, e.damage*1.3, '#aa55ff', bzone); }
         playSfx('tele');
       };
       cut(0); for (let s = 1; s < sets; s++) after(s*0.8, () => cut(s));
@@ -204,13 +217,14 @@ function startPattern(e, d, ux, uy) {
       for (let j = 0; j < rows; j++) for (let k = -5; k <= 5; k++) {
         if (k === gap || k === gap+1) continue;
         const x = px + (ux*(j-1) + nx*k)*140, y = py + (uy*(j-1) + ny*k)*140;
-        if (inMap(x, y)) telegraph({ type:'circle', x, y, r:82, dur:1.2 + j*0.2 + Math.abs(k)*0.02, dmg:e.damage*1.2, color:'#ff6622', owner:e });
+        const fzone = (j === rows-1) ? { kind:'fire', dur:3.5, dps:e.damage*0.4 } : undefined;
+        if (inMap(x, y)) telegraph({ type:'circle', x, y, r:82, dur:1.2 + j*0.2 + Math.abs(k)*0.02, dmg:e.damage*1.2, color:'#ff6622', owner:e, zone:fzone });
       }
       playSfx('tele'); e.st = 1.3 + rows*0.2; break;
     }
     case 'breath': { // Ancient Dragon: two thin lanes mark an arc, a fan of fire sweeps from one to the other, and the tail comes down behind
       const a = Math.atan2(uy, ux), s = e.strafe, N = 15, ph = e.phase, shots = P2 ? N*2 : N; // enraged, it sweeps back again
-      const edge = (k, dur) => telegraph({ type:'line', x:e.x, y:e.y, ax:Math.cos(a + k*s*0.8), ay:Math.sin(a + k*s*0.8), len:600, w:36, dur, color:'#ffaa33', owner:e });
+      const edge = (k, dur) => telegraph({ type:'line', x:e.x, y:e.y, ax:Math.cos(a + k*s*0.8), ay:Math.sin(a + k*s*0.8), len:600, w:36, dur, color:'#ffaa33', owner:e, zone:{ kind:'fire', dur:4, dps:e.damage*0.3 } });
       edge(-1, 0.85); edge(1, 1.85);
       telegraph({ type:'circle', x:e.x - ux*(e.size+80), y:e.y - uy*(e.size+80), r:150, dur:0.95, dmg:e.damage*1.3, color:'#ff5544', owner:e });
       for (let i = 0; i < shots; i++) after(0.85 + i*0.07, () => {
@@ -221,7 +235,7 @@ function startPattern(e, d, ux, uy) {
       e.facing = { x:ux, y:uy }; playSfx('tele'); e.st = 1.1 + shots*0.07; break;
     }
     case 'pillars': { // Statue of God: pillars fall on a wide grid in alternating waves, so the safe ground keeps moving
-      const cx = player.x, cy = player.y, waves = P2 ? 3 : 2;
+      const cx = player.x, cy = player.y, waves = P3 ? 4 : P2 ? 3 : 2;
       const drop = w => {
         if (!e.alive) return;
         for (let i = -3; i <= 3; i++) for (let j = -2; j <= 2; j++) {
@@ -235,7 +249,87 @@ function startPattern(e, d, ux, uy) {
     }
   }
 }
-function endPattern(e) { e.state = 'chase'; e.cd = e.phase === 2 ? rand(1.3,2.1) : rand(2.2,3.2); e.mcd = Math.max(e.mcd, 0.9); } // a beat to hit back before the next close swipe
+function endPattern(e) { e.state = 'chase'; e.cd = e.phase >= 2 ? rand(1.3,2.1) : rand(2.2,3.2); e.mcd = Math.max(e.mcd, 0.9); } // a beat to hit back before the next close swipe
+function bossPhaseMove(e, ph) {
+  e.state = 'cast';
+  switch (e.def.name) {
+    case 'Spider Queen': // ph 2: web patches round the hunter; ph 3: full 9-egg clutch
+      if (ph === 2) {
+        const a0 = rand(0, TAU);
+        for (let i = 0; i < 7; i++) {
+          const a = a0 + i/7*TAU, distOff = rand(220, 520), x = player.x + Math.cos(a)*distOff, y = player.y + Math.sin(a)*distOff;
+          if (!inMap(x, y)) continue;
+          telegraph({ type:'circle', x, y, r:110, dur:0.9, dmg:0, color:'#cc77cc', owner:e, zone:{ kind:'web', dur:12, slow:0.45 } });
+        }
+        e.st = 1.0;
+      } else {
+        bossBrood(e, 9, true); e.st = 1.5;
+      }
+      break;
+    case 'Orc Chieftain': // ph 2: war cry summons two elite orcs; ph 3: five-jump pound chain
+      if (ph === 2) {
+        ring(e.x, e.y, '#ff7733', e.size, 700, 0.6, 12); shake(16);
+        for (let i = 0; i < 2; i++) spawnQueue.push({ t:0.3 + i*0.2, def:dungeon.gate.enemies[0], x:e.x + (i ? 140 : -140), y:e.y, o:{ scale:dungeon.scale, elite:true } });
+        e.st = 1.0;
+      } else {
+        e.step = 0; e.poundN = 5; bossPound(e);
+      }
+      break;
+    case 'Death Knight': // ph 2: two elite adds from the crypt; ph 3: cross-arena crossing cleave cuts
+      if (ph === 2) {
+        const def = dungeon.gate.enemies[1] || dungeon.gate.enemies[0];
+        for (let i = 0; i < 2; i++) {
+          const x = e.x + (i ? 160 : -160), y = e.y;
+          ring(x, y, '#aa55ff', 10, 140, 0.5, 6);
+          spawnQueue.push({ t:0.4 + i*0.2, def, x, y, o:{ scale:dungeon.scale, elite:true } });
+        }
+        e.st = 1.2;
+      } else {
+        const dx = player.x - e.x, dy = player.y - e.y, d = Math.hypot(dx, dy) || 1, ux = dx/d, uy = dy/d;
+        const bzone = { kind:'blood', dur:2.5, dps:e.damage*0.5 };
+        for (let k = -3; k <= 3; k++) {
+          const dur = 1.1 + Math.abs(k)*0.06;
+          // Along hunter direction: direction (ux, uy), offsets along (-uy, ux), base player.x - ux*1000
+          lane(e, player.x - ux*1000 - uy*(k*230), player.y - uy*1000 + ux*(k*230), ux, uy, 2000, 86, dur, e.damage*1.3, '#aa55ff', bzone);
+          // Across hunter direction: direction (-uy, ux), offsets along (ux, uy), base player.x + uy*1000
+          lane(e, player.x + uy*1000 + ux*(k*230), player.y - ux*1000 + uy*(k*230), -uy, ux, 2000, 86, dur, e.damage*1.3, '#aa55ff', bzone);
+        }
+        e.st = 1.6;
+      }
+      break;
+    case 'Demon Lord': { // ph 2: outer ring of fire shrinks the arena; ph 3: inner hellfire ring
+      const inset = ph === 2 ? 120 : 460, dur = ph === 2 ? 30 : 20;
+      const xmin = -arenaW/2 + inset, xmax = arenaW/2 - inset, ymin = -arenaH/2 + inset, ymax = arenaH/2 - inset;
+      const pts = [];
+      for (let x = xmin; x <= xmax; x += 220) { pts.push([x, ymin]); pts.push([x, ymax]); }
+      for (let y = ymin + 220; y < ymax; y += 220) { pts.push([xmin, y]); pts.push([xmax, y]); }
+      for (const [x, y] of pts) telegraph({ type:'circle', x, y, r:130, dur:1.1, dmg:e.damage*0.8, color:'#ff6622', owner:e, zone:{ kind:'fire', dur, dps:e.damage*0.4 } });
+      e.st = 1.2;
+      break;
+    }
+    case 'Ancient Dragon': { // ph 2: 12 meteors rain on hunter; ph 3: 18-meteor firestorm
+      const n = ph === 2 ? 12 : 18, iv = ph === 2 ? 0.25 : 0.18;
+      for (let i = 0; i < n; i++) after(i*iv, () => {
+        if (!e.alive) return;
+        telegraph({ type:'circle', x:player.x, y:player.y, r:100, dur:0.9, dmg:e.damage*0.9, color:'#ffaa33', owner:e, zone:{ kind:'fire', dur:4, dps:e.damage*0.35 } });
+      });
+      e.st = 1.0;
+      break;
+    }
+    case 'Statue of God': { // ph 2: sweeping gaze clock hand; ph 3: twin opposing gazes
+      const a0 = Math.atan2(player.y - e.y, player.x - e.x) - e.strafe*0.6, s = e.strafe;
+      for (let i = 0; i < 24; i++) after(i*0.15, () => {
+        if (!e.alive) return;
+        const a = a0 + s*i/24*TAU;
+        lane(e, e.x, e.y, Math.cos(a), Math.sin(a), 1700, 80, 0.5, e.damage*0.9, '#ffcc55');
+        if (ph === 3) lane(e, e.x, e.y, Math.cos(a + Math.PI), Math.sin(a + Math.PI), 1700, 80, 0.5, e.damage*0.9, '#ffcc55');
+      });
+      e.st = 1.0;
+      break;
+    }
+  }
+  playSfx('tele');
+}
 
 function updateEnemies(dt) {
   for (const e of enemies) {
