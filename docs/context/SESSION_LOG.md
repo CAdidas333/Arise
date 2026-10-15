@@ -1,5 +1,21 @@
 # Arise — Session Log
 
+## Session 7 — 2026-10-12 (Monday) — Boss attacks public, bosses fight up close, the army is called, slower levels, the hunter squares up
+
+### Focus
+Free rein, with Chris and his testers (Kevin and Isaak, by text) playing the public page and sending notes. Everything below is live on the public page (last stamp 20261012223732). Written at the start of Session 8 from the S7 handoff notes and the commits, because Session 7 did not write its own entry.
+
+### What Changed
+- **Boss signature attacks public** (14:18-14:30, on Chris's word "ship the boss attacks"): brood, pound, cleave, firewall, breath, pillars.
+- **Bosses use their patterns up close** (789450a): the close swipe is its own `swipe` state and no longer resets the pattern timer (0 patterns a minute before, 13 to 16 after). On upright phones the boss health is a thin strip along the top edge.
+- **Upright-phone layout** (75246dd): the combo counter sits beside the stat bars, above the pop-ups (thread U8 done).
+- **Testers' notes** (232504e, 903a492): a pink potion button with a count on phones; a hint on how to raise a shadow; **the army is called**: three shadows escort, Arise: Legion calls the strongest for 12 seconds, the Awakening calls the whole roster (`shadowRole`, `syncShadowField`; `node tools/test_army.js`).
+- **Levels at half the speed** (dfcb8c0, `XP_PACE = 2`) and a repeatable balance bot (`node tools/balance_bot.js`, thread G1).
+- **The hunter squares up** (73d0047, a free worker, pass 2): lock-on facing near an enemy, backstep dodge, a Counter after a well-timed dodge, a warning ring on melee wind-ups, a ring under the target (thread F11).
+
+### Not Done
+Nobody has played any of it by hand; no real-phone test; Chris has not heard the music. Still too easy by the bot's numbers (thread E1).
+
 ## Session 6 — 2026-10-11 (Sunday) — Real dungeons, loot and gear, recorded music, real 3D figures, the story thread and the result card
 
 ### Focus
