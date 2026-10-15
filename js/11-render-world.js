@@ -997,7 +997,7 @@ function drawEnemy(e) {
   ctx.globalAlpha = grow*0.4; ctx.fillStyle = '#000';
   ctx.beginPath(); ctx.ellipse(e.x, e.y + sz*0.85, sz*0.95, sz*0.32, 0, 0, TAU); ctx.fill();
   if (e.elite || e.isBoss) { // aura
-    ctx.globalAlpha = grow*(0.1 + 0.05*Math.sin(clock*4)); ctx.fillStyle = e.isBoss ? (e.phase === 2 ? '#ff2222' : COLORS.danger) : '#ffcc66';
+    ctx.globalAlpha = grow*(0.1 + 0.05*Math.sin(clock*4)); ctx.fillStyle = e.isBoss ? (e.phase >= 2 ? '#ff2222' : COLORS.danger) : '#ffcc66';
     disc(e.x, e.y, sz*(e.isBoss ? 2.1 : 1.8));
     ctx.globalAlpha = grow*0.7; ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(e.x, e.y, sz*1.5, clock*2, clock*2 + 4.2); ctx.stroke();
@@ -1005,7 +1005,7 @@ function drawEnemy(e) {
   ctx.globalAlpha = grow;
   ctx.save(); ctx.translate(e.x, e.y + (e.isBoss ? 0 : Math.sin(e.animT*6)*1.5)); ctx.scale(grow, grow);
   if (e.isBoss) {
-    drawBoss(e.def.name, sz, e.animT, e.facing.x, e.facing.y, { body: col, dark: e.hitFlash > 0 ? '#ffffff' : '#07070c', light: e.hitFlash > 0 ? '#ffffff' : bossTrim(e.color), eye: e.phase === 2 ? '#ffee66' : '#ff3344' });
+    drawBoss(e.def.name, sz, e.animT, e.facing.x, e.facing.y, { body: col, dark: e.hitFlash > 0 ? '#ffffff' : '#07070c', light: e.hitFlash > 0 ? '#ffffff' : bossTrim(e.color), eye: e.phase >= 2 ? '#ffee66' : '#ff3344' });
   } else {
     ctx.fillStyle = col;
     if (e.kind === 'melee') { // horns
