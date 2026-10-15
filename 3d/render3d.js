@@ -103,6 +103,7 @@ if (hintEl) hintEl.innerHTML += ' &nbsp;·&nbsp; Z / C TURN CAMERA &nbsp;·&nbsp
 
 // Floor and walls
 let currentGate = null, floorTexture = null, floorMesh = null;
+let torchFlameMat3D = null, torchGlowMat3D = null;
 const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x111118, roughness: 0.85 });
 const wallMeshes = [], floorGroup = new THREE.Group();
 scene.add(floorGroup);
@@ -114,6 +115,8 @@ function clearFloorAndWalls() {
   if (floorMesh) { floorGroup.remove(floorMesh); floorMesh.geometry.dispose(); floorMesh = null; }
   while (wallMeshes.length) { const wm = wallMeshes.pop(); floorGroup.remove(wm); wm.geometry.dispose(); wm.material.dispose(); }
   while (layoutMeshes.length) { const m = layoutMeshes.pop(); floorGroup.remove(m); m.geometry.dispose(); if (m.material !== floorMaterial) m.material.dispose(); }
+  torchFlameMat3D = null;
+  torchGlowMat3D = null;
 }
 
 function rebuildFloorAndWalls(w, h, line) {
@@ -161,12 +164,36 @@ function rebuildLayout3D(line) {
     if (x1 > x0 && y1 > y0) floorPiece(x0, y0, x1, y1);
   }
 
-  const wallMat = new THREE.MeshBasicMaterial({ color: line, transparent: true, opacity: 0.65 });
-  const wallH = 30, t = 2;
+  const WT = 30, WH = 70;
+  const edgeMat = new THREE.MeshBasicMaterial({ color: line, transparent: true, opacity: 0.35 });
+  const northEdgeMat = new THREE.MeshBasicMaterial({ color: line, transparent: true, opacity: 0.6 });
   for (const s of L.walls) {
     const horiz = s.y0 === s.y1, len = horiz ? Math.abs(s.x1 - s.x0) : Math.abs(s.y1 - s.y0);
-    const m = new THREE.Mesh(new THREE.BoxGeometry(horiz ? len : t, wallH, horiz ? t : len), wallMat);
-    m.position.set((s.x0 + s.x1) / 2, wallH / 2, (s.y0 + s.y1) / 2); floorGroup.add(m); wallMeshes.push(m);
+    let nx = 0, nz = 0;
+    if (horiz) {
+      const mx = (s.x0 + s.x1) / 2, my = s.y0;
+      nz = !inMap(mx, my - 6) ? -1 : 1;
+    } else {
+      const mx = s.x0, my = (s.y0 + s.y1) / 2;
+      nx = !inMap(mx - 6, my) ? -1 : 1;
+    }
+    const mx = (s.x0 + s.x1) / 2 + nx * (WT / 2);
+    const mz = (s.y0 + s.y1) / 2 + nz * (WT / 2);
+    const bw = horiz ? len + 2 * WT : WT;
+    const bd = horiz ? WT : len + 2 * WT;
+
+    const wm = new THREE.Mesh(new THREE.BoxGeometry(bw, WH, bd), new THREE.MeshLambertMaterial({ color: 0x1a1a24, transparent: true, opacity: 0.95 }));
+    wm.position.set(mx, WH / 2, mz);
+    wm.userData.nx = nx;
+    wm.userData.nz = nz;
+    floorGroup.add(wm);
+    wallMeshes.push(wm);
+
+    const isNorth = (nz === -1);
+    const topM = new THREE.Mesh(new THREE.BoxGeometry(bw, 2, bd), isNorth ? northEdgeMat : edgeMat);
+    topM.position.set(mx, WH + 1, mz);
+    floorGroup.add(topM);
+    layoutMeshes.push(topM);
   }
 
   const danger = (typeof COLORS !== 'undefined' && COLORS.danger) ? COLORS.danger : '#ff3344';
@@ -187,6 +214,166 @@ function rebuildLayout3D(line) {
   const em = new THREE.Mesh(new THREE.BoxGeometry(eastward ? 10 : 84, 150, eastward ? 84 : 10),
     new THREE.MeshBasicMaterial({ color: ember, transparent: true, opacity: open ? 0.5 : 0.12, blending: THREE.AdditiveBlending, depthWrite: false }));
   em.position.set(L.exit.x, 75, L.exit.y); floorGroup.add(em); layoutMeshes.push(em);
+
+  const dc = L.decor || (L.decor = buildLayoutDecor(L));
+
+  // Pilasters and torches
+  if (dc.pil && dc.pil.length) {
+    const pilCount = dc.pil.length;
+    const pilGeo = new THREE.BoxGeometry(1, 1, 1);
+    const pilMat = new THREE.MeshLambertMaterial({ color: 0x2a2a38 });
+    const pilMesh = new THREE.InstancedMesh(pilGeo, pilMat, pilCount);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < pilCount; i++) {
+      const p = dc.pil[i];
+      dummy.position.set(p.x, (WH - 4) / 2, p.y + 4);
+      dummy.scale.set(18, WH - 4, 8);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      pilMesh.setMatrixAt(i, dummy.matrix);
+    }
+    pilMesh.instanceMatrix.needsUpdate = true;
+    floorGroup.add(pilMesh);
+    layoutMeshes.push(pilMesh);
+
+    const torches = dc.pil.filter(p => p.torch);
+    if (torches.length) {
+      const tCount = torches.length;
+      const bktGeo = new THREE.BoxGeometry(4, 10, 6);
+      const bktMat = new THREE.MeshLambertMaterial({ color: 0x14141c });
+      const bktMesh = new THREE.InstancedMesh(bktGeo, bktMat, tCount);
+
+      const flameGeo = new THREE.ConeGeometry(4, 12, 6);
+      torchFlameMat3D = new THREE.MeshBasicMaterial({ color: ember, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+      const flameMesh = new THREE.InstancedMesh(flameGeo, torchFlameMat3D, tCount);
+
+      const glowGeo = new THREE.PlaneGeometry(60, 60);
+      torchGlowMat3D = new THREE.MeshBasicMaterial({ color: ember, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false });
+      const glowMesh = new THREE.InstancedMesh(glowGeo, torchGlowMat3D, tCount);
+
+      for (let i = 0; i < tCount; i++) {
+        const p = torches[i];
+        dummy.position.set(p.x, 44, p.y + 10);
+        dummy.scale.set(1, 1, 1);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        bktMesh.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(p.x, 55, p.y + 10);
+        dummy.scale.set(1, 1, 1);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        flameMesh.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(p.x, 55, p.y + 10.5);
+        dummy.scale.set(1, 1, 1);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        glowMesh.setMatrixAt(i, dummy.matrix);
+      }
+      bktMesh.instanceMatrix.needsUpdate = true;
+      flameMesh.instanceMatrix.needsUpdate = true;
+      glowMesh.instanceMatrix.needsUpdate = true;
+      floorGroup.add(bktMesh); layoutMeshes.push(bktMesh);
+      floorGroup.add(flameMesh); layoutMeshes.push(flameMesh);
+      floorGroup.add(glowMesh); layoutMeshes.push(glowMesh);
+    }
+  }
+
+  // Rubble
+  let totalStones = 0;
+  for (const rd of dc.rooms) {
+    if (rd.rubble) totalStones += (rd.rubble.length / 8) | 0;
+  }
+  if (totalStones > 0) {
+    const rubGeo = new THREE.BoxGeometry(1, 1, 1);
+    const rubMat = new THREE.MeshLambertMaterial({ color: 0x24242e });
+    const rubMesh = new THREE.InstancedMesh(rubGeo, rubMat, totalStones);
+    const dummy = new THREE.Object3D();
+    let idx = 0;
+    for (const rd of dc.rooms) {
+      const rb = rd.rubble;
+      if (!rb) continue;
+      for (let i = 0; i < rb.length; i += 8) {
+        const x0 = rb[i], y0 = rb[i + 1], x1 = rb[i + 2], y1 = rb[i + 3];
+        const x2 = rb[i + 4], y2 = rb[i + 5], x3 = rb[i + 6], y3 = rb[i + 7];
+        const cx = (x0 + x1 + x2 + x3) / 4;
+        const cz = (y0 + y1 + y2 + y3) / 4;
+        const spreadX = Math.max(x0, x1, x2, x3) - Math.min(x0, x1, x2, x3);
+        const spreadZ = Math.max(y0, y1, y2, y3) - Math.min(y0, y1, y2, y3);
+        const w = Math.max(spreadX, spreadZ);
+        const h = 3 + w * 0.35;
+        const ang = Math.atan2(y1 - y0, x1 - x0);
+        dummy.position.set(cx, h / 2, cz);
+        dummy.scale.set(w, h, w);
+        dummy.rotation.set(0, ang, 0);
+        dummy.updateMatrix();
+        rubMesh.setMatrixAt(idx++, dummy.matrix);
+      }
+    }
+    rubMesh.instanceMatrix.needsUpdate = true;
+    floorGroup.add(rubMesh);
+    layoutMeshes.push(rubMesh);
+  }
+
+  // Cracks
+  const crackPos = [];
+  for (const rd of dc.rooms) {
+    if (!rd.cracks) continue;
+    for (const pts of rd.cracks) {
+      for (let j = 0; j < pts.length - 2; j += 2) {
+        crackPos.push(pts[j], 0.4, pts[j + 1], pts[j + 2], 0.4, pts[j + 3]);
+      }
+    }
+  }
+  if (crackPos.length > 0) {
+    const crackGeo = new THREE.BufferGeometry();
+    crackGeo.setAttribute('position', new THREE.Float32BufferAttribute(crackPos, 3));
+    const crackMat = new THREE.LineBasicMaterial({ color: 0x050508, transparent: true, opacity: 0.7 });
+    const crackMesh = new THREE.LineSegments(crackGeo, crackMat);
+    floorGroup.add(crackMesh);
+    layoutMeshes.push(crackMesh);
+  }
+
+  // Inlays
+  const inlayPos = [];
+  for (const rd of dc.rooms) {
+    if (!rd.inlay) continue;
+    for (let k = 0; k < 2; k++) {
+      const arr = rd.inlay[k];
+      if (!arr) continue;
+      for (let j = 0; j < arr.length; j += 4) {
+        inlayPos.push(arr[j], 0.4, arr[j + 1], arr[j + 2], 0.4, arr[j + 3]);
+      }
+    }
+  }
+  if (inlayPos.length > 0) {
+    const inlayGeo = new THREE.BufferGeometry();
+    inlayGeo.setAttribute('position', new THREE.Float32BufferAttribute(inlayPos, 3));
+    const inlayMat = new THREE.LineBasicMaterial({ color: line, transparent: true, opacity: 0.22 });
+    const inlayMesh = new THREE.LineSegments(inlayGeo, inlayMat);
+    floorGroup.add(inlayMesh);
+    layoutMeshes.push(inlayMesh);
+  }
+
+  // Runners
+  const runnerPos = [];
+  if (dc.runners) {
+    for (const r of dc.runners) {
+      const s = r.s;
+      if (!s || s.length < 8) continue;
+      runnerPos.push(s[0], 0.4, s[1], s[2], 0.4, s[3]);
+      runnerPos.push(s[4], 0.4, s[5], s[6], 0.4, s[7]);
+    }
+  }
+  if (runnerPos.length > 0) {
+    const runnerGeo = new THREE.BufferGeometry();
+    runnerGeo.setAttribute('position', new THREE.Float32BufferAttribute(runnerPos, 3));
+    const runnerMat = new THREE.LineBasicMaterial({ color: line, transparent: true, opacity: 0.18 });
+    const runnerMesh = new THREE.LineSegments(runnerGeo, runnerMat);
+    floorGroup.add(runnerMesh);
+    layoutMeshes.push(runnerMesh);
+  }
 }
 
 const floorTexCache = {};
@@ -996,6 +1183,26 @@ function draw() {
   camera3D.position.set(camX + Math.sin(view3D.yaw)*hd + sx, 20 + Math.sin(view3D.pitch)*view3D.dist + sy, camY + Math.cos(view3D.yaw)*hd);
   camera3D.lookAt(camX, 20, camY);
   viewYaw = view3D.yaw;
+
+  // Cutaway so tall walls never hide the hunter
+  if (typeof player !== 'undefined' && player) {
+    const tcx = camera3D.position.x - player.x, tcz = camera3D.position.z - player.y;
+    const tlen = Math.hypot(tcx, tcz);
+    if (tlen > 0.0001) {
+      const toCamX = tcx / tlen, toCamZ = tcz / tlen;
+      for (let i = 0; i < wallMeshes.length; i++) {
+        const wm = wallMeshes[i];
+        if (wm.userData && wm.userData.nx !== undefined) {
+          const target = (wm.userData.nx * toCamX + wm.userData.nz * toCamZ > 0.35) ? 0.18 : 0.95;
+          wm.material.opacity += (target - wm.material.opacity) * Math.min(1, dt * 8);
+        }
+      }
+    }
+  }
+
+  const clk = typeof clock !== 'undefined' ? clock : now / 1000;
+  if (torchFlameMat3D) torchFlameMat3D.opacity = 0.75 + 0.2 * Math.sin(clk * 11);
+  if (torchGlowMat3D) torchGlowMat3D.opacity = 0.14 + 0.06 * Math.sin(clk * 7);
 
   // Floor and walls are rebuilt when the arena size, the layout, a door, the wave or the wall colour changes
   const curArenaW = typeof arenaW !== 'undefined' ? arenaW : 1400;
