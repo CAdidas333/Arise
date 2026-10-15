@@ -12,7 +12,7 @@ const endlessGate = floor => GATE_DEFS[Math.min(GATE_DEFS.length-1, Math.floor((
 function startDungeon(gateDef, endless = false) {
   arenaW = 1400; arenaH = 1000; // reset to normal, expands for boss
   layout = endless ? null : genLayout(gateDef.waves - 1); // rooms and corridors; the open arena stays for endless mode and boss fights
-  enemies = []; projectiles = []; telegraphs = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
+  enemies = []; projectiles = []; telegraphs = []; zones = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
   particles = []; texts = []; rings = []; arcs = []; ghosts = []; bolts = [];
   run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0, loot:[] };
   dungeon = { gate:endless ? endlessGate(1) : gateDef, wave:1, maxWaves:endless ? Infinity : gateDef.waves, state:'fight', wait:0, bossRef:null, endless, scale:1, introT:0, alive:0, picks:[] };
@@ -76,7 +76,7 @@ function roomStep() {
 // The way out of the last chamber leads to the open arena, where the boss hunt runs as it always has
 function enterBossArena() {
   layout = null; dungeon.wait = 0;
-  remnants = []; projectiles = []; telegraphs = [];
+  remnants = []; projectiles = []; telegraphs = []; zones = [];
   player.x = 0; player.y = 0; camera.x = 0; camera.y = 0; lastMovePos = { x:0, y:0 }; lastMoveTime = gameTime;
   player.shadows.forEach(s => { if (s.active) { s.x = rand(-50, 50); s.y = rand(20, 70); } });
   flash('#ffffff', 0.5); playSfx('tele');
@@ -95,7 +95,7 @@ function startBoss() {
   dungeon.state = 'intro'; dungeon.introT = 3.2;
   camera.focus = b; camera.targetZoom = baseZoom()*1.15;
   $('cine-name').textContent = b.name.toUpperCase(); $('cine-title').textContent = b.title;
-  show('cine'); projectiles = []; telegraphs = []; mouse.down = false; touchAttack = false;
+  show('cine'); projectiles = []; telegraphs = []; zones = []; mouse.down = false; touchAttack = false;
   playSfx('boss'); setMusic('boss'); shake(12);
 }
 function updateIntro(dt) {
@@ -112,7 +112,7 @@ function onBossDeath(b) {
   dungeon.bossRef = null; dungeon.state = 'dying'; say('boss_defeated', true, 0.6);
   hide('boss-bar-wrap');
   enemies.forEach(e => { if (e.alive) { e.alive = false; spawnBurst(e.x, e.y, e.color, 10, 260); } });
-  spawnQueue = []; projectiles = []; telegraphs = [];
+  spawnQueue = []; projectiles = []; telegraphs = []; zones = [];
   slowmo(0.18, 1.7); shake(28); flash('#ffffff', 0.7); hitstop(0.12); playSfx('explode');
   camera.focus = { x:b.x, y:b.y }; camera.targetZoom = baseZoom()*1.3;
   for (let i = 1; i <= 5; i++) after(0.28*i, () => { const x = b.x+rand(-50,50), y = b.y+rand(-50,50); spawnBurst(x, y, b.color, 30, 620); ring(x, y, '#ffffff', 10, 160, 0.4, 6); shake(12); playSfx('explode'); }, true);
@@ -221,7 +221,7 @@ function returnToHub() {
   gameState = 'HUB'; paused = false; timeScale = 1; slowT = 0; hitStop = 0;
   ['hud','victory-overlay','death-overlay','extraction-overlay','boon-overlay','pause-overlay','cine'].forEach(hide);
   show('system-menu');
-  enemies = []; projectiles = []; telegraphs = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
+  enemies = []; projectiles = []; telegraphs = []; zones = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
   dungeon = null; run = null; layout = null; legionTimer = 0; pendingExtraction = null; camera.focus = null; mouse.down = false; touchAttack = false;
   player.hp = player.maxHp; player.mp = player.maxMp;
   player.shadows.forEach(s => { s.active = false; });

@@ -1071,6 +1071,68 @@ function drawTelegraph(g) {
   ctx.globalAlpha = 1;
 }
 
+function drawZone(z) {
+  const a = clamp(Math.min(z.t/0.3, (z.dur - z.t)/0.6), 0, 1);
+  if (a <= 0) return;
+  const h = k => { const s = Math.sin(z.x*12.9898 + z.y*78.233 + k*37.719)*43758.5453; return s - Math.floor(s); };
+  if (z.type === 'circle') {
+    if (z.kind === 'web') {
+      ctx.fillStyle = '#d8d0e8'; ctx.globalAlpha = 0.08*a; disc(z.x, z.y, z.r);
+      const angs = [];
+      for (let i = 0; i < 7; i++) angs.push(i/7*TAU + (h(i)-0.5)*0.5);
+      ctx.strokeStyle = '#d8d0e8'; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.45*a;
+      ctx.beginPath();
+      for (let i = 0; i < 7; i++) { ctx.moveTo(z.x, z.y); ctx.lineTo(z.x + Math.cos(angs[i])*z.r, z.y + Math.sin(angs[i])*z.r); }
+      ctx.stroke();
+      for (const f of [0.3, 0.6, 0.95]) {
+        ctx.beginPath();
+        for (let i = 0; i < 7; i++) {
+          const px = z.x + Math.cos(angs[i])*z.r*f, py = z.y + Math.sin(angs[i])*z.r*f;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+    } else if (z.kind === 'fire') {
+      ctx.fillStyle = '#ff6622'; ctx.globalAlpha = 0.2*a; disc(z.x, z.y, z.r);
+      ctx.fillStyle = '#ffaa33'; ctx.globalAlpha = (0.12 + 0.08*Math.sin(clock*9 + z.x))*a; disc(z.x, z.y, z.r*0.7);
+      ctx.strokeStyle = '#ff6622'; ctx.globalAlpha = 0.5*a; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, TAU); ctx.stroke();
+    } else if (z.kind === 'rubble') {
+      ctx.fillStyle = '#8a7a66'; ctx.globalAlpha = 0.22*a; disc(z.x, z.y, z.r);
+      ctx.fillStyle = '#3a332b'; ctx.globalAlpha = 0.8*a;
+      for (let i = 0; i < 6; i++) {
+        const ang = h(i+10)*TAU, d = h(i+20)*0.8*z.r;
+        disc(z.x + Math.cos(ang)*d, z.y + Math.sin(ang)*d, 4 + h(i)*5);
+      }
+    } else if (z.kind === 'blood') {
+      ctx.fillStyle = '#aa1133'; ctx.globalAlpha = 0.25*a; disc(z.x, z.y, z.r);
+      ctx.strokeStyle = '#ff3355'; ctx.globalAlpha = 0.5*a; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, TAU); ctx.stroke();
+    } else {
+      ctx.fillStyle = z.color || '#ff4444'; ctx.globalAlpha = 0.2*a; disc(z.x, z.y, z.r);
+    }
+  } else {
+    ctx.save(); ctx.translate(z.x, z.y); ctx.rotate(Math.atan2(z.ay, z.ax));
+    if (z.kind === 'web') {
+      ctx.fillStyle = '#d8d0e8'; ctx.globalAlpha = 0.08*a; ctx.fillRect(0, -z.w/2, z.len, z.w);
+    } else if (z.kind === 'fire') {
+      ctx.fillStyle = '#ff6622'; ctx.globalAlpha = 0.2*a; ctx.fillRect(0, -z.w/2, z.len, z.w);
+      ctx.fillStyle = '#ffaa33'; ctx.globalAlpha = (0.12 + 0.08*Math.sin(clock*9 + z.x))*a; ctx.fillRect(0, -z.w*0.3, z.len, z.w*0.6);
+      ctx.strokeStyle = '#ff6622'; ctx.globalAlpha = 0.5*a; ctx.lineWidth = 2; ctx.strokeRect(0, -z.w/2, z.len, z.w);
+    } else if (z.kind === 'rubble') {
+      ctx.fillStyle = '#8a7a66'; ctx.globalAlpha = 0.22*a; ctx.fillRect(0, -z.w/2, z.len, z.w);
+    } else if (z.kind === 'blood') {
+      ctx.fillStyle = '#aa1133'; ctx.globalAlpha = 0.25*a; ctx.fillRect(0, -z.w/2, z.len, z.w);
+      ctx.strokeStyle = '#ff3355'; ctx.globalAlpha = 0.5*a; ctx.lineWidth = 1.5; ctx.strokeRect(0, -z.w/2, z.len, z.w);
+    } else {
+      ctx.fillStyle = z.color || '#ff4444'; ctx.globalAlpha = 0.2*a; ctx.fillRect(0, -z.w/2, z.len, z.w);
+    }
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
 function drawPickups() {
   for (const r of remnants) { // shadow remnants — a wisp waiting for the word
     const fade = Math.min(1, (r.dur - r.t)/2), fl = Math.sin(clock*7 + r.x);
