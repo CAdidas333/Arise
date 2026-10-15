@@ -1,5 +1,24 @@
 # Arise — Session Log
 
+## Session 8 — 2026-10-15 (Thursday) — Three-phase boss fights with arena tricks (V18 complete), and the 3D view catches up
+
+### Focus
+Restarted by Houston in the morning under free rein. Orchestrator only: briefs, review, browser tests in both views, ship. Every build job went to the free Gemini worker (`worker run Arise <slug> <brief> --engine auto`); each was accepted on its first pass.
+
+### What Changed
+- **Boss signature attacks re-checked** (already public since 2026-10-12): each boss cast its attack with no errors in both views.
+- **Zones** (worker `boss-zones`, merge f8e83d9; brief `docs/briefs/v18-step8b-zones.md`): floor patches that stay, slow and burn, drawn in both views. By hand after: rubble stones lighter.
+- **Three-phase boss fights** (worker `boss-phases`, merge 2793a0d; brief `v18-step8c-boss-phases.md`): a scripted move at 50 percent and a LAST STAND at 25 percent per boss, and zones on the signature attacks. By hand after: the Statue of God's beam made cold blue with a shorter warning, so it reads as one beam and never as a fan of gold rays (art rule).
+- **3D leftovers** (worker `lane4-3d`, merge 66e7873; brief `v18-3d-lane4-leftovers.md`; the worker ran into its 20-minute limit with everything done): minimap that turns with the camera (U5), dodge afterimages, Arise light pillars, hub backdrop (F9), floor textures cached before a gate starts (G5). New shared script `js/12b-overlay.js`.
+- **Shipped** 705b434 to `main`, stamp 20261015084150, checked on both public pages.
+- **Docs:** the missing Session 7 entry (Houston's flag), threads F7, F9, U5, G5 done, F12 opened, two lessons (headless captures, the boss intro in tests).
+
+### Checks
+`tools/check_names.sh`, `test_layout.js` (PASS 8000), `test_gear.js`, `test_army.js`, the headless load, `balance_bot.js` (every gate cleared, 0 deaths). Browser: every boss reached phases 2 and 3 in both views with no errors; a hit, a dodge, an attack and the Awakening in both views. Frames in `docs/previews/` (`step8_*_v1.jpg`, `3d_*_v1.jpg` of 2026-10-15).
+
+### Not Done
+3D thick walls and room dressing (U3) was with a worker at the wrap. Nobody has played the boss fights by hand (F12); still too easy by the bot (E1).
+
 ## Session 7 — 2026-10-12 (Monday) — Boss attacks public, bosses fight up close, the army is called, slower levels, the hunter squares up
 
 ### Focus

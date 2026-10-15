@@ -4,7 +4,7 @@ tags: [project]
 
 # Arise — Master Context
 
-**Last updated**: 2026-10-11 (Session 6 wrap)
+**Last updated**: 2026-10-15 (Session 8)
 **Live URL**: https://cadidas333.github.io/Arise/
 **Repo**: CAdidas333/Arise (public)
 
@@ -44,7 +44,7 @@ Full script rewrite. Adds: frame-rate-independent engine, 3-hit combo + dodge, s
 Fixes from Chris's play-testing: the arena-centre mark is now a star-free circle and floor marks are plain diamonds; aim modes (Auto, Keys, Mouse; `M` cycles; `X` or `J` attacks; arrow keys work); a rebuilt extraction sound; a Controls tab in the System menu; skill points at one per 2 levels (the tree fills around level 94; old saves are refunded on load). V18 step 1 (painted floors and hub backdrop) is live.
 
 ### Structure since V18 work began (branch `v18-world`)
-Chris lifted the single-file rule on 2026-10-09 ("you can use as many folders and whatever you need"). `index.html` now holds the CSS and markup and loads 15 classic scripts from `js/` in order (they share one global scope; no modules, no build step; `js/03a-layout.js` and `js/12a-card.js` joined the original 13 on 2026-10-11). Painted art lives in `assets/` with provenance in `assets/CREDITS.md`. `tools/process_art.py` turns raw generated images into game assets; `tools/stamp.sh` refreshes the `?v=` on the script tags and must be run before committing any change in `js/`. `tools/el_voice.py`, `tools/el_sfx.py` and `tools/system_lines.tsv` are the ElevenLabs voice and sound-effect scripts and the System lines (the voice and effects were generated and are live since 2026-10-09); `tools/el_music.py` made the music (2026-10-11). Briefs for helper jobs live in `docs/briefs/`. How work is done: Claude writes briefs, reviews and tests; free image models and the worker (`worker run Arise <slug> <brief>`, Gemini first) do the generating and coding. The 3D view (`3d/`, with a local copy of three.js r149, MIT) has been live at `/3d/` since 2026-10-09.
+Chris lifted the single-file rule on 2026-10-09 ("you can use as many folders and whatever you need"). `index.html` now holds the CSS and markup and loads 16 classic scripts (15 until 2026-10-15, when `js/12b-overlay.js` joined) from `js/` in order (they share one global scope; no modules, no build step; `js/03a-layout.js` and `js/12a-card.js` joined the original 13 on 2026-10-11). Painted art lives in `assets/` with provenance in `assets/CREDITS.md`. `tools/process_art.py` turns raw generated images into game assets; `tools/stamp.sh` refreshes the `?v=` on the script tags and must be run before committing any change in `js/`. `tools/el_voice.py`, `tools/el_sfx.py` and `tools/system_lines.tsv` are the ElevenLabs voice and sound-effect scripts and the System lines (the voice and effects were generated and are live since 2026-10-09); `tools/el_music.py` made the music (2026-10-11). Briefs for helper jobs live in `docs/briefs/`. How work is done: Claude writes briefs, reviews and tests; free image models and the worker (`worker run Arise <slug> <brief>`, Gemini first) do the generating and coding. The 3D view (`3d/`, with a local copy of three.js r149, MIT) has been live at `/3d/` since 2026-10-09.
 
 ### Changes on 2026-10-10 (Session 5, live)
 The mark in the middle of each gate floor is plain rings only (it must never read as a magic circle). The hunter is pass 3 of the body, drawn at 1.35 size, and the old stick figure is kept as `drawHunterClassic`, chosen by `settings.hunter` ("Hunter look" in the Controls tab). The 3D view has an orbit camera (`view3D` in `3d/render3d.js`; Z, C, V, right-drag, wheel) and movement relative to the camera through the shared `viewYaw` in `js/03-state.js`. The 3D view draws fight effects on a transparent overlay (`drawFx3D`; the game canvas sits above the 3D canvas). Each boss has its own body (`drawBoss` in `js/11-render-world.js`, also used for boss shadow soldiers); V18 step 4 is complete.
@@ -57,8 +57,17 @@ The mark in the middle of each gate floor is plain rings only (it must never rea
 - **Real 3D figures** for the hunter, six enemy kinds, six bosses and shadow soldiers (three.js primitives, shared geometry); gear gems in rarity colours; two-finger turn and pinch zoom on phones.
 - **Story thread (V18 step 7).** A one-time opening of five System cards, a chapter card on first entry to each gate, a closing line on first clear; text in the `STORY` table (`js/01-data.js`); seen-flags saved in `player.story`.
 - **Shareable result card (V18 step 9).** `js/12a-card.js`; SAVE RESULT CARD on the victory screen and the endless death screen (1200 by 630 PNG, share sheet or download).
-- **Not live yet:** V18 step 8 (hand-designed boss fights). One signature attack per boss, the first pass at it, was being built by a sub-agent (only `js/05-enemies.js` and the `patterns` lists) when this was written; no merge had landed on `v18-world`.
+- **V18 step 8** followed: signature attacks public 2026-10-12, the full fights 2026-10-15 (below).
 - **Tools and checks added:** `node tools/test_layout.js` (expects `PASS 8000`), `node tools/test_gear.js`, `tools/check_names.sh` (lists top-level names declared twice, which breaks the shared global scope), `tools/serve.py` (threaded local preview, port 8767, `.claude/launch.json` points at it). `.claude/worktrees/` and `assets/music/takes/` are git-ignored.
+
+### Changes on 2026-10-12 (Session 7, live)
+Boss signature attacks public; bosses use their patterns against a hunter in close; upright-phone layout fixes (boss health strip, combo beside the stat bars); a pink potion button with a count; the army is called (three escort, Arise: Legion calls the strongest, the Awakening calls the roster); levels at half the speed (`XP_PACE = 2`); `node tools/balance_bot.js`; the hunter squares up (lock-on facing, backstep dodge, Counter, warning rings). Details in SESSION_LOG.
+
+### Changes on 2026-10-15 (Session 8, live; stamp 20261015084150)
+- **V18 step 8 done, so V18 is complete.** Each boss has three phases: at 50 percent it enrages as before and makes a scripted move, at 25 percent it makes a "LAST STAND" with a second move (`bossPhaseMove` in `js/05-enemies.js`; `e.phase` is 1, 2 or 3 and every enraged test is `phase >= 2`). Moves: Spider Queen webs the floor, then a nine-egg clutch; Orc Chieftain war cry and two elite orcs, then a five-jump pound chain; Death Knight two elite adds, then crossing sword lanes; Demon Lord a ring of fire round the arena for 30 seconds, then a second ring; Ancient Dragon fire rain, then a firestorm; Statue of God a sweeping cold eye-beam, then two.
+- **Zones (arena tricks).** A floor patch that stays after an attack lands: `addZone`, or a `zone:{ kind, dur, slow, dps }` field on any telegraph. Kinds: web (slows walking), fire and blood (burn twice a second while stood in, never during a dodge), rubble (slows). Drawn by `drawZone` (2D) and `zoneMeshes` (3D). The signature attacks leave them (unhatched eggs, pounds from phase 2, cleave lanes from phase 2, the firewall's back row, the breath's edges).
+- **3D lane:** a minimap that turns with the camera, dodge afterimages, Arise light pillars, the gate backdrop on the title and hub, floor textures loaded before a gate starts. `drawMinimap`, `drawPortal` and `drawMotes` moved to a 16th script, `js/12b-overlay.js`, loaded by both pages.
+- **In flight at the wrap:** thick stone walls and room dressing in 3D (thread U3), a free-worker job.
 
 ### Origin
 Kevin proposed building an MMO RPG that simulates the Solo Leveling experience. For V1, we scoped it to a single-player browser game capturing the core loop: enter gates, fight enemies, level up, extract shadows, repeat with harder content. By Session 1's end, the game was publicly deployed and mobile-ready.
@@ -77,7 +86,7 @@ Kevin proposed building an MMO RPG that simulates the Solo Leveling experience. 
 ```
 Arise/
   index.html          — CSS and markup, loads the scripts (652 lines on v18-world, 2026-10-11)
-  js/                 — 15 classic scripts, loaded in order, shared global scope (01-data ... 13-loop, plus 03a-layout and 12a-card)
+  js/                 — 16 classic scripts, loaded in order, shared global scope (01-data ... 13-loop, plus 03a-layout, 12a-card and 12b-overlay)
   assets/             — Painted floors (floors/), hub backdrop (bg/), System voice (voice/), signature effects (sfx/), music (music/; takes/ is git-ignored), CREDITS.md (provenance)
   tools/              — process_art.py, stamp.sh, sync3d.py, serve.py, check_names.sh, test_layout.js, test_gear.js, el_voice.py, el_sfx.py, el_music.py, system_lines.tsv
   3d/                 — The 3D view: render3d.js, vendored three.js, and index.html GENERATED from the root index.html by tools/sync3d.py

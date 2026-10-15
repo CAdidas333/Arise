@@ -227,3 +227,19 @@
 **Outcome**: Both sides changed the `<script>` block in `index.html` (a new tag on one side, new `?v=` stamps on the other), so git reported a conflict.
 
 **Next time**: Keep the block that has the new tag, then run `tools/stamp.sh` to refresh every stamp.
+
+## 2026-10-15 — Headless captures: an iframe page hung, a page copy with the setup injected worked
+
+**Tried**: Captured game frames with headless Chrome from a small page that loaded the game in an iframe and set it up from outside; then the same with `--timeout` instead of `--virtual-time-budget`.
+
+**Outcome**: The iframe page never finished under virtual time (killed after 50 seconds), and `--timeout` returned plain black frames. What worked, in about 8 seconds a frame: a throwaway copy of `index.html` (or of `3d/index.html` with its `<base>` removed) at the repo root with the setup script injected before `</body>` (run on `load` plus 800 ms, CSS animations off), captured with `--headless=new --user-data-dir=<own folder> --virtual-time-budget=1000 --run-all-compositor-stages-before-draw --screenshot=...`. The setup must call `hide('title-screen')`, or the title overlay covers the frame. A budget just above the setup delay catches a moment (a dodge's afterimages, a beam mid-sweep).
+
+**Next time**: Use that recipe; keep the copies out of git (delete them after) and give Chrome its own profile folder so it never collides with the user's Chrome.
+
+## 2026-10-15 — A boss test that starts during the 3.2-second boss intro sees nothing happen
+
+**Tried**: Forced a boss's attack or phase change right after `enterBossArena()` in a browser test.
+
+**Outcome**: The first cast never fired and phase changes showed late, because `startBoss` sets `dungeon.state = 'intro'` for 3.2 seconds and the boss does not act until it ends. It looked like a fault in the boss code and was not.
+
+**Next time**: In a boss test, step the game until `dungeon.state === 'fight'` before forcing anything.
