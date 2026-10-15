@@ -15,7 +15,7 @@ function updatePlayer(dt) {
   const mag = Math.hypot(dx, dy);
   if (mag > 0.12) {
     dx /= mag; dy /= mag; moveDir.x = dx; moveDir.y = dy; player.moving = true;
-    if (player.dodgeT <= 0) { const sp = pSpeed() * Math.min(1, mag) * (player.atkT > 0 ? 0.55 : 1); movePlayerTo(player.x + dx*sp*dt, player.y + dy*sp*dt); }
+    if (player.dodgeT <= 0) { const sp = pSpeed() * Math.min(1, mag) * (player.atkT > 0 ? 0.55 : 1) * zoneSlow(); movePlayerTo(player.x + dx*sp*dt, player.y + dy*sp*dt); }
   } else { moveDir.x = moveDir.y = 0; player.moving = false; }
   if (player.dodgeT > 0) {
     player.dodgeT -= dt; movePlayerTo(player.x + player.ddx*760*dt, player.y + player.ddy*760*dt);
@@ -91,7 +91,7 @@ function step(raw) {
   if (dungeon.state === 'intro') updateIntro(raw);
   if (dungeon.state === 'fight') {
     gameTime += dt; run.time += dt;
-    updatePlayer(dt); updateSpawns(dt); updateEnemies(dt); updateTelegraphs(dt); updateProjectiles(dt); updateShadows(dt);
+    updatePlayer(dt); updateSpawns(dt); updateEnemies(dt); updateTelegraphs(dt); updateZones(dt); updateProjectiles(dt); updateShadows(dt);
     if (dungeon.state === 'fight') {
       if (layout && layout.lock < 0) roomStep(); // between chambers: wait for the hunter to walk in
       else if (dungeon.wait > 0) { dungeon.wait -= dt; if (dungeon.wait <= 0) spawnWave(); }
@@ -112,9 +112,9 @@ function step(raw) {
 // Open the page with #debug to poke at internals from the console
 if (location.hash === '#debug') window.__arise = {
   get player() { return player; }, get dungeon() { return dungeon; }, get enemies() { return enemies; }, get run() { return run; },
-  get gameState() { return gameState; }, get particles() { return particles; }, get remnants() { return remnants; }, get telegraphs() { return telegraphs; }, get layout() { return layout; }, set layout(v) { layout = v; }, get orbs() { return orbs; },
+  get gameState() { return gameState; }, get particles() { return particles; }, get remnants() { return remnants; }, get telegraphs() { return telegraphs; }, get zones() { return zones; }, get layout() { return layout; }, set layout(v) { layout = v; }, get orbs() { return orbs; },
   GATE_DEFS, ENDLESS, SKILL, startDungeon, step, useSkill, damageEnemy, chooseBoon, returnToHub, addShadow, tryArise, dodge, hurtPlayer, makeEnemy, saveGame, genLayout, keepIn, inMap, roomAt, pointInRoom, mapRects, roomStep, enterBossArena,
-  rollGear, takeGear, gearMod, cleanGear, gearValue, dropGear,
+  rollGear, takeGear, gearMod, cleanGear, gearValue, dropGear, addZone, updateZones, zoneSlow,
 };
 
 let lastTime = performance.now(), loopErr = 0;

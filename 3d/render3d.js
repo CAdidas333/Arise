@@ -887,7 +887,7 @@ const GEAR_HEX3D = [0xcfd8e3, 0x4aa8ff, 0xbb66ff, 0xffcc33]; // by rarity
 
 // Entity tracking maps
 const enemyMeshes = new Map(), shadowMeshes = new Map(), projectileMeshes = new Map();
-const orbMeshes = new Map(), remnantMeshes = new Map(), telegraphMeshes = new Map();
+const orbMeshes = new Map(), remnantMeshes = new Map(), telegraphMeshes = new Map(), zoneMeshes = new Map();
 const seenFigures = new Set(); // the enemies, then the shadows, drawn this frame; reused so a frame allocates nothing for them
 
 function disposeNode(node) {
@@ -948,7 +948,7 @@ function draw() {
     view3D.yaw = 0; viewYaw = 0;
     hunterGroup.visible = false;
     const emptySet = new Set();
-    [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, telegraphMeshes].forEach(m => pruneMap(m, emptySet));
+    [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, telegraphMeshes, zoneMeshes].forEach(m => pruneMap(m, emptySet));
     renderer.render(scene, camera3D);
     drawFx3D();
     return;
@@ -1094,6 +1094,49 @@ function draw() {
     }
   }
   pruneMap(telegraphMeshes, activeTele);
+
+  // Zones
+  const activeZones = new Set();
+  for (const z of (typeof zones !== 'undefined' ? zones : [])) {
+    activeZones.add(z);
+    let m = zoneMeshes.get(z);
+    if (!m) {
+      if (z.type === 'circle' && z.kind === 'web') {
+        const discG = new THREE.CircleGeometry(z.r || 50, 32); discG.rotateX(-Math.PI / 2);
+        const discM = new THREE.MeshBasicMaterial({ color: 0xd8d0e8, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false });
+        const dm = new THREE.Mesh(discG, discM); dm.userData.disposeGeom = true; dm.userData.baseOpacity = 0.12;
+        const wireG = new THREE.CircleGeometry(z.r || 50, 7); wireG.rotateX(-Math.PI / 2);
+        const wireM = new THREE.MeshBasicMaterial({ color: 0xd8d0e8, wireframe: true, transparent: true, opacity: 0.6, depthWrite: false });
+        const wm = new THREE.Mesh(wireG, wireM); wm.userData.disposeGeom = true; wm.userData.baseOpacity = 0.6;
+        wm.position.y = 0.3;
+        m = new THREE.Group();
+        m.add(dm); m.add(wm);
+      } else {
+        let geom;
+        if (z.type === 'circle') { geom = new THREE.CircleGeometry(z.r || 50, 32); geom.rotateX(-Math.PI / 2); }
+        else { geom = new THREE.PlaneGeometry(z.w || 20, z.len || 100); geom.rotateX(-Math.PI / 2); }
+        const col = z.kind === 'web' ? 0xd8d0e8 : z.kind === 'fire' ? 0xff6622 : z.kind === 'rubble' ? 0x8a7a66 : z.kind === 'blood' ? 0xaa1133 : (z.color || 0xff4444);
+        const mat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false });
+        m = new THREE.Mesh(geom, mat); m.userData.disposeGeom = true; m.userData.baseOpacity = 0.3;
+      }
+      scene.add(m); zoneMeshes.set(z, m);
+    }
+    const a = clamp(Math.min(z.t / 0.3, (z.dur - z.t) / 0.6), 0, 1);
+    if (m.isGroup) {
+      for (const c of m.children) c.material.opacity = (c.userData.baseOpacity || 0.3) * a;
+    } else {
+      const base = z.kind === 'fire' ? 0.3 + 0.12 * Math.sin(clock * 9 + z.x) : (m.userData.baseOpacity || 0.3);
+      m.material.opacity = base * a;
+    }
+    if (z.type === 'circle') {
+      m.position.set(z.x, 0.8, z.y);
+    } else {
+      const d = Math.hypot(z.ax, z.ay) || 1, nx = z.ax / d, nz = z.ay / d;
+      const mx = z.x + nx * (z.len || 100) * 0.5, mz = z.y + nz * (z.len || 100) * 0.5;
+      m.position.set(mx, 0.8, mz); m.lookAt(mx + nx, 0.8, mz + nz);
+    }
+  }
+  pruneMap(zoneMeshes, activeZones);
 
   renderer.render(scene, camera3D);
   drawFx3D();

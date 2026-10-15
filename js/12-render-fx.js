@@ -72,8 +72,8 @@ function drawWorld() {
   const vis = (x, y, r = 0) => x+r > vx0 && x-r < vx1 && y+r > vy0 && y-r < vy1;
 
   drawArena(vx0, vy0, vx1, vy1);
-  if (layout) { ctx.save(); ctx.beginPath(); for (const r of mapRects()) ctx.rect(r.x0, r.y0, r.x1-r.x0, r.y1-r.y0); ctx.clip(); telegraphs.forEach(drawTelegraph); ctx.restore(); } // warnings stay on the floor, never on the black outside a room
-  else telegraphs.forEach(drawTelegraph);
+  if (layout) { ctx.save(); ctx.beginPath(); for (const r of mapRects()) ctx.rect(r.x0, r.y0, r.x1-r.x0, r.y1-r.y0); ctx.clip(); zones.forEach(drawZone); telegraphs.forEach(drawTelegraph); ctx.restore(); } // warnings stay on the floor, never on the black outside a room
+  else { zones.forEach(drawZone); telegraphs.forEach(drawTelegraph); }
   for (const r of rings) {
     const p = r.t/r.dur, rad = lerp(r.r0, r.r1, 1 - (1-p)*(1-p));
     ctx.globalAlpha = 1-p; ctx.strokeStyle = r.color; ctx.lineWidth = r.w*(1-p) + 1;

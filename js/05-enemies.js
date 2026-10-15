@@ -17,6 +17,32 @@ function makeEnemy(def, x, y, o = {}) {
 const clampArena = e => { const p = keepIn(e.x, e.y, e.size); e.x = p.x; e.y = p.y; };
 const mv = (e, ux, uy, spd, dt) => { e.x += ux*spd*dt; e.y += uy*spd*dt; };
 const telegraph = o => telegraphs.push(Object.assign({ t:0 }, o));
+let zones = [];
+const addZone = o => { if (zones.length < 90) zones.push(Object.assign({ t:0, tick:0, slow:0, dps:0 }, o)); };
+function inZone(z, x, y, pad = 0) {
+  if (z.type === 'circle') return dist(z.x, z.y, x, y) < z.r + pad;
+  const px = x - z.x, py = y - z.y, along = px*z.ax + py*z.ay, across = Math.abs(py*z.ax - px*z.ay);
+  return along > -pad && along < z.len + pad && across < z.w/2 + pad;
+}
+function zoneSlow() {
+  if (!player || !zones.length) return 1;
+  let m = 0;
+  for (const z of zones) if (z.slow > m && inZone(z, player.x, player.y, 0)) m = z.slow;
+  return Math.max(0.4, 1 - m);
+}
+function updateZones(dt) {
+  const live = [];
+  for (const z of zones) {
+    z.t += dt;
+    if (z.t >= z.dur || (z.owner && !z.owner.alive)) continue;
+    if (z.dps > 0 && dungeon && dungeon.state === 'fight' && player && inZone(z, player.x, player.y, 8)) {
+      z.tick += dt;
+      if (z.tick >= 0.5) { z.tick -= 0.5; if (player.inv <= 0) hurtPlayer(z.dps*0.5); }
+    } else z.tick = 0;
+    live.push(z);
+  }
+  zones = live;
+}
 function shoot(e, ang, speed, dmg, size, color) {
   projectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*speed, vy:Math.sin(ang)*speed, damage:dmg, size, color, life:3.2, fromEnemy:true });
 }
@@ -258,6 +284,7 @@ function updateTelegraphs(dt) {
       if (along > -8 && along < g.len+8 && across < g.w/2+8) hurtPlayer(g.dmg);
       else slipped((x, y) => { const qx = x-g.x, qy = y-g.y, al = qx*g.ax + qy*g.ay; return al > -8 && al < g.len+8 && Math.abs(qy*g.ax - qx*g.ay) < g.w/2+8; });
     }
+    if (g.zone) addZone(Object.assign({ type:g.type, x:g.x, y:g.y, r:g.r, ax:g.ax, ay:g.ay, len:g.len, w:g.w, owner:g.owner }, g.zone));
   }
   telegraphs = live;
 }
