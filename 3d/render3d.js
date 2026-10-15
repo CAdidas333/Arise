@@ -103,7 +103,13 @@ if (hintEl) hintEl.innerHTML += ' &nbsp;·&nbsp; Z / C TURN CAMERA &nbsp;·&nbsp
 
 // Floor and walls
 let currentGate = null, floorTexture = null, floorMesh = null;
-let torchFlameMat3D = null, torchGlowMat3D = null;
+let torchFlameMat3D = null, torchGlowMat3D = null, torchGlowTex3D = null;
+const glowTex3D = () => torchGlowTex3D || (torchGlowTex3D = (() => { // a soft round falloff, made once; additive, so the black edge adds nothing
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.4, '#555555'); gr.addColorStop(1, '#000000'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})());
 const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x111118, roughness: 0.85 });
 const wallMeshes = [], floorGroup = new THREE.Group();
 scene.add(floorGroup);
@@ -114,7 +120,7 @@ const layoutMeshes = []; // floor pieces, door bars and the exit light of a layo
 function clearFloorAndWalls() {
   if (floorMesh) { floorGroup.remove(floorMesh); floorMesh.geometry.dispose(); floorMesh = null; }
   while (wallMeshes.length) { const wm = wallMeshes.pop(); floorGroup.remove(wm); wm.geometry.dispose(); wm.material.dispose(); }
-  while (layoutMeshes.length) { const m = layoutMeshes.pop(); floorGroup.remove(m); m.geometry.dispose(); if (m.material !== floorMaterial) m.material.dispose(); }
+  while (layoutMeshes.length) { const m = layoutMeshes.pop(); floorGroup.remove(m); m.geometry.dispose(); if (m.material !== floorMaterial) m.material.dispose(); if (m.isInstancedMesh) m.dispose(); } // the dressing is rebuilt with every door and wave, so free its instance buffers too
   torchFlameMat3D = null;
   torchGlowMat3D = null;
 }
@@ -248,7 +254,7 @@ function rebuildLayout3D(line) {
       const flameMesh = new THREE.InstancedMesh(flameGeo, torchFlameMat3D, tCount);
 
       const glowGeo = new THREE.PlaneGeometry(60, 60);
-      torchGlowMat3D = new THREE.MeshBasicMaterial({ color: ember, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false });
+      torchGlowMat3D = new THREE.MeshBasicMaterial({ color: ember, map: glowTex3D(), transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false });
       const glowMesh = new THREE.InstancedMesh(glowGeo, torchGlowMat3D, tCount);
 
       for (let i = 0; i < tCount; i++) {
@@ -329,7 +335,7 @@ function rebuildLayout3D(line) {
   if (crackPos.length > 0) {
     const crackGeo = new THREE.BufferGeometry();
     crackGeo.setAttribute('position', new THREE.Float32BufferAttribute(crackPos, 3));
-    const crackMat = new THREE.LineBasicMaterial({ color: 0x050508, transparent: true, opacity: 0.7 });
+    const crackMat = new THREE.LineBasicMaterial({ color: 0x050508, transparent: true, opacity: 0.4 });
     const crackMesh = new THREE.LineSegments(crackGeo, crackMat);
     floorGroup.add(crackMesh);
     layoutMeshes.push(crackMesh);
@@ -1202,7 +1208,7 @@ function draw() {
 
   const clk = typeof clock !== 'undefined' ? clock : now / 1000;
   if (torchFlameMat3D) torchFlameMat3D.opacity = 0.75 + 0.2 * Math.sin(clk * 11);
-  if (torchGlowMat3D) torchGlowMat3D.opacity = 0.14 + 0.06 * Math.sin(clk * 7);
+  if (torchGlowMat3D) torchGlowMat3D.opacity = 0.5 + 0.15 * Math.sin(clk * 7);
 
   // Floor and walls are rebuilt when the arena size, the layout, a door, the wave or the wall colour changes
   const curArenaW = typeof arenaW !== 'undefined' ? arenaW : 1400;
