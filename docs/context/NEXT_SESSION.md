@@ -34,8 +34,8 @@ brief `docs/briefs/v18-3d-lane5-walls-dressing.md`. If the wrap note below does 
 1. Ship U3 (3D walls and dressing) if it is not live (see above).
 2. When Chris has played: tune from what he says. Do not make enemies hit harder before he has (his word, 2026-10-12). The bot
    still dies 0 times and the shadows do most of the boss damage (E1); levers: `shadowDmg`, boss health, enemy damage.
-3. 3D lane: the light pillars for gate portals and anything else the 2D view draws that 3D does not; check the 3D view on a
-   phone-sized window (440 by 762) now that the minimap is drawn there (it sits top right under the pause button).
+3. 3D lane: anything else the 2D view draws that 3D does not. The 3D minimap was checked at 440 by 762 in a desktop browser
+   (top right, where the 2D one is); not yet with a phone's touch layout.
 4. Parked: shared leaderboard and co-op (F1); the printable status report (C1).
 
 ## Watch-outs / state of mind
