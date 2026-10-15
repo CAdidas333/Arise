@@ -2,11 +2,9 @@
 _Written: 2026-10-15 (Thursday) during Session 8, by the Arise project manager session (started by Houston)_
 
 ## Where we left off
-V18 is complete: all nine steps are live. Session 8 shipped three-phase boss fights with arena tricks (step 8) and four 3D
-leftovers, live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261015084150, commit 705b434 (`main` = `v18-world`
-at the ship). One job was in flight at the wrap: **thick stone walls and room dressing in 3D (U3)**, worker slug `walls3d`,
-brief `docs/briefs/v18-3d-lane5-walls-dressing.md`. If the wrap note below does not say it shipped, review it first:
-`worker diff Arise walls3d` from `~/Projects`, test both views, then `worker merge` and `worker clean`, stamp, ship.
+V18 is complete: all nine steps are live. Session 8 shipped three-phase boss fights with arena tricks (step 8), four 3D
+leftovers, and thick stone walls with room dressing in 3D. Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp
+20261015090051, commit d47aa59 (`main` = `v18-world` at the ship). Nothing is in flight; no worker worktrees are left.
 
 ## Tell Chris when he plays (plain words; his list, lined up, none of it blocks the work)
 - **Bosses fight in three phases now.** At half health each boss enrages and does something of its own; at a quarter it makes
@@ -17,7 +15,8 @@ brief `docs/briefs/v18-3d-lane5-walls-dressing.md`. If the wrap note below does 
 - **Some attacks leave the floor dangerous for a moment**: fire and blood burn while you stand in them (walking through is free,
   dodging through never hurts), webs and rubble slow you.
 - **The 3D view has a minimap** that turns with the camera, dodge afterimages, a column of light on every Arise, the gate picture
-  on the title and hub, and the floor shows from the first frame.
+  on the title and hub, the floor from the first frame, and rooms that look like the 2D ones: thick stone walls (the ones
+  between the camera and you fade out), pilasters, torches, rubble and cracks.
 - **Questions for him after he plays:** do the boss fights feel fair or too hard up close (F12, F7)? Does the square-up and
   counter feel right (F11)? Is it still too easy (E1)? Rooms too many or too few (E4)? Gear drops (E5)?
 - **Still waiting on him:** his ears on the music (U6: hub take 2, fight take 1, boss take 1; swap by naming track and take);
@@ -28,15 +27,14 @@ brief `docs/briefs/v18-3d-lane5-walls-dressing.md`. If the wrap note below does 
   small size in 2D (it can read as a cross).
 - **Pictures** (`docs/previews/`): `step8_demon_ring_of_fire_v1.jpg`, `step8_knight_crossing_cuts_v1.jpg`,
   `step8_zones_2d_v1.jpg`, `step8_zones_3d_v1.jpg`, `3d_minimap_arise_pillar_v1.jpg`, `3d_dodge_afterimages_v1.jpg`,
-  `3d_title_backdrop_v1.jpg`.
+  `3d_title_backdrop_v1.jpg`, `3d_walls_room_dressing_v1.jpg`.
 
 ## Ranked next actions
-1. Ship U3 (3D walls and dressing) if it is not live (see above).
-2. When Chris has played: tune from what he says. Do not make enemies hit harder before he has (his word, 2026-10-12). The bot
+1. When Chris has played: tune from what he says. Do not make enemies hit harder before he has (his word, 2026-10-12). The bot
    still dies 0 times and the shadows do most of the boss damage (E1); levers: `shadowDmg`, boss health, enemy damage.
-3. 3D lane: anything else the 2D view draws that 3D does not. The 3D minimap was checked at 440 by 762 in a desktop browser
+2. 3D lane: anything else the 2D view draws that 3D does not. The 3D minimap was checked at 440 by 762 in a desktop browser
    (top right, where the 2D one is); not yet with a phone's touch layout.
-4. Parked: shared leaderboard and co-op (F1); the printable status report (C1).
+3. Parked: shared leaderboard and co-op (F1); the printable status report (C1).
 
 ## Watch-outs / state of mind
 - **Free rein holds (D-0085).** Decide and ship, tell Chris after. His: money, and the art rule (no star symbols, runes, occult
