@@ -4,7 +4,7 @@ _Written: 2026-10-15 (Thursday) during Session 8, by the Arise project manager s
 ## Where we left off
 V18 is complete: all nine steps are live. Session 8 shipped three-phase boss fights with arena tricks (step 8), four 3D
 leftovers, and thick stone walls with room dressing in 3D. Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp
-20261015090051, commit d47aa59 (`main` = `v18-world` at the ship). Nothing is in flight; no worker worktrees are left.
+20261015090051, commit d47aa59. Overnight on 2026-10-16 (Houston's word) the 3D view got every warning, target and prompt the 2D view has (thread U11), live at stamp 20261016030318. Nothing is in flight; no worker worktrees are left.
 
 ## Tell Chris when he plays (plain words; his list, lined up, none of it blocks the work)
 - **Bosses fight in three phases now.** At half health each boss enrages and does something of its own; at a quarter it makes
@@ -16,7 +16,8 @@ leftovers, and thick stone walls with room dressing in 3D. Live at https://cadid
   dodging through never hurts), webs and rubble slow you.
 - **The 3D view has a minimap** that turns with the camera, dodge afterimages, a column of light on every Arise, the gate picture
   on the title and hub, the floor from the first frame, and rooms that look like the 2D ones: thick stone walls (the ones
-  between the camera and you fade out), pilasters, torches, rubble and cracks.
+  between the camera and you fade out), pilasters, torches, rubble and cracks. Since 2026-10-16 it also shows enemy health
+  bars, the ARISE prompt, the arrow to the boss, the red edge when health is low, and glowing shots, like the 2D view.
 - **Questions for him after he plays:** do the boss fights feel fair or too hard up close (F12, F7)? Does the square-up and
   counter feel right (F11)? Is it still too easy (E1)? Rooms too many or too few (E4)? Gear drops (E5)?
 - **Still waiting on him:** his ears on the music (U6: hub take 2, fight take 1, boss take 1; swap by naming track and take);
@@ -27,21 +28,21 @@ leftovers, and thick stone walls with room dressing in 3D. Live at https://cadid
   small size in 2D (it can read as a cross).
 - **Pictures** (`docs/previews/`): `step8_demon_ring_of_fire_v1.jpg`, `step8_knight_crossing_cuts_v1.jpg`,
   `step8_zones_2d_v1.jpg`, `step8_zones_3d_v1.jpg`, `3d_minimap_arise_pillar_v1.jpg`, `3d_dodge_afterimages_v1.jpg`,
-  `3d_title_backdrop_v1.jpg`, `3d_walls_room_dressing_v1.jpg`.
+  `3d_title_backdrop_v1.jpg`, `3d_walls_room_dressing_v1.jpg`, `3d_parity_prompt_lowhp_v1.jpg`, `3d_parity_shots_boss_arrow_v1.jpg`.
 
 ## Ranked next actions
 1. When Chris has played: tune from what he says. Do not make enemies hit harder before he has (his word, 2026-10-12). The bot
    still dies 0 times and the shadows do most of the boss damage (E1); levers: `shadowDmg`, boss health, enemy damage.
-2. 3D lane: anything else the 2D view draws that 3D does not. The 3D minimap was checked at 440 by 762 in a desktop browser
-   (top right, where the 2D one is); not yet with a phone's touch layout.
+2. 3D lane: the corner clash (U12: the edge arrow can land on the minimap; on upright phones the boss name touches it) and the
+   decoration left in U13. The 3D minimap was checked at 440 by 762 with a phone's touch layout (2026-10-16): nothing overlaps it.
 3. Parked: shared leaderboard and co-op (F1); the printable status report (C1).
 
 ## Watch-outs / state of mind
 - **Free rein holds (D-0085).** Decide and ship, tell Chris after. His: money, and the art rule (no star symbols, runes, occult
   or religious imagery, in pictures and in words).
 - **Build route:** free workers. From `~/Projects`: `worker run Arise <slug> <absolute brief path> --engine auto --timeout 25m`
-  in the background, then `worker diff`, review line by line, test, `worker merge`, `worker clean`. Gemini had quota all of
-  Session 8. A job with many parts can hit its timeout with the work done (the 3D leftovers job did at 20 minutes): review the
+  in the background, then `worker diff`, review line by line, test, `worker merge`, `worker clean`. Gemini had quota on 2026-10-15
+  but ran out overnight; `--engine auto` then uses the free OpenCode model, which did good work. A job with many parts can hit its timeout with the work done (the 3D leftovers job did at 20 minutes): review the
   diff, not the summary.
 - **Before every ship:** `bash tools/check_names.sh`, `node tools/test_layout.js` (PASS 8000), `node tools/test_gear.js`,
   `node tools/test_army.js`, `node -e "require('./tools/lib/headless.js').createGame()"`, the bot when balance changes, then the
