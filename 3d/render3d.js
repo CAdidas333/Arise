@@ -433,6 +433,10 @@ function buildFloor(g) {
 // Art rule: plain bodies, armour, blades and flame only. No star shapes, no runes or glyph-like marks, no crosses, no halos,
 // nothing occult or religious. Keep it that way when adding to a figure.
 const hunterGroup = new THREE.Group(); scene.add(hunterGroup);
+// 8. The pool of light on the floor under the hunter: cyan, violet while Awakened (one plane, tinted per frame)
+const hunterGlow3D = new THREE.Mesh(new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial({ map: glowTex3D(), color: 0x00d4ff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
+scene.add(hunterGlow3D);
 
 const Fig = (function () {
   const geo = {}, mats = {}, pals = {}, templates = {};
@@ -1164,6 +1168,7 @@ function draw() {
   if (typeof gameState === 'undefined' || gameState !== 'DUNGEON' || typeof dungeon === 'undefined' || !dungeon) {
     view3D.yaw = 0; viewYaw = 0;
     hunterGroup.visible = false;
+    hunterGlow3D.visible = false;
     const emptySet = new Set();
     [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, telegraphMeshes, zoneMeshes].forEach(m => pruneMap(m, emptySet));
     renderer.render(scene, camera3D);
@@ -1231,11 +1236,19 @@ function draw() {
     Fig.tintHunter(player.hitFlash > 0 ? 1 : ult ? 2 : 0,
       ult ? '#dd88ff' : ((typeof WEAPONS !== 'undefined' && WEAPONS[player.weapon]) ? WEAPONS[player.weapon].color : '#aaddff'));
     Fig.poseHunter(player, dt);
-    hunterGroup.visible = !(dungeon.state === 'dead');
+    hunterGroup.visible = !(dungeon.state === 'dead')
+      && !(player.inv > 0 && player.dodgeT <= 0 && player.hitFlash <= 0 && Math.sin(clock * 40) < -0.3); // 7. i-frames: the hunter blinks out
     hunterLight.position.set(player.x, 30, player.y);
     hunterLight.color.set(ult ? 0xbb66ff : ((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff));
+    const gR = ult ? 120 : 64; // 8. the pool of light under his feet: violet and twice as wide while Awakened
+    hunterGlow3D.visible = dungeon.state !== 'dead';
+    hunterGlow3D.position.set(player.x, 0.7, player.y);
+    hunterGlow3D.scale.set(gR, 1, gR);
+    hunterGlow3D.material.color.set(ult ? 0x8844ff : 0x00d4ff);
+    hunterGlow3D.material.opacity = ult ? 0.6 : 0.35;
   } else {
     hunterGroup.visible = false;
+    hunterGlow3D.visible = false;
   }
 
   // Enemies
@@ -1275,6 +1288,7 @@ function draw() {
       scene.add(m); projectileMeshes.set(p, m);
     }
     const r = p.size || 5; m.scale.set(r, r, r); m.position.set(p.x, 12, p.y); m.material.color.set(p.color || 0xffffff);
+    m.visible = !p.crescent; // crescent waves are drawn as an arc on the overlay instead
   }
   pruneMap(projectileMeshes, activeProj);
 
@@ -1418,6 +1432,16 @@ function drawFx3D() {
       return Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / 10;
     }
 
+    // A soft radial glow on the overlay, centred on a screen point (gradients track the projection, so they are made per frame)
+    function glowAt(pt, rad, col, a) {
+      const g = ctx.createRadialGradient(pt[0], pt[1], 0, pt[0], pt[1], rad);
+      g.addColorStop(0, col);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = a;
+      ctx.fillStyle = g;
+      ctx.fillRect(pt[0] - rad, pt[1] - rad, rad * 2, rad * 2);
+    }
+
     // 3. Rings
     if (typeof rings !== 'undefined' && rings) {
       for (const r of rings) {
@@ -1528,6 +1552,89 @@ function drawFx3D() {
         ctx.stroke();
       }
       ctx.globalCompositeOperation = 'lighter';
+    }
+
+    // 1. A health bar floats over every wounded enemy, so the hunter can read which one is nearly dead
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    if (typeof enemies !== 'undefined' && enemies) {
+      for (const e of enemies) {
+        if (!e.alive || e.isBoss || e.spawnT > 0 || !(e.hp < e.maxHp)) continue;
+        const p = toScreen(e.x, e.y, (e.size || 14) * 2.4 + 12);
+        if (!p) continue;
+        const bw = clamp((e.size || 14) * 2.4 * pxPer(e.x, e.y), 16, 80);
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.fillRect(p[0] - bw / 2, p[1] - 2, bw, 4);
+        ctx.fillStyle = e.elite ? '#ffcc66' : e.hp > e.maxHp * 0.3 ? COLORS.health : COLORS.danger;
+        ctx.fillRect(p[0] - bw / 2, p[1] - 2, bw * Math.max(0, e.hp / e.maxHp), 4);
+      }
+    }
+
+    // 2. "[E] ARISE" pulses over a shadow remnant the hunter stands beside
+    if (typeof remnants !== 'undefined' && remnants) {
+      ctx.font = 'bold 12px Orbitron, monospace';
+      ctx.textAlign = 'center';
+      for (const r of remnants) {
+        if (dist(player.x, player.y, r.x, r.y) >= 95) continue;
+        const p = toScreen(r.x, r.y, 60);
+        if (!p) continue;
+        const fade = Math.min(1, (r.dur - r.t) / 2);
+        ctx.globalAlpha = fade * (0.7 + 0.3 * Math.sin(clock * 8));
+        ctx.fillStyle = '#ddbbff';
+        ctx.fillText(isMobile ? 'ARISE' : '[E]  ARISE', p[0], p[1]);
+      }
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'left';
+    }
+
+    // 5. A slow arc of light spins round every elite and boss, marking the dangerous enemies
+    ctx.globalCompositeOperation = 'lighter';
+    if (typeof enemies !== 'undefined' && enemies) {
+      ctx.lineWidth = 1.5;
+      for (const e of enemies) {
+        if (!e.alive || e.spawnT > 0 || !(e.elite || e.isBoss)) continue;
+        ctx.strokeStyle = e.isBoss ? (e.phase >= 2 ? '#ff2222' : COLORS.danger) : '#ffcc66';
+        ctx.globalAlpha = 0.7;
+        let ok = true;
+        const pts = [];
+        for (let i = 0; i < 24; i++) {
+          const ang = clock * 2 + (i / 23) * 4.2;
+          const pt = toScreen(e.x + Math.cos(ang) * e.size * 1.5, e.y + Math.sin(ang) * e.size * 1.5, 2);
+          if (!pt) { ok = false; break; }
+          pts.push(pt);
+        }
+        if (ok && pts.length > 0) {
+          ctx.beginPath();
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // 6. Shots glow: a soft disc with a white core; a crescent wave sweeps as a bright arc
+    if (typeof projectiles !== 'undefined' && projectiles) {
+      for (const p of projectiles) {
+        const q = toScreen(p.x, p.y, 12);
+        if (!q) continue;
+        if (p.crescent) {
+          const q2 = toScreen(p.x + Math.cos(p.a) * 20, p.y + Math.sin(p.a) * 20, 12);
+          if (!q2) continue;
+          const sa = Math.atan2(q2[1] - q[1], q2[0] - q[0]);
+          const s = p.size * pxPer(p.x, p.y);
+          ctx.strokeStyle = p.color; ctx.globalAlpha = Math.min(1, p.life * 4); ctx.lineWidth = 9;
+          ctx.beginPath(); ctx.arc(q[0] - Math.cos(sa) * s, q[1] - Math.sin(sa) * s, s * 1.2, sa - 0.9, sa + 0.9); ctx.stroke();
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.stroke();
+        } else {
+          const s = (p.size || 5) * pxPer(p.x, p.y);
+          ctx.fillStyle = p.color; ctx.globalAlpha = 0.3;
+          ctx.beginPath(); ctx.arc(q[0], q[1], s * 2.6, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.arc(q[0], q[1], s * 0.45, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
     }
 
     // 4. Slash arcs
@@ -1645,6 +1752,28 @@ function drawFx3D() {
       }
     }
 
+    // 9. A dropped gear item glows in the colour of its rarity, so loot catches the eye
+    if (typeof orbs !== 'undefined' && orbs) {
+      for (const o of orbs) {
+        if (o.type !== 'gear' || !o.item) continue;
+        const p = toScreen(o.x, o.y, 8);
+        if (!p) continue;
+        glowAt(p, 22 * pxPer(o.x, o.y), GEAR_COLORS[o.item.rarity] || GEAR_COLORS[0], 0.35);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // 10. Each shadow remnant pulses with a violet glow, so the wisp reads from across the room
+    if (typeof remnants !== 'undefined' && remnants) {
+      for (const r of remnants) {
+        const p = toScreen(r.x, r.y, 10);
+        if (!p) continue;
+        const fade = Math.min(1, (r.dur - r.t) / 2);
+        glowAt(p, (26 + Math.sin(clock * 7 + r.x) * 3) * pxPer(r.x, r.y), COLORS.accent, 0.25 * fade);
+      }
+      ctx.globalAlpha = 1;
+    }
+
     // 7. Reset to source-over
     ctx.globalCompositeOperation = 'source-over';
 
@@ -1668,6 +1797,23 @@ function drawFx3D() {
       ctx.textAlign = 'left';
     }
 
+    // Off screen (or behind the camera): an arrow at the screen edge, in the direction the hunter must walk
+    function edgeArrow(tx, ty, col) {
+      const far = dist(player.x, player.y, tx, ty);
+      if (far <= 1) return;
+      const ux = (tx - player.x) / far, uy = (ty - player.y) / far;
+      const p0 = toScreen(player.x, player.y, 0), p1 = toScreen(player.x + ux * 150, player.y + uy * 150, 0);
+      if (!p0 || !p1) return;
+      const a = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]), mg = 70;
+      const kk = Math.min((w / 2 - mg) / Math.abs(Math.cos(a) || 1e-6), (h / 2 - mg) / Math.abs(Math.sin(a) || 1e-6));
+      ctx.save(); ctx.translate(w / 2 + Math.cos(a) * kk, h / 2 + Math.sin(a) * kk);
+      ctx.fillStyle = col; ctx.font = 'bold 11px Orbitron, monospace'; ctx.textAlign = 'center';
+      ctx.globalAlpha = 0.7 + 0.3 * Math.sin(clock * 6);
+      ctx.fillText(Math.round(far / 10) + 'm', 0, -22);
+      ctx.rotate(a); ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-8, -10); ctx.lineTo(-3, 0); ctx.lineTo(-8, 10); ctx.closePath(); ctx.fill();
+      ctx.restore(); ctx.textAlign = 'left'; ctx.globalAlpha = 1;
+    }
+
     // 8b. Between chambers: an arrow to the door out, then to the next chamber, and at the end to the way to the boss
     if (typeof layout !== 'undefined' && layout && layout.lock < 0 && dungeon.state === 'fight' && !(dungeon.bossRef && dungeon.bossRef.alive)) {
       const k = dungeon.wave - 1, d = layout.doors[2 * k], boss = dungeon.wave >= dungeon.maxWaves;
@@ -1676,33 +1822,40 @@ function drawFx3D() {
       else if (boss) { tx = layout.exit.x; ty = layout.exit.y; }
       else { const r = layout.rooms[dungeon.wave]; tx = (r.x0 + r.x1) / 2; ty = (r.y0 + r.y1) / 2; }
       const col = boss ? '#ffcc33' : ((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : '#00d4ff');
-      const far = dist(player.x, player.y, tx, ty), sp = toScreen(tx, ty, 70);
-      ctx.fillStyle = col; ctx.font = 'bold 11px Orbitron, monospace'; ctx.textAlign = 'center';
+      const sp = toScreen(tx, ty, 70);
       if (sp && sp[0] > 40 && sp[0] < w - 40 && sp[1] > 40 && sp[1] < h - 40) {
         // the target is on screen: a small marker bobbing above it, pointing down
         const bob = Math.sin(clock * 4) * 5;
-        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = col; ctx.globalAlpha = 0.85;
         ctx.beginPath(); ctx.moveTo(sp[0], sp[1] + 12 + bob); ctx.lineTo(sp[0] - 10, sp[1] - 6 + bob); ctx.lineTo(sp[0] + 10, sp[1] - 6 + bob); ctx.closePath(); ctx.fill();
-      } else if (far > 1) {
-        // off screen (or behind the camera): an arrow at the screen edge, in the direction the hunter must walk
-        const ux = (tx - player.x) / far, uy = (ty - player.y) / far;
-        const p0 = toScreen(player.x, player.y, 0), p1 = toScreen(player.x + ux * 150, player.y + uy * 150, 0);
-        if (p0 && p1) {
-          const a = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]), mg = 70;
-          const kk = Math.min((w / 2 - mg) / Math.abs(Math.cos(a) || 1e-6), (h / 2 - mg) / Math.abs(Math.sin(a) || 1e-6));
-          ctx.save(); ctx.translate(w / 2 + Math.cos(a) * kk, h / 2 + Math.sin(a) * kk);
-          ctx.globalAlpha = 0.7 + 0.3 * Math.sin(clock * 6);
-          ctx.fillText(Math.round(far / 10) + 'm', 0, -22);
-          ctx.rotate(a); ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-8, -10); ctx.lineTo(-3, 0); ctx.lineTo(-8, 10); ctx.closePath(); ctx.fill();
-          ctx.restore();
-        }
-      }
-      ctx.textAlign = 'left'; ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1;
+      } else edgeArrow(tx, ty, col);
+    }
+
+    // 3. The boss hunt: a red edge arrow with the distance, shown only while the boss is off screen
+    if (dungeon.state === 'fight' && dungeon.bossRef && dungeon.bossRef.alive) {
+      const b = dungeon.bossRef, bp = toScreen(b.x, b.y, 20);
+      if (!bp || bp[0] < 70 || bp[0] > w - 70 || bp[1] < 70 || bp[1] > h - 70) edgeArrow(b.x, b.y, '#ff3344');
     }
 
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
     drawMinimap();
+
+    // 4. The screen edge closes in red when the hunter is close to death, violet while Awakened; a red pulse under 25%
+    const hp = player.hp / player.maxHp;
+    const c = toScreen(player.x, player.y, 30) || [w / 2, h / 2], R = Math.max(w, h);
+    if (hp < 0.3 || player.ultT > 0) {
+      const vg = ctx.createRadialGradient(c[0], c[1], R * 0.16, c[0], c[1], R * 0.75);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, hp < 0.3 ? 'rgba(50,0,0,0.78)' : 'rgba(22,0,48,0.5)');
+      ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
+    }
+    if (hp < 0.25 && player.hp > 0) {
+      ctx.globalAlpha = (Math.sin(clock * 4) * 0.5 + 0.5) * 0.14;
+      ctx.fillStyle = '#ff0000'; ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
+    }
 
     // 9. Screen flash
     if (typeof screenFlash !== 'undefined' && screenFlash && screenFlash.alpha > 0) {
