@@ -68,18 +68,26 @@ function sellGear(i) {
   player.bag.splice(i, 1); player.gold += gearValue(it);
   playSfx('pickup'); saveGame();
 }
-function sellCommonGear() {
-  const sold = player.bag.filter(it => it.rarity === 0);
+function sellWeakerGear() {
+  const sold = player.bag.filter(it => gearWeaker(it));
   if (!sold.length) { playSfx('deny'); return; }
   const total = sold.reduce((a, it) => a + gearValue(it), 0);
-  player.bag = player.bag.filter(it => it.rarity !== 0); player.gold += total;
-  playSfx('buy'); toast(`SOLD ${sold.length} COMMON ITEM${sold.length > 1 ? 'S' : ''} FOR ◈ ${fmtNum(total)}`, 'gold', 2000); saveGame();
+  player.bag = player.bag.filter(it => !gearWeaker(it)); player.gold += total;
+  playSfx('buy'); toast(`SOLD ${sold.length} WEAKER ITEM${sold.length > 1 ? 'S' : ''} FOR ◈ ${fmtNum(total)}`, 'gold', 2000); saveGame();
 }
 function enterGate(id) {
   const g = GATE_DEFS.find(x => x.id === id);
   if (!g || player.level < g.reqLevel || storyRun) return;
+  if (player.bag.length >= BAG_MAX && !(gateAsk && gateAsk.ok)) { gateAsk = { id }; menuTab = 'gates'; playSfx('deny'); renderSystemMenu(); return; }
+  gateAsk = null;
   if (chapterDue(g)) showChapter(g, () => startDungeon(g)); // the first visit opens with a chapter card; any other visit starts at once
   else startDungeon(g);
+}
+function enterEndless() {
+  if (player.level < ENDLESS.reqLevel || storyRun) return;
+  if (player.bag.length >= BAG_MAX && !(gateAsk && gateAsk.ok)) { gateAsk = { endless:true }; menuTab = 'gates'; playSfx('deny'); renderSystemMenu(); return; }
+  gateAsk = null;
+  startDungeon(ENDLESS, true);
 }
 
 // Dev mode: ` = +5 levels, ~ (Shift+`) = -5 levels
@@ -108,7 +116,7 @@ $('system-menu').addEventListener('click', e => {
   if (e.detail > 1 && el.dataset.act.startsWith('gear-')) return; // the list re-renders under the pointer: a double click must not sell or equip the next item too
   const v = el.dataset.v;
   switch (el.dataset.act) {
-    case 'tab': menuTab = v; playSfx('ui'); break;
+    case 'tab': menuTab = v; gateAsk = null; playSfx('ui'); break;
     case 'stat': allocateStat(v); break;
     case 'auto': autoAssign(); break;
     case 'node': buyNode(v); break;
@@ -118,11 +126,13 @@ $('system-menu').addEventListener('click', e => {
     case 'gear-equip': equipGear(+v); break;
     case 'gear-unequip': unequipGear(v); break;
     case 'gear-sell': sellGear(+v); break;
-    case 'gear-sell-common': sellCommonGear(); break;
+    case 'gear-sell-weaker': sellWeakerGear(); break;
     case 'aim': cycleAim(); break;
     case 'look': cycleLook(); break;
     case 'gate': enterGate(v); return;
-    case 'endless': if (player.level >= ENDLESS.reqLevel) startDungeon(ENDLESS, true); return;
+    case 'endless': enterEndless(); return;
+    case 'gate-go': { const a = gateAsk; gateAsk = { ...a, ok:true }; if (a.endless) enterEndless(); else enterGate(a.id); gateAsk = null; return; }
+    case 'gate-back': gateAsk = null; break;
   }
   renderSystemMenu();
 });
@@ -184,7 +194,7 @@ function onKey(key, e) {
   if (key === '`') { window.devBoost(); return; }
   if (key === '~') { window.devDown(); return; }
   if (key === 'm' && !isMobile) { cycleAim(); if (gameState === 'HUB') renderSystemMenu(); return; }
-  if (gameState === 'HUB') { const i = key.length === 1 ? '123456'.indexOf(key) : -1; if (i >= 0) { menuTab = TABS[i][0]; playSfx('ui'); renderSystemMenu(); } return; }
+  if (gameState === 'HUB') { const i = key.length === 1 ? '123456'.indexOf(key) : -1; if (i >= 0) { menuTab = TABS[i][0]; gateAsk = null; playSfx('ui'); renderSystemMenu(); } return; }
   if (gameState !== 'DUNGEON') return;
   if (key === 'tab') { e.preventDefault(); return; }
   if (key === 'escape' || key === 'p') { e.preventDefault(); togglePause(); return; }

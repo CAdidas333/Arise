@@ -58,7 +58,7 @@ function renderSystemMenu() {
   if (!player) return;
   checkDailyReset();
   $('sys-tabs').innerHTML = TABS.map(([id, label], i) => {
-    const pip = id === 'status' ? player.statPoints : id === 'tree' ? player.skillPoints : 0;
+    const pip = id === 'status' ? player.statPoints : id === 'tree' ? player.skillPoints : id === 'armory' ? player.bag.filter(it => gearBetter(it)).length : 0;
     return `<div class="sys-tab ${menuTab === id ? 'on' : ''}" data-act="tab" data-v="${id}">${isMobile ? '' : `<span style="opacity:.4">${i+1}</span> `}${label}${pip ? `<span class="pip">${pip}</span>` : ''}</div>`;
   }).join('');
 
@@ -110,6 +110,8 @@ function tabStatus() {
 }
 
 function tabGates() {
+  if (gateAsk) return `<h3>Bag full</h3><div class="g-total">Your bag is full (${player.bag.length} / ${BAG_MAX}). Gear found in this gate will be sold on the spot for gold.</div>
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="sys-btn" data-act="gate-go">ENTER ANYWAY</button><button class="sys-btn" data-act="tab" data-v="armory">OPEN ARMORY</button><button class="sys-btn" data-act="gate-back">BACK</button></div>`;
   // Highlight the highest unlocked gate
   let nextId = null;
   for (let i = GATE_DEFS.length-1; i >= 0; i--) if (player.level >= GATE_DEFS[i].reqLevel) { nextId = GATE_DEFS[i].id; break; }
@@ -193,7 +195,7 @@ function tabArmory() {
 // --- GEAR: three slots, the total they give, and the bag ---
 const gearChip = (k, v) => gearModText(k, v).replace(/ /g, '&nbsp;'); // a line of mods breaks between mods, never inside one
 const gearMods = it => Object.keys(it.mods).map(k => gearChip(k, it.mods[k])).join(' · ');
-const gearRow = (it, btns) => `<div class="shop-item gear-item" style="color:${GEAR_COLORS[it.rarity]}"><div class="s-ico"></div><div class="s-body"><div class="s-name">${esc(it.name)}<span class="grade">${GEAR_RARITY[it.rarity].toUpperCase()}</span></div>
+const gearRow = (it, btns, up) => `<div class="shop-item gear-item" style="color:${GEAR_COLORS[it.rarity]}"><div class="s-ico"></div><div class="s-body"><div class="s-name">${esc(it.name)}<span class="grade">${GEAR_RARITY[it.rarity].toUpperCase()}</span>${up ? '<span class="grade" style="color:#44ff66;border-color:#44ff66">UPGRADE</span>' : ''}</div>
   <div class="s-desc">${it.slot.toUpperCase()} · LV ${it.lvl}</div><div class="g-mods">${gearMods(it)}</div></div><div class="g-btns">${btns}</div></div>`;
 function gearSection() {
   const bag = player.bag, room = bag.length < BAG_MAX;
@@ -206,10 +208,11 @@ function gearSection() {
   const total = GEAR_KEYS.filter(k => gearMod(k) > 0).map(k => gearChip(k, k === 'cdr' ? Math.min(0.25, gearMod(k)) : gearMod(k))).join(' · ');
   h += `<div class="g-total">${total ? `GEAR TOTAL &nbsp; <span>${total}</span>` : 'Enemies inside gates drop gear. A boss always drops one item.'}</div>`;
   h += `<h3>Bag — ${bag.length} / ${BAG_MAX}</h3>`;
-  const common = bag.filter(it => it.rarity === 0);
-  if (common.length) h += `<button class="sys-btn gold" data-act="gear-sell-common" style="margin-bottom:10px">SELL ALL COMMON &nbsp; ◈ ${fmtNum(common.reduce((a, it) => a + gearValue(it), 0))}</button>`;
+  if (!room) h += '<div class="g-total">The bag is full. New finds in a gate are sold on the spot.</div>';
+  const weaker = bag.filter(it => gearWeaker(it));
+  if (weaker.length) h += `<button class="sys-btn gold" data-act="gear-sell-weaker" style="margin-bottom:10px">SELL ALL WEAKER THAN EQUIPPED &nbsp; ◈ ${fmtNum(weaker.reduce((a, it) => a + gearValue(it), 0))}</button>`;
   if (!bag.length) h += '<div class="g-total">The bag is empty. When it is full, new finds are sold on the spot.</div>';
-  bag.forEach((it, i) => { h += gearRow(it, `<button class="sys-btn" data-act="gear-equip" data-v="${i}">EQUIP</button><button class="sys-btn gold" data-act="gear-sell" data-v="${i}">SELL ◈ ${fmtNum(gearValue(it))}</button>`); });
+  bag.forEach((it, i) => { h += gearRow(it, `<button class="sys-btn" data-act="gear-equip" data-v="${i}">EQUIP</button><button class="sys-btn gold" data-act="gear-sell" data-v="${i}">SELL ◈ ${fmtNum(gearValue(it))}</button>`, gearBetter(it)); });
   return h;
 }
 
@@ -217,6 +220,7 @@ function gearSection() {
 //  STORY — full-screen cards in the System's voice: the opening, and a chapter card for each gate
 // ================================================================
 let storyRun = null; // while a card is up: { cards, i, head, onEnd, lock, timer }. Everything else ignores keys and clicks until it ends.
+let gateAsk = null; // when the bag is full, the gate waiting for the hunter's answer: { id } or { endless:true }
 const STORY_CHAPTER_MS = 3200;
 
 // cards: arrays of lines. head: null for the opening, or { chapter, name, rank } for a chapter card. onEnd runs when the last card is done or skipped.
