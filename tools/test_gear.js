@@ -122,6 +122,31 @@ if (Math.abs(gearMod('dmg') - 0.12) > 1e-12 || gearMod('crit') !== 0.04 || gearM
 if (gearMod('dmg', { gear:{ armor:null, boots:null, ring:null } }) !== 0) fail('gearMod ignored the hunter it was given');
 if (gearModText('dmg', 0.12) !== '+12% damage' || gearModText('cdr', 0.05) !== '-5% cooldowns') fail('gearModText');
 
+// 6. gearScore, gearBetter, gearWeaker, and BAG_MAX
+if (BAG_MAX !== 24) fail('BAG_MAX expected 24, got ' + BAG_MAX);
+if (gearScore(null) !== 0) fail('gearScore(null)');
+for (const k of GEAR_KEYS) {
+  if (Math.abs(gearScore({ slot:'ring', mods:{ [k]:GEAR_CAPS[k] } }) - 1) > 1e-12) fail('gearScore of one mod at cap for ' + k);
+  checked++;
+}
+for (let i = 0; i < 200; i++) {
+  if (!(gearScore(rollGear(100, 3)) > gearScore(rollGear(1)))) fail('Legendary at lvl 100 did not outscore rollGear(1)');
+  checked++;
+}
+const worn = { slot:'ring', name:'w', rarity:1, lvl:20, mods:{ dmg:0.09, crit:0.05 } };
+const sameIt = { slot:'ring', name:'s', rarity:1, lvl:20, mods:{ dmg:0.09, crit:0.05 } };
+const betterIt = { slot:'ring', name:'b', rarity:1, lvl:20, mods:{ dmg:0.12, crit:0.05 } };
+const weakerIt = { slot:'ring', name:'k', rarity:0, lvl:1, mods:{ dmg:0.04 } };
+const bootIt = { slot:'boots', name:'bt', rarity:0, lvl:1, mods:{ spd:0.03 } };
+player = { gear:{ armor:null, boots:null, ring:worn } };
+if (!gearBetter(bootIt) || gearWeaker(bootIt)) fail('empty slot must be better and never weaker');
+if (gearBetter(sameIt) || gearWeaker(sameIt)) fail('equal item is neither better nor weaker');
+if (!gearBetter(betterIt) || gearWeaker(betterIt)) fail('better item');
+if (gearBetter(weakerIt) || !gearWeaker(weakerIt)) fail('weaker item');
+const kept = [weakerIt, sameIt, betterIt, bootIt].filter(it => !gearWeaker(it));
+if (kept.length !== 3 || kept.includes(weakerIt) || !kept.includes(sameIt) || !kept.includes(betterIt) || !kept.includes(bootIt)) fail('sellWeakerGear filter');
+checked += 5;
+
 return checked;
 `;
 

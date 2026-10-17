@@ -172,7 +172,7 @@ function segDist(px,py,x1,y1,x2,y2) {
 const GEAR_SLOTS = ['armor','boots','ring'];
 const GEAR_RARITY = ['Common','Rare','Epic','Legendary'];
 const GEAR_COLORS = ['#cfd8e3','#4aa8ff','#bb66ff','#ffcc33'];
-const BAG_MAX = 12;
+const BAG_MAX = 24;
 // mod key -> the most one item may carry. dmg, hp, mp, spd, def and gold multiply by (1+v); crit adds v; cdr multiplies cooldowns by (1-v)
 const GEAR_CAPS = { dmg:0.18, hp:0.25, mp:0.30, spd:0.10, crit:0.10, def:0.30, cdr:0.08, gold:0.30 };
 const GEAR_KEYS = Object.keys(GEAR_CAPS);
@@ -211,6 +211,10 @@ function rollGear(lvl, minRarity = 0, luck = 0) {
   return { slot, name:gearName(slot, rarity), rarity, lvl, mods };
 }
 const gearValue = item => Math.round((20 + item.lvl*6) * (1 + item.rarity*1.5)); // sell price
+// An item's strength: each mod as a share of its cap, summed (so more mods and bigger mods both count)
+const gearScore = it => it ? Object.keys(it.mods).reduce((a, k) => a + it.mods[k]/GEAR_CAPS[k], 0) : 0;
+function gearBetter(it, p = player) { return !p.gear[it.slot] || gearScore(it) > gearScore(p.gear[it.slot]) + 1e-9; }
+function gearWeaker(it, p = player) { return !!p.gear[it.slot] && gearScore(it) < gearScore(p.gear[it.slot]) - 1e-9; }
 // Anything read from a save goes through here: a clean item, or null
 function cleanGear(x) {
   if (!x || typeof x !== 'object' || !GEAR_SLOTS.includes(x.slot) || !x.mods || typeof x.mods !== 'object') return null;
