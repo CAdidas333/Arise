@@ -78,14 +78,15 @@ function sellWeakerGear() {
 function enterGate(id) {
   const g = GATE_DEFS.find(x => x.id === id);
   if (!g || player.level < g.reqLevel || storyRun) return;
-  if (player.bag.length >= BAG_MAX && !(gateAsk && gateAsk.ok)) { gateAsk = { id }; menuTab = 'gates'; playSfx('deny'); renderSystemMenu(); return; }
+  if (player.bag.length >= BAG_MAX && !(gateAsk && gateAsk.ok)) { gateAsk = { id }; menuTab = 'gates'; playSfx('deny'); askGate(); return; }
   gateAsk = null;
   if (chapterDue(g)) showChapter(g, () => startDungeon(g)); // the first visit opens with a chapter card; any other visit starts at once
   else startDungeon(g);
 }
+function askGate() { renderSystemMenu(); const b = document.querySelector('[data-act="gate-go"]'); if (b) b.scrollIntoView({ block:'center' }); } // on a phone the question can sit below the fold
 function enterEndless() {
   if (player.level < ENDLESS.reqLevel || storyRun) return;
-  if (player.bag.length >= BAG_MAX && !(gateAsk && gateAsk.ok)) { gateAsk = { endless:true }; menuTab = 'gates'; playSfx('deny'); renderSystemMenu(); return; }
+  if (player.bag.length >= BAG_MAX && !(gateAsk && gateAsk.ok)) { gateAsk = { endless:true }; menuTab = 'gates'; playSfx('deny'); askGate(); return; }
   gateAsk = null;
   startDungeon(ENDLESS, true);
 }

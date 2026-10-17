@@ -111,7 +111,7 @@ function tabStatus() {
 
 function tabGates() {
   if (gateAsk) return `<h3>Bag full</h3><div class="g-total">Your bag is full (${player.bag.length} / ${BAG_MAX}). Gear found in this gate will be sold on the spot for gold.</div>
-    <div style="display:flex;gap:8px;margin-top:14px"><button class="sys-btn" data-act="gate-go">ENTER ANYWAY</button><button class="sys-btn" data-act="tab" data-v="armory">OPEN ARMORY</button><button class="sys-btn" data-act="gate-back">BACK</button></div>`;
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px"><button class="sys-btn" data-act="gate-go">ENTER ANYWAY</button><button class="sys-btn" data-act="tab" data-v="armory">OPEN ARMORY</button><button class="sys-btn" data-act="gate-back">BACK</button></div>`;
   // Highlight the highest unlocked gate
   let nextId = null;
   for (let i = GATE_DEFS.length-1; i >= 0; i--) if (player.level >= GATE_DEFS[i].reqLevel) { nextId = GATE_DEFS[i].id; break; }
@@ -195,8 +195,8 @@ function tabArmory() {
 // --- GEAR: three slots, the total they give, and the bag ---
 const gearChip = (k, v) => gearModText(k, v).replace(/ /g, '&nbsp;'); // a line of mods breaks between mods, never inside one
 const gearMods = it => Object.keys(it.mods).map(k => gearChip(k, it.mods[k])).join(' · ');
-const gearRow = (it, btns, up) => `<div class="shop-item gear-item" style="color:${GEAR_COLORS[it.rarity]}"><div class="s-ico"></div><div class="s-body"><div class="s-name">${esc(it.name)}<span class="grade">${GEAR_RARITY[it.rarity].toUpperCase()}</span>${up ? '<span class="grade" style="color:#44ff66;border-color:#44ff66">UPGRADE</span>' : ''}</div>
-  <div class="s-desc">${it.slot.toUpperCase()} · LV ${it.lvl}</div><div class="g-mods">${gearMods(it)}</div></div><div class="g-btns">${btns}</div></div>`;
+const gearRow = (it, btns, up) => `<div class="shop-item gear-item" style="color:${GEAR_COLORS[it.rarity]}"><div class="s-ico"></div><div class="s-body"><div class="s-name">${esc(it.name)}<span class="grade">${GEAR_RARITY[it.rarity].toUpperCase()}</span></div>
+  <div class="s-desc">${it.slot.toUpperCase()} · LV ${it.lvl}${up ? '<span class="grade" style="color:#44ff66;border-color:#44ff66">UPGRADE</span>' : ''}</div><div class="g-mods">${gearMods(it)}</div></div><div class="g-btns">${btns}</div></div>`;
 function gearSection() {
   const bag = player.bag, room = bag.length < BAG_MAX;
   let h = '<h3>Gear</h3>';
