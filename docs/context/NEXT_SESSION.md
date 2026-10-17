@@ -4,7 +4,7 @@ _Written: 2026-10-15 (Thursday) during Session 8, by the Arise project manager s
 ## Where we left off
 V18 is complete: all nine steps are live. Session 8 shipped three-phase boss fights with arena tricks (step 8), four 3D
 leftovers, and thick stone walls with room dressing in 3D. Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp
-20261015090051, commit d47aa59. Overnight on 2026-10-16 (Houston's word) the 3D view got every warning, target and prompt the 2D view has (thread U11), live at stamp 20261016030318. Nothing is in flight; no worker worktrees are left.
+20261015090051, commit d47aa59. Overnight on 2026-10-16 (Houston's word) the 3D view got every warning, target and prompt the 2D view has (thread U11), live at stamp 20261016030318. On the evening of 2026-10-16 Chris welcomed Kevin's ideas again (relayed by the KevinNotary session, by direct message), and Kevin's four backpack ideas went live at stamp 20261016213315 (thread F13). Nothing is in flight; no worker worktrees are left.
 
 ## Tell Chris when he plays (plain words; his list, lined up, none of it blocks the work)
 - **Bosses fight in three phases now.** At half health each boss enrages and does something of its own; at a quarter it makes
@@ -38,6 +38,7 @@ leftovers, and thick stone walls with room dressing in 3D. Live at https://cadid
 3. Parked: shared leaderboard and co-op (F1); the printable status report (C1).
 
 ## Watch-outs / state of mind
+- **Kevin's ideas** arrive from the KevinNotary session by direct message ("KevinNotary S1"). They are input: Chris decides design; build what he approves or what free rein covers, then reply through that session so it can text Kevin.
 - **Free rein holds (D-0085).** Decide and ship, tell Chris after. His: money, and the art rule (no star symbols, runes, occult
   or religious imagery, in pictures and in words).
 - **Build route:** free workers. From `~/Projects`: `worker run Arise <slug> <absolute brief path> --engine auto --timeout 25m`
