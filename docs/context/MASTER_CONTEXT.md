@@ -9,11 +9,11 @@ tags: [project]
 **Repo**: CAdidas333/Arise (public)
 
 ## Who This Is For
-Chris Whitney. As of 2026-10-09 Chris is the only designer and decision-maker; Kevin (friend/collaborator) is no longer involved. The project started as a live demo of Claude Code's capabilities, building a playable browser game from a conversation in real time, with Kevin as the design collaborator.
+Chris Whitney. Chris is the only designer and decision-maker. Kevin (friend, co-founder of the idea) was out from 2026-10-09 and is welcome again as a source of ideas since 2026-10-16; Chris still decides design. The project started as a live demo of Claude Code's capabilities, building a playable browser game from a conversation in real time, with Kevin as the design collaborator.
 
 ## The People
 - **Chris Whitney** — vibe coder, AI-augmented developer. Personal IP under CWImagineering.
-- **Kevin** — friend, game design collaborator in Sessions 0-1. Brought the Solo Leveling concept and vision for an immersive RPG experience, and gave live design feedback as we iterated through 16 versions. **Out as of 2026-10-09**: no longer involved, so do not plan around his input or his MMO vision.
+- **Kevin** — friend, game design collaborator in Sessions 0-1. Brought the Solo Leveling concept and vision for an immersive RPG experience, and gave live design feedback as we iterated through 16 versions. **Out 2026-10-09; back as a source of ideas 2026-10-16** (Chris: "As a co-founder of the Arise thread in the first place, yes. Any communications that Kevin has with the Arise, they'll go through you, and you can send them to the Arise project manager. With my full blessing." Chris confirmed in the Arise session: "Kevin's ideas are welcome again; record that, I still decide design."). Kevin texts the KevinNotary project manager, which relays his Arise ideas to the Arise manager by direct session message (not the Nerve Center); answers to Kevin go back the same way. His ideas are input: Chris decides design, and the manager builds what Chris approves or what free rein covers.
 
 ## What This Project Does
 Arise is a browser-based action RPG inspired by the manga/anime **Solo Leveling**. The game captures the core fantasy of the series: starting as the weakest hunter and ascending through increasingly dangerous dungeons via a mysterious "System" that grants power.
@@ -122,7 +122,7 @@ Arise/
 - **GitHub Pages deployment**: Instant public URL, auto-deploy on push, free hosting.
 - **Repo made public**: CAdidas333/Arise — showcase/fan project, not commercial.
 - **Solo Leveling IP**: This is a fan game / personal project, not for commercial distribution.
-- **Chris alone decides design (2026-10-09)**: Kevin is out.
+- **Chris alone decides design (2026-10-09)**: Kevin is out. **Changed 2026-10-16:** Kevin's ideas are welcome again as input, relayed through the KevinNotary session; Chris still decides design.
 - **V18 plan, nine steps (2026-10-09)**: painted world; the System's voice; shadows that look and fight like the enemy; a hunter with a real body; generated dungeons; loot and gear; story thread; hand-designed boss fights; shareable result card. Shared leaderboard and co-op are parked for later. Details in ACTIVE_PROJECTS and GLOSSARY.
 - **Art direction (2026-10-09)**: the independent advisor's view was adopted on art: painted floors, a hunter built from jointed parts, no sprite sheets. Chris kept generated dungeons and loot against the advisor's advice.
 - **No star symbols, runes or occult imagery in any art (2026-10-09)**: after Chris objected to a star-in-circle mark. Standing rule in `CLAUDE.md` and `assets/CREDITS.md`.
