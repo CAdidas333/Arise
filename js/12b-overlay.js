@@ -43,8 +43,21 @@ function drawPortal(hub) {
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
 }
 
+// Where the minimap sits: dropped 10px on upright phones so the boss name above it never crowds it
+function minimapBox() {
+  const L = layout, mw = isMobile ? 90 : 130, mh = L ? Math.round(mw*0.75) : mw*arenaH/arenaW;
+  const my = (H > W && W <= 520) ? 70 : 60, mx = W - mw - 20;
+  return { x0: mx, y0: my, x1: mx + mw, y1: my + mh + 18 };
+}
+
+// An edge arrow that would land on the minimap is nudged down to just under it instead
+function edgeClear(x, y) {
+  const b = minimapBox();
+  if (x < b.x0 - 34 || x > b.x1 || y < b.y0 || y > b.y1 + 34) return [x, y];
+  return [Math.min(x, W - 70), b.y1 + 40];
+}
 function drawMinimap() {
-  const L = layout, mw = isMobile ? 90 : 130, mh = L ? Math.round(mw*0.75) : mw*arenaH/arenaW, mx = W - mw - 20, my = 60;
+  const L = layout, b = minimapBox(), mx = b.x0, my = b.y0, mw = b.x1 - b.x0, mh = b.y1 - b.y0 - 18;
   const sx = L ? mw/3600 : mw/arenaW, sy = L ? sx : mh/arenaH, cx = mx + mw/2, cy = my + mh/2;
   const ox = L ? player.x : 0, oy = L ? player.y : 0; // with a layout the map is centred on the hunter
   const px = x => cx + (x-ox)*sx, py = y => cy + (y-oy)*sy;
