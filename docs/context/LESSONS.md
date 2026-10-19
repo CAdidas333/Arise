@@ -243,3 +243,11 @@
 **Outcome**: The first cast never fired and phase changes showed late, because `startBoss` sets `dungeon.state = 'intro'` for 3.2 seconds and the boss does not act until it ends. It looked like a fault in the boss code and was not.
 
 **Next time**: In a boss test, step the game until `dungeon.state === 'fight'` before forcing anything.
+
+## 2026-10-18 — A worker said every check passed; the merged overlay script would not load
+
+**Tried**: Merged a free-worker job (OpenCode, after Gemini ran out of quota) whose report said all checks passed.
+
+**Outcome**: `node -e "require('./tools/lib/headless.js').createGame()"` failed after the merge: `drawMinimap` now declared `const b` twice (the new minimap box and the old boss marker), so `js/12b-overlay.js` would not load in either view. `tools/check_names.sh` cannot see it: it lists only top-level names. Caught before the stamp; fixed by hand in one line (068378e). The worker had hit its 30-minute limit, so its last check may never have run.
+
+**Next time**: Run the headless load yourself after every merge and before `tools/stamp.sh`, and do not trust a "checks passed" from a worker that ran out of time. Start the next job only after that check is green, or it inherits the fault.
