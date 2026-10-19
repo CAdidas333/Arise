@@ -103,7 +103,7 @@ if (hintEl) hintEl.innerHTML += ' &nbsp;·&nbsp; Z / C TURN CAMERA &nbsp;·&nbsp
 
 // Floor and walls
 let currentGate = null, floorTexture = null, floorMesh = null;
-let torchFlameMat3D = null, torchGlowMat3D = null, torchGlowTex3D = null;
+let torchFlameMat3D = null, torchGlowMat3D = null, torchGlowTex3D = null, torchPoolMat3D = null;
 const glowTex3D = () => torchGlowTex3D || (torchGlowTex3D = (() => { // a soft round falloff, made once; additive, so the black edge adds nothing
   const c = document.createElement('canvas'); c.width = c.height = 64;
   const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -123,6 +123,7 @@ function clearFloorAndWalls() {
   while (layoutMeshes.length) { const m = layoutMeshes.pop(); floorGroup.remove(m); m.geometry.dispose(); if (m.material !== floorMaterial) m.material.dispose(); if (m.isInstancedMesh) m.dispose(); } // the dressing is rebuilt with every door and wave, so free its instance buffers too
   torchFlameMat3D = null;
   torchGlowMat3D = null;
+  torchPoolMat3D = null;
 }
 
 function rebuildFloorAndWalls(w, h, line) {
@@ -257,6 +258,10 @@ function rebuildLayout3D(line) {
       torchGlowMat3D = new THREE.MeshBasicMaterial({ color: ember, map: glowTex3D(), transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false });
       const glowMesh = new THREE.InstancedMesh(glowGeo, torchGlowMat3D, tCount);
 
+      const poolGeo = new THREE.PlaneGeometry(1, 1); poolGeo.rotateX(-Math.PI / 2); // 5. a soft pool of torchlight spilling on the floor in front of each torch
+      torchPoolMat3D = new THREE.MeshBasicMaterial({ color: ember, map: glowTex3D(), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+      const poolMesh = new THREE.InstancedMesh(poolGeo, torchPoolMat3D, tCount);
+
       for (let i = 0; i < tCount; i++) {
         const p = torches[i];
         dummy.position.set(p.x, 44, p.y + 10);
@@ -276,13 +281,21 @@ function rebuildLayout3D(line) {
         dummy.rotation.set(0, 0, 0);
         dummy.updateMatrix();
         glowMesh.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(p.x, 0.5, p.y + 70);
+        dummy.scale.set(200, 1, 140);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        poolMesh.setMatrixAt(i, dummy.matrix);
       }
       bktMesh.instanceMatrix.needsUpdate = true;
       flameMesh.instanceMatrix.needsUpdate = true;
       glowMesh.instanceMatrix.needsUpdate = true;
+      poolMesh.instanceMatrix.needsUpdate = true;
       floorGroup.add(bktMesh); layoutMeshes.push(bktMesh);
       floorGroup.add(flameMesh); layoutMeshes.push(flameMesh);
       floorGroup.add(glowMesh); layoutMeshes.push(glowMesh);
+      floorGroup.add(poolMesh); layoutMeshes.push(poolMesh);
     }
   }
 
@@ -1111,6 +1124,14 @@ const enemyMeshes = new Map(), shadowMeshes = new Map(), projectileMeshes = new 
 const orbMeshes = new Map(), remnantMeshes = new Map(), telegraphMeshes = new Map(), zoneMeshes = new Map();
 const seenFigures = new Set(); // the enemies, then the shadows, drawn this frame; reused so a frame allocates nothing for them
 
+// 6. A soft dark disc on the floor under the hunter, every living enemy and every shadow soldier, so nobody floats
+const groundShadows3D = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: glowTex3D(), transparent: true, opacity: 0.45, depthWrite: false }), 160);
+groundShadows3D.frustumCulled = false;
+groundShadows3D.count = 0;
+groundShadows3D.userData.dummy = new THREE.Object3D();
+scene.add(groundShadows3D);
+
 function disposeNode(node) {
   scene.remove(node);
   if (node.geometry && node.userData?.disposeGeom) node.geometry.dispose();
@@ -1169,6 +1190,7 @@ function draw() {
     view3D.yaw = 0; viewYaw = 0;
     hunterGroup.visible = false;
     hunterGlow3D.visible = false;
+    groundShadows3D.count = 0;
     const emptySet = new Set();
     [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, telegraphMeshes, zoneMeshes].forEach(m => pruneMap(m, emptySet));
     renderer.render(scene, camera3D);
@@ -1214,6 +1236,7 @@ function draw() {
   const clk = typeof clock !== 'undefined' ? clock : now / 1000;
   if (torchFlameMat3D) torchFlameMat3D.opacity = 0.75 + 0.2 * Math.sin(clk * 11);
   if (torchGlowMat3D) torchGlowMat3D.opacity = 0.5 + 0.15 * Math.sin(clk * 7);
+  if (torchPoolMat3D) torchPoolMat3D.opacity = 0.18 + 0.05 * Math.sin(clk * 5);
 
   // Floor and walls are rebuilt when the arena size, the layout, a door, the wave or the wall colour changes
   const curArenaW = typeof arenaW !== 'undefined' ? arenaW : 1400;
@@ -1278,6 +1301,22 @@ function draw() {
   }
   pruneMap(shadowMeshes, seenFigures);
 
+  // Soft ground shadows: one instance per figure standing on the floor, none for an enemy still spawning in
+  const gsd = groundShadows3D.userData.dummy;
+  let gsi = 0;
+  const putShadow = (x, y, r) => {
+    if (gsi >= 160) return;
+    gsd.position.set(x, 0.4, y);
+    gsd.scale.set(r * 2.4, 1, r * 2.4);
+    gsd.updateMatrix();
+    groundShadows3D.setMatrixAt(gsi++, gsd.matrix);
+  };
+  if (player) putShadow(player.x, player.y, 16);
+  for (const e of (enemies || [])) if (e.alive && !(e.spawnT > 0)) putShadow(e.x, e.y, e.size || 14);
+  if (player && player.shadows) for (const s of player.shadows) if (s.active) putShadow(s.x, s.y, s.size || 14);
+  groundShadows3D.count = gsi;
+  groundShadows3D.instanceMatrix.needsUpdate = true;
+
   // Projectiles
   const activeProj = new Set();
   for (const p of (projectiles || [])) {
@@ -1332,10 +1371,20 @@ function draw() {
       else { geom = new THREE.PlaneGeometry(g.w || 20, g.len || 100); geom.rotateX(-Math.PI / 2); }
       const mat = new THREE.MeshBasicMaterial({ color: g.color || 0xff4444, transparent: true, opacity: 0.15, side: THREE.DoubleSide, depthWrite: false });
       m = new THREE.Mesh(geom, mat); m.userData.disposeGeom = true;
+      // 12. A bright rim on the warning, so its edge reads at a glance like the 2D telegraph
+      const rim = g.type === 'circle'
+        ? new THREE.Mesh(new THREE.RingGeometry((g.r || 50) * 0.965, g.r || 50, 48).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: g.color || 0xff4444, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false }))
+        : new THREE.LineSegments(new THREE.EdgesGeometry(geom),
+            new THREE.LineBasicMaterial({ color: g.color || 0xff4444, transparent: true, opacity: 0.9 }));
+      rim.userData.disposeGeom = true;
+      rim.position.y = 0.2;
+      m.add(rim);
       scene.add(m); telegraphMeshes.set(g, m);
     }
     const p = Math.max(0, Math.min(1, g.dur ? g.t / g.dur : 0));
     m.material.opacity = 0.15 + 0.40 * p; m.material.color.set(g.color || 0xff4444);
+    m.children[0].material.color.set(g.color || 0xff4444);
     if (g.type === 'circle') {
       m.position.set(g.x, 1.2, g.y);
     } else {
@@ -1774,6 +1823,10 @@ function drawFx3D() {
       ctx.globalAlpha = 1;
     }
 
+    // 11. The same drifting motes as the 2D view, in the gate's colours, floating over the dungeon floor
+    const moteTh = (dungeon.gate && dungeon.gate.theme) || {};
+    drawMotes(moteTh.ember || COLORS.accent, moteTh.line || COLORS.primary, 0.5);
+
     // 7. Reset to source-over
     ctx.globalCompositeOperation = 'source-over';
 
@@ -1806,7 +1859,8 @@ function drawFx3D() {
       if (!p0 || !p1) return;
       const a = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]), mg = 70;
       const kk = Math.min((w / 2 - mg) / Math.abs(Math.cos(a) || 1e-6), (h / 2 - mg) / Math.abs(Math.sin(a) || 1e-6));
-      ctx.save(); ctx.translate(w / 2 + Math.cos(a) * kk, h / 2 + Math.sin(a) * kk);
+      const [ex, ey] = edgeClear(w / 2 + Math.cos(a) * kk, h / 2 + Math.sin(a) * kk);
+      ctx.save(); ctx.translate(ex, ey);
       ctx.fillStyle = col; ctx.font = 'bold 11px Orbitron, monospace'; ctx.textAlign = 'center';
       ctx.globalAlpha = 0.7 + 0.3 * Math.sin(clock * 6);
       ctx.fillText(Math.round(far / 10) + 'm', 0, -22);

@@ -132,7 +132,7 @@ function drawIndicators() {
   const dx = (tx-camera.x)*camera.zoom, dy = (ty-camera.y)*camera.zoom;
   if (Math.abs(dx) < W/2 - 30 && Math.abs(dy) < H/2 - 30) return;
   const a = Math.atan2(dy, dx), m = 70, k = Math.min((W/2-m)/Math.abs(Math.cos(a) || 1e-6), (H/2-m)/Math.abs(Math.sin(a) || 1e-6));
-  const ix = W/2 + Math.cos(a)*k, iy = H/2 + Math.sin(a)*k;
+  const [ix, iy] = edgeClear(W/2 + Math.cos(a)*k, H/2 + Math.sin(a)*k);
   ctx.save(); ctx.translate(ix, iy);
   ctx.globalAlpha = 0.7 + 0.3*Math.sin(clock*6); ctx.fillStyle = col;
   ctx.font = 'bold 11px Orbitron, monospace'; ctx.textAlign = 'center';
