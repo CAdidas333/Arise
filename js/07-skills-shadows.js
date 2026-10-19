@@ -202,6 +202,7 @@ function syncShadowField() {
     s.role = role;
     const was = !!s.active;
     if (!was && want) {
+      s.riseT = s.riseDur = 0.5; // it climbs out of a dark pool instead of simply appearing
       const a = rand(0, TAU), r = rand(60, 140);
       const p = keepIn(player.x + Math.cos(a)*r, player.y + Math.sin(a)*r, 14);
       s.x = p.x; s.y = p.y; s.attackCd = 0;
@@ -221,10 +222,11 @@ function shadowKindFor(name) {
   return 'melee';
 }
 function addShadow(s) {
-  const ns = { ...s, active:true, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 }, lingerT:3 }; // on the field where it rose for 3 seconds, then it follows its role
+  const ns = { ...s, active:true, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 }, lingerT:3, riseT:0.8, riseDur:0.8 }; // on the field where it rose for 3 seconds, then it follows its role; riseT is not saved
   player.shadows.push(ns);
   if (player.shadows.length > 40) { let wi = 0; player.shadows.forEach((x,i) => { if (x.damage < player.shadows[wi].damage) wi = i; }); player.shadows.splice(wi, 1); }
   deployShadows(); ns.x = s.x; ns.y = s.y;
+  floatText(ns.x, ns.y - 50, 'ARISE', '#bb88ff', 30);
 }
 function nearRemnant() {
   let r = null, rd = 95;
@@ -242,7 +244,7 @@ function tryArise() {
 }
 
 function updateShadows(dt) {
-  player.shadows.forEach(s => { if (s.lingerT > 0) s.lingerT -= dt; });
+  player.shadows.forEach(s => { if (s.lingerT > 0) s.lingerT -= dt; if (s.riseT > 0) s.riseT = Math.max(0, s.riseT - dt); });
   syncShadowField();
   const alive = liveEnemies();
   // Shadows only attack if the player is actively fighting AND moving, OR legion mode is active
@@ -254,7 +256,9 @@ function updateShadows(dt) {
   const active = player.shadows.filter(s => s.active), total = active.length;
 
   active.forEach((s, i) => {
-    s.animT += dt; s.attackCd -= dt; s.moving = false;
+    s.animT += dt;
+    if (s.riseT > 0) return; // still climbing out: it neither moves nor attacks until it is up
+    s.attackCd -= dt; s.moving = false;
     if (canAttack) {
       const target = alive[i % alive.length]; // spread the army across the enemy line
       const dx = target.x-s.x, dy = target.y-s.y, d = Math.hypot(dx,dy) || 1;

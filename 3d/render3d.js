@@ -1009,8 +1009,9 @@ const Fig = (function () {
   // fx, fy: the way the hunter faces, which a shadow standing in formation copies
   function shadow(fig, s, dt, berserk, fx, fy) {
     const ud = fig.userData, r = (s.kind === 'boss' ? 28 : s.grade === 'Elite' ? 16 : 12) * (s.atkT > 0 ? 1.15 : 1);
+    const p = s.riseT > 0 ? 1 - s.riseT / s.riseDur : 1;                              // climbing out of the floor, the way an enemy rises when it spawns
     setPal(fig, shadowPal(berserk));
-    fig.scale.set(r, r, r); fig.position.set(s.x, 0, s.y);
+    fig.scale.set(r, r, r); fig.position.set(s.x, s.riseT > 0 ? -(1 - p) * ud.h * r : 0, s.y);
     const d = stride(ud, s.x, s.y, r, dt);
     let tx = fx, ty = fy;
     if (s.facing && s.facing.y) { tx = s.facing.x; ty = s.facing.y; }              // fighting: it faces its target
@@ -1132,6 +1133,14 @@ groundShadows3D.count = 0;
 groundShadows3D.userData.dummy = new THREE.Object3D();
 scene.add(groundShadows3D);
 
+// A dark pool on the floor under each shadow soldier while it climbs out (ARISE)
+const risePools3D = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial({ color: 0x120022, alphaMap: glowTex3D(), transparent: true, opacity: 0.85, depthWrite: false }), 40);
+risePools3D.frustumCulled = false;
+risePools3D.count = 0;
+risePools3D.userData.dummy = new THREE.Object3D();
+scene.add(risePools3D);
+
 function disposeNode(node) {
   scene.remove(node);
   if (node.geometry && node.userData?.disposeGeom) node.geometry.dispose();
@@ -1191,6 +1200,7 @@ function draw() {
     hunterGroup.visible = false;
     hunterGlow3D.visible = false;
     groundShadows3D.count = 0;
+    risePools3D.count = 0;
     const emptySet = new Set();
     [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, telegraphMeshes, zoneMeshes].forEach(m => pruneMap(m, emptySet));
     renderer.render(scene, camera3D);
@@ -1300,6 +1310,22 @@ function draw() {
     }
   }
   pruneMap(shadowMeshes, seenFigures);
+
+  // The dark pools rising shadows climb out of, one instance per shadow still up out of the floor
+  const rsd = risePools3D.userData.dummy;
+  let rsi = 0;
+  if (player && player.shadows) {
+    for (const s of player.shadows) {
+      if (!s || !s.active || !(s.riseT > 0) || rsi >= 40) continue;
+      const p = 1 - s.riseT / s.riseDur, r = s.kind === 'boss' ? 28 : s.grade === 'Elite' ? 16 : 12;
+      rsd.position.set(s.x, 0.6, s.y);
+      rsd.scale.set(r * 3.2 * (1 - 0.25 * p), 1, r * 3.2 * (1 - 0.25 * p));
+      rsd.updateMatrix();
+      risePools3D.setMatrixAt(rsi++, rsd.matrix);
+    }
+  }
+  risePools3D.count = rsi;
+  risePools3D.instanceMatrix.needsUpdate = true;
 
   // Soft ground shadows: one instance per figure standing on the floor, none for an enemy still spawning in
   const gsd = groundShadows3D.userData.dummy;
