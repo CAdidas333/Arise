@@ -66,7 +66,7 @@
 ### Next Up (ranked)
 1. Chris plays: the boss fights (F12), the square-up and counter (F11), pacing (E4), gear (E5), difficulty (E1, E2); his ears on the music (U6); a real-phone test (E3). Do not tune difficulty before he says how it plays
 2. Balance (E1): the bot dies 0 times; the shadows do most of the boss damage. Levers when Chris asks: shadow damage per level (`shadowDmg`), boss health, enemy damage
-3. 3D lane: the decoration left in U13 and the corner clash in U12; every warning, target and prompt is in 3D since 2026-10-16 (U11)
+3. 3D lane: caught up (U11 to U13 done by 2026-10-18); the ARISE rise is in both views (F14)
 4. Parked: shared leaderboard and co-op (F1); the printable status report (C1)
 - Open questions and deferred ideas are in `docs/context/OPEN_THREADS.md`
 

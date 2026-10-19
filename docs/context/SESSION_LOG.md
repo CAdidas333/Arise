@@ -16,6 +16,7 @@ Restarted by Houston in the morning under free rein. Orchestrator only: briefs, 
 
 - **Overnight 2026-10-16, on Houston's word (3D parity):** a free-worker audit listed 52 things the player sees in 2D and which the 3D view shows (`docs/briefs/v18-3d-parity-audit.md`); a second job built its ten top gaps (thread U11), accepted with no changes; shipped at stamp 20261016030318. The 3D minimap was checked at 440 by 762 with a phone's touch layout. Gemini was out of quota overnight; the free OpenCode model did both jobs.
 
+- **Night of 2026-10-18, Houston's overnight brief:** the corner clash fixed (U12), the last 3D decoration (U13), and the ARISE rise (F14), all by free OpenCode workers (Gemini was out of quota), reviewed and checked at desktop and phone sizes in both views; one fault caught by hand before shipping (a duplicate name inside `drawMinimap`, 068378e). Live at stamp 20261018233409.
 - **Evening 2026-10-16, Chris's word:** Kevin's ideas are welcome again (recorded in MASTER_CONTEXT; relayed through the KevinNotary session). His four backpack ideas built by a Gemini worker and shipped at stamp 20261016213315 (thread F13).
 
 ### Checks

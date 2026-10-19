@@ -4,9 +4,10 @@ _Written: 2026-10-15 (Thursday) during Session 8, by the Arise project manager s
 ## Where we left off
 V18 is complete: all nine steps are live. Session 8 shipped three-phase boss fights with arena tricks (step 8), four 3D
 leftovers, and thick stone walls with room dressing in 3D. Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp
-20261015090051, commit d47aa59. Overnight on 2026-10-16 (Houston's word) the 3D view got every warning, target and prompt the 2D view has (thread U11), live at stamp 20261016030318. On the evening of 2026-10-16 Chris welcomed Kevin's ideas again (relayed by the KevinNotary session, by direct message), and Kevin's four backpack ideas went live at stamp 20261016213315 (thread F13). Nothing is in flight; no worker worktrees are left.
+20261015090051, commit d47aa59. Overnight on 2026-10-16 (Houston's word) the 3D view got every warning, target and prompt the 2D view has (thread U11), live at stamp 20261016030318. On the evening of 2026-10-16 Chris welcomed Kevin's ideas again (relayed by the KevinNotary session, by direct message), and Kevin's four backpack ideas went live at stamp 20261016213315 (thread F13). On the night of 2026-10-18 (Houston's brief) the corner clash (U12), the last 3D decoration (U13) and the ARISE rise (F14) went live at stamp 20261018233409. Nothing is in flight; no worker worktrees are left.
 
 ## Tell Chris when he plays (plain words; his list, lined up, none of it blocks the work)
+- **Try first: raise a shadow.** Beat an enemy, walk to the purple wisp it leaves and press E (ARISE on a phone): the word ARISE appears and the soldier climbs up out of a dark pool. Arise: Legion makes the called shadows rise the same way.
 - **Bosses fight in three phases now.** At half health each boss enrages and does something of its own; at a quarter it makes
   a last stand. Spider Queen webs the floor (webs slow you), then lays nine eggs round you that all hatch if you stay inside.
   Orc Chieftain roars and calls two elite orcs, then jumps five times in a row. Death Knight raises two elites, then cuts a
@@ -33,8 +34,7 @@ leftovers, and thick stone walls with room dressing in 3D. Live at https://cadid
 ## Ranked next actions
 1. When Chris has played: tune from what he says. Do not make enemies hit harder before he has (his word, 2026-10-12). The bot
    still dies 0 times and the shadows do most of the boss damage (E1); levers: `shadowDmg`, boss health, enemy damage.
-2. 3D lane: the corner clash (U12: the edge arrow can land on the minimap; on upright phones the boss name touches it) and the
-   decoration left in U13. The 3D minimap was checked at 440 by 762 with a phone's touch layout (2026-10-16): nothing overlaps it.
+2. 3D lane: done for now (U11 to U13); the deliberate leftovers are listed in U13. The 3D minimap was checked at 440 by 762 with a phone's touch layout (2026-10-16): nothing overlaps it.
 3. Parked: shared leaderboard and co-op (F1); the printable status report (C1).
 
 ## Watch-outs / state of mind
