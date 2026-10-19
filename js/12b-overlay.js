@@ -57,7 +57,7 @@ function edgeClear(x, y) {
   return [Math.min(x, W - 70), b.y1 + 40];
 }
 function drawMinimap() {
-  const L = layout, b = minimapBox(), mx = b.x0, my = b.y0, mw = b.x1 - b.x0, mh = b.y1 - b.y0 - 18;
+  const L = layout, box = minimapBox(), mx = box.x0, my = box.y0, mw = box.x1 - box.x0, mh = box.y1 - box.y0 - 18;
   const sx = L ? mw/3600 : mw/arenaW, sy = L ? sx : mh/arenaH, cx = mx + mw/2, cy = my + mh/2;
   const ox = L ? player.x : 0, oy = L ? player.y : 0; // with a layout the map is centred on the hunter
   const px = x => cx + (x-ox)*sx, py = y => cy + (y-oy)*sy;
