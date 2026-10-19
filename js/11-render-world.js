@@ -936,6 +936,16 @@ function drawShadowSoldier(s) {
   ctx.globalAlpha = berserk ? 0.35 : 0.2; ctx.fillStyle = berserk ? '#cc44ff' : COLORS.accent;
   ctx.beginPath(); ctx.ellipse(s.x, s.y + r*0.85, r*1.2, r*0.4, 0, 0, TAU); ctx.fill();
   if (boss) { ctx.globalAlpha = 0.12; disc(s.x, s.y, r*1.9); }
+  const rising = s.riseT > 0, p = rising ? 1 - s.riseT/s.riseDur : 1; // 0 under the floor, 1 fully up
+  if (rising) { // a dark pool on the floor, and the body climbs out through the clip above it
+    ctx.globalAlpha = 0.85*(1 - p*p); ctx.fillStyle = '#120022';
+    ctx.beginPath(); ctx.ellipse(s.x, s.y + r*0.85, r*(1.6 - 0.4*p), r*0.5, 0, 0, TAU); ctx.fill();
+    ctx.globalAlpha = 0.6*(1 - p); ctx.strokeStyle = COLORS.accent; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(s.x, s.y + r*0.85, r*(1.6 - 0.4*p), r*0.5, 0, 0, TAU); ctx.stroke();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(s.x - r*3, s.y - r*6, r*6, r*6 + r*0.85); ctx.clip();
+    ctx.translate(0, (1 - p)*r*2.4);
+  }
   ctx.save(); ctx.translate(s.x, s.y + Math.sin(s.animT*6)*1.5);
   ctx.globalAlpha = berserk ? 0.95 : 0.85;
   if (boss) {
@@ -950,6 +960,7 @@ function drawShadowSoldier(s) {
     disc(ox - r*0.24, oy, er); disc(ox + r*0.24, oy, er);
   }
   ctx.restore();
+  if (rising) ctx.restore();
   ctx.globalAlpha = 1;
 }
 
