@@ -1,5 +1,14 @@
 # Arise — Session Log
 
+## Session 8, continued — 2026-10-20 (Tuesday) — The session log caught up, and the System announces a level-up
+
+### What Changed
+- **Session log** (4582c8c): the 10-16 to 10-18 nights got their own entry, on Houston's flag (the context-drift daemon read the newest entry as 10-15).
+- **The System's level-up window** (e774ad0 brief, 7eee5b6 ship, stamp 20261020150450): a blue System window for a level-up, violet for a rank-up, in both views (thread F15). One free OpenCode pass; placement fixed by hand from frames at desktop, upright phone and short landscape sizes.
+
+### Checks
+`check_names.sh`, `test_layout.js` (PASS 8000), `test_gear.js`, `test_army.js` (PASS 570), the headless load, the balance bot (no errors; it levels hunters many times). Browser: the window's text, its violet rank-up tone, no touches taken, gone after 2 seconds, in 3D; frames in both views at three sizes with four pop-ups showing. Public pages on the new stamp.
+
 ## Session 8, continued — 2026-10-16 to 2026-10-18 (nights) — The 3D view at parity, Kevin's backpack, the ARISE rise, the minimap corner
 
 ### Focus

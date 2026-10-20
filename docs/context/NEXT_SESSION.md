@@ -4,9 +4,10 @@ _Written: 2026-10-15 (Thursday) during Session 8, by the Arise project manager s
 ## Where we left off
 V18 is complete: all nine steps are live. Session 8 shipped three-phase boss fights with arena tricks (step 8), four 3D
 leftovers, and thick stone walls with room dressing in 3D. Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp
-20261015090051, commit d47aa59. Overnight on 2026-10-16 (Houston's word) the 3D view got every warning, target and prompt the 2D view has (thread U11), live at stamp 20261016030318. On the evening of 2026-10-16 Chris welcomed Kevin's ideas again (relayed by the KevinNotary session, by direct message), and Kevin's four backpack ideas went live at stamp 20261016213315 (thread F13). On the night of 2026-10-18 (Houston's brief) the corner clash (U12), the last 3D decoration (U13) and the ARISE rise (F14) went live at stamp 20261018233409. Nothing is in flight; no worker worktrees are left.
+20261015090051, commit d47aa59. Overnight on 2026-10-16 (Houston's word) the 3D view got every warning, target and prompt the 2D view has (thread U11), live at stamp 20261016030318. On the evening of 2026-10-16 Chris welcomed Kevin's ideas again (relayed by the KevinNotary session, by direct message), and Kevin's four backpack ideas went live at stamp 20261016213315 (thread F13). On the night of 2026-10-18 (Houston's brief) the corner clash (U12), the last 3D decoration (U13) and the ARISE rise (F14) went live at stamp 20261018233409. On 2026-10-20 the System's level-up window went live at stamp 20261020150450 (F15). Nothing is in flight; no worker worktrees are left.
 
 ## Tell Chris when he plays (plain words; his list, lined up, none of it blocks the work)
+- **New on 2026-10-20: the System announces each level-up** in a blue window above the hunter (violet for a rank-up).
 - **Try first: raise a shadow.** Beat an enemy, walk to the purple wisp it leaves and press E (ARISE on a phone): the word ARISE appears and the soldier climbs up out of a dark pool. Arise: Legion makes the called shadows rise the same way.
 - **Bosses fight in three phases now.** At half health each boss enrages and does something of its own; at a quarter it makes
   a last stand. Spider Queen webs the floor (webs slow you), then lays nine eggs round you that all hatch if you stay inside.
