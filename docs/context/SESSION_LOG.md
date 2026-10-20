@@ -1,15 +1,18 @@
 # Arise — Session Log
 
-## Session 8, continued — 2026-10-20 (Tuesday) — The session log caught up, and the System announces a level-up
+## Session 8, continued — 2026-10-20 (Tuesday) — The session log caught up, the System announces a level-up, and the stamp refuses a broken build
 
 ### What Changed
 - **Session log** (4582c8c): the 10-16 to 10-18 nights got their own entry, on Houston's flag (the context-drift daemon read the newest entry as 10-15).
 - **The System's level-up window** (e774ad0 brief, 7eee5b6 ship, stamp 20261020150450): a blue System window for a level-up, violet for a rank-up, in both views (thread F15). One free OpenCode pass; placement fixed by hand from frames at desktop, upright phone and short landscape sizes.
-
-- **G8, the stamp refuses a broken build** (a5a4963 brief, e76e29b merge): names check, a parse check of every script including the 3D renderer, and the headless load, before any stamp; proved with three deliberate clashes.
+- **G8, the stamp refuses a broken build** (a5a4963 brief, e76e29b merge, a086656 docs): names check, a parse check of every script including the 3D renderer, and the headless load, before any stamp; proved with three deliberate clashes.
+- **Handoff** (1321b56): `NEXT_SESSION.md` rewritten as of 10-20, shipped work summarised, real next steps on top.
 
 ### Checks
 `check_names.sh`, `test_layout.js` (PASS 8000), `test_gear.js`, `test_army.js` (PASS 570), the headless load, the balance bot (no errors; it levels hunters many times). Browser: the window's text, its violet rank-up tone, no touches taken, gone after 2 seconds, in 3D; frames in both views at three sizes with four pop-ups showing. Public pages on the new stamp.
+
+### What's Next
+Nobody has played any of it yet (see Not Done in the entry below). Chris plays, then tune from what he says; difficulty stays as it is until then (thread E1). Kevin's ideas as they arrive through the KevinNotary session. Ranked in `NEXT_SESSION.md`; open items in `OPEN_THREADS.md`.
 
 ## Session 8, continued — 2026-10-16 to 2026-10-18 (nights) — The 3D view at parity, Kevin's backpack, the ARISE rise, the minimap corner
 
@@ -19,8 +22,8 @@ The same project-manager session, woken three times: by Houston overnight on 10-
 ### What Changed
 - **3D parity, overnight 10-16** (952813d brief, 59632d0 ship, stamp 20261016030318): a worker audit listed 52 things the player sees in 2D (`docs/briefs/v18-3d-parity-audit.md`); a second job built the ten top gaps: enemy health bars, the "[E] ARISE" prompt, the boss-hunt edge arrow, the low-health and Awakening screen edge, elite and boss aura arcs, glowing shots and crescent waves, the invulnerability blink, the light under the hunter, gear and remnant glows (thread U11). The 3D minimap was checked at 440 by 762 with the phone touch layout.
 - **Kevin's ideas welcome again, evening 10-16** (e03db06): Chris's word recorded in MASTER_CONTEXT; Kevin's ideas come from the KevinNotary session by direct message, Chris still decides design.
-- **Kevin's backpack, evening 10-16** (60d90ed, stamp 20261016213315): the bag holds 24; SELL ALL WEAKER THAN EQUIPPED; an UPGRADE tag and a count on the ARMORY tab; a full bag asks before a gate (thread F13). By hand after: the tag moved off long item names, the question scrolled into view on phones. Kevin was told through the KevinNotary session at 21:34.
-- **The minimap corner, night of 10-18** (068378e and the merge before it): the edge arrow no longer lands on the minimap, and on upright phones the minimap sits 11 pixels clear of the boss name (thread U12).
+- **Kevin's backpack, evening 10-16** (60d90ed, stamp 20261016213315): the bag holds 24; SELL ALL WEAKER THAN EQUIPPED; an UPGRADE tag and a count on the ARMORY tab; a full bag asks before a gate (thread F13). By hand after: the tag moved off long item names, the question scrolled into view on phones. Kevin was told through the KevinNotary session after it shipped.
+- **The minimap corner, night of 10-18** (6a18b5d brief, 3d36386 merge, 068378e fix): the edge arrow no longer lands on the minimap, and on upright phones the minimap sits 11 pixels clear of the boss name (thread U12).
 - **The last 3D decoration, night of 10-18** (same merge, frames 912178c): floor motes, torch light pools, soft ground shadows, bright rims on warning shapes (thread U13; the deliberate leftovers are listed there).
 - **The ARISE rise, night of 10-18** (6bbf22a brief, 9d04002 ship, stamp 20261018233409): a raised shadow climbs out of a dark pool over 0.8 seconds with the word ARISE above it, 0.5 seconds when Legion or the Awakening calls the army; it neither moves nor attacks until it is up (thread F14).
 - **Caught before shipping:** the merged minimap code declared `const b` twice inside `drawMinimap`, which would have stopped the shared overlay script loading in both views; the worker had hit its time limit and reported its checks as passed. Fixed by hand in 068378e; lesson 41871b8.

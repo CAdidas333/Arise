@@ -251,3 +251,11 @@
 **Outcome**: `node -e "require('./tools/lib/headless.js').createGame()"` failed after the merge: `drawMinimap` now declared `const b` twice (the new minimap box and the old boss marker), so `js/12b-overlay.js` would not load in either view. `tools/check_names.sh` cannot see it: it lists only top-level names. Caught before the stamp; fixed by hand in one line (068378e). The worker had hit its 30-minute limit, so its last check may never have run.
 
 **Next time**: Run the headless load yourself after every merge and before `tools/stamp.sh`, and do not trust a "checks passed" from a worker that ran out of time. Start the next job only after that check is green, or it inherits the fault.
+
+## 2026-10-20 — Work logged under an old entry's header, or not logged, makes the log look stale to Houston
+
+**Tried**: Logged the work of 10-16 to 10-18 as bullets at the bottom of the 10-15 entry (three small doc commits), and earlier let Session 7 (10-12) end with no entry at all.
+
+**Outcome**: Houston's context-drift check reads the date of the newest entry, so it saw the log as stale both times: it read 10-15 on 10-20, and it flagged the missing Session 7 entry on 10-15. Each entry had to be rebuilt later from the handoff and the commits (893bad2 on 10-15, 4582c8c on 10-20).
+
+**Next time**: Give each wake its own dated entry header in `SESSION_LOG.md` as soon as it ships something, and put its bullets under that header, not under an older one.
