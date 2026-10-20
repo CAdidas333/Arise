@@ -15,9 +15,8 @@ Nobody has played any of this by hand, tried it on a real phone, or heard the mu
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
    E4 rooms per gate, E5 gear drops). Do not make enemies hit harder before he has (his word, 2026-10-12). The bot still dies
    0 times and the shadows do most of the boss damage; levers when he asks: `shadowDmg`, boss health, enemy damage.
-2. **Unblocked now (free rein): G8, make `tools/stamp.sh` refuse to stamp a broken build.** Have it run `tools/check_names.sh`
-   and `node -e "require('./tools/lib/headless.js').createGame()"` first and stop on either failure. The headless load is what
-   caught the 10-18 fault (a name declared twice inside `drawMinimap`) that `check_names.sh` cannot see. Small worker job.
+2. Done 2026-10-20: G8, `tools/stamp.sh` now refuses to stamp a broken build (names clash, a script that cannot parse, or
+   scripts that do not load together). A refused stamp prints `stamp refused: ...`; fix the cause, never work around it.
 3. **Kevin's ideas** as they arrive from the KevinNotary session: weigh them, build what Chris approves or free rein covers,
    reply through that session.
 4. Low, when there is nothing better: the U13 leftovers kept out on purpose (a plain dark vignette, darkened corridors,
