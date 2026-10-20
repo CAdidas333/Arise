@@ -13,7 +13,7 @@ For how Arise relates to other projects:
 ## Stack
 - Pure HTML5 Canvas + vanilla JavaScript
 - Zero dependencies, zero build step
-- `index.html` plus `js/` (15 classic scripts, loaded in order) and `assets/` — open in browser and play (Chris lifted the single-file rule 2026-10-09)
+- `index.html` plus `js/` (16 classic scripts, loaded in order) and `assets/` — open in browser and play (Chris lifted the single-file rule 2026-10-09)
 - Serve locally: `python3 -m http.server 8080` or `npx serve`
 
 ## Critical Arise Rules
