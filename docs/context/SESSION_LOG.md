@@ -1,5 +1,26 @@
 # Arise — Session Log
 
+## Session 8, continued — 2026-10-16 to 2026-10-18 (nights) — The 3D view at parity, Kevin's backpack, the ARISE rise, the minimap corner
+
+### Focus
+The same project-manager session, woken three times: by Houston overnight on 10-16 (bring the 3D lane up to the 2D view), by Chris on the evening of 10-16 (Kevin's ideas, relayed by the KevinNotary session), and by Houston overnight on 10-18 (U12, U13, then the most visible improvement, enemies no harder). Free workers built everything (Gemini where it had quota, the free OpenCode model otherwise); the orchestrator briefed, reviewed, tested in both views at desktop and phone sizes, and shipped.
+
+### What Changed
+- **3D parity, overnight 10-16** (952813d brief, 59632d0 ship, stamp 20261016030318): a worker audit listed 52 things the player sees in 2D (`docs/briefs/v18-3d-parity-audit.md`); a second job built the ten top gaps: enemy health bars, the "[E] ARISE" prompt, the boss-hunt edge arrow, the low-health and Awakening screen edge, elite and boss aura arcs, glowing shots and crescent waves, the invulnerability blink, the light under the hunter, gear and remnant glows (thread U11). The 3D minimap was checked at 440 by 762 with the phone touch layout.
+- **Kevin's ideas welcome again, evening 10-16** (e03db06): Chris's word recorded in MASTER_CONTEXT; Kevin's ideas come from the KevinNotary session by direct message, Chris still decides design.
+- **Kevin's backpack, evening 10-16** (60d90ed, stamp 20261016213315): the bag holds 24; SELL ALL WEAKER THAN EQUIPPED; an UPGRADE tag and a count on the ARMORY tab; a full bag asks before a gate (thread F13). By hand after: the tag moved off long item names, the question scrolled into view on phones. Kevin was told through the KevinNotary session at 21:34.
+- **The minimap corner, night of 10-18** (068378e and the merge before it): the edge arrow no longer lands on the minimap, and on upright phones the minimap sits 11 pixels clear of the boss name (thread U12).
+- **The last 3D decoration, night of 10-18** (same merge, frames 912178c): floor motes, torch light pools, soft ground shadows, bright rims on warning shapes (thread U13; the deliberate leftovers are listed there).
+- **The ARISE rise, night of 10-18** (6bbf22a brief, 9d04002 ship, stamp 20261018233409): a raised shadow climbs out of a dark pool over 0.8 seconds with the word ARISE above it, 0.5 seconds when Legion or the Awakening calls the army; it neither moves nor attacks until it is up (thread F14).
+- **Caught before shipping:** the merged minimap code declared `const b` twice inside `drawMinimap`, which would have stopped the shared overlay script loading in both views; the worker had hit its time limit and reported its checks as passed. Fixed by hand in 068378e; lesson 41871b8.
+
+### Checks
+Every ship: `tools/check_names.sh`, `test_layout.js` (PASS 8000), `test_gear.js`, `test_army.js` (PASS 570), the headless load, and the balance bot for the rise. Browser: both views, desktop and 440 by 762 with the phone touch layout, every new path measured (the rise frame by frame, the full-bag ask's three buttons, the minimap box and the arrow move), no console errors, the public pages on the new stamp. Frames in `docs/previews/` against the art rule.
+
+### Not Done
+Nobody has played any of it by hand; Chris has not heard the music or tested on his phone. Difficulty is unchanged until he plays (still too easy by the bot, thread E1).
+
+
 ## Session 8 — 2026-10-15 (Thursday) — Three-phase boss fights with arena tricks (V18 complete), and the 3D view catches up
 
 ### Focus
@@ -14,10 +35,7 @@ Restarted by Houston in the morning under free rein. Orchestrator only: briefs, 
 - **3D rooms dressed** (worker `walls3d`, merge 364fe81; brief `v18-3d-lane5-walls-dressing.md`): thick stone walls with a cutaway on the camera side, pilasters, torches, rubble, cracks, inlays and runners from the shared dressing data. By hand after: instance buffers freed on rebuild, softer cracks, a round torch glow. Shipped d47aa59, stamp 20261015090051.
 - **Docs:** the missing Session 7 entry (Houston's flag), threads F7, F9, U5, G5 done, F12 opened, two lessons (headless captures, the boss intro in tests).
 
-- **Overnight 2026-10-16, on Houston's word (3D parity):** a free-worker audit listed 52 things the player sees in 2D and which the 3D view shows (`docs/briefs/v18-3d-parity-audit.md`); a second job built its ten top gaps (thread U11), accepted with no changes; shipped at stamp 20261016030318. The 3D minimap was checked at 440 by 762 with a phone's touch layout. Gemini was out of quota overnight; the free OpenCode model did both jobs.
 
-- **Night of 2026-10-18, Houston's overnight brief:** the corner clash fixed (U12), the last 3D decoration (U13), and the ARISE rise (F14), all by free OpenCode workers (Gemini was out of quota), reviewed and checked at desktop and phone sizes in both views; one fault caught by hand before shipping (a duplicate name inside `drawMinimap`, 068378e). Live at stamp 20261018233409.
-- **Evening 2026-10-16, Chris's word:** Kevin's ideas are welcome again (recorded in MASTER_CONTEXT; relayed through the KevinNotary session). His four backpack ideas built by a Gemini worker and shipped at stamp 20261016213315 (thread F13).
 
 ### Checks
 `tools/check_names.sh`, `test_layout.js` (PASS 8000), `test_gear.js`, `test_army.js`, the headless load, `balance_bot.js` (every gate cleared, 0 deaths). Browser: every boss reached phases 2 and 3 in both views with no errors; a hit, a dodge, an attack and the Awakening in both views. Frames in `docs/previews/` (`step8_*_v1.jpg`, `3d_*_v1.jpg` of 2026-10-15).
