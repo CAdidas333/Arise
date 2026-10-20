@@ -1,5 +1,5 @@
 # Next Session Handoff
-_Written: 2026-10-20 (Tuesday) by the Arise project manager session (Session 8, continued; started by Houston)_
+_Written: 2026-10-20 16:40 (Tuesday) by the Arise project manager session (Session 8, wrapped for renewal), for Chris Whitney_
 
 ## Where we left off
 V18 is complete and the 3D view has caught up with the 2D one. Live at https://cadidas333.github.io/Arise/ and `/3d/`,
@@ -21,7 +21,8 @@ Nobody has played any of this by hand, tried it on a real phone, or heard the mu
    reply through that session.
 4. Low, when there is nothing better: the U13 leftovers kept out on purpose (a plain dark vignette, darkened corridors,
    the classic hunter look in 3D); G4 (preview frames served on the public site, harmless); G6 (read ElevenLabs' music terms).
-5. Parked: shared leaderboard and co-op (F1, Chris's word to start); the printable status report (C1).
+5. Parked: shared leaderboard and co-op (F1, Chris's word to start). The printable status report (C1) was made at this wrap:
+   `docs/Status_Report_2026-10-20.html`.
 
 ## Tell Chris when he plays (plain words; his list, none of it blocks the work)
 - **Try first: raise a shadow.** Beat an enemy, walk to the purple wisp it leaves and press E (ARISE on a phone): the word
@@ -76,3 +77,8 @@ Nobody has played any of this by hand, tried it on a real phone, or heard the mu
   (stub `saveGame` in tests).
 - An untracked `AGENTS.md` (a copy of the project rules for other agent tools, dated 10-17) sits in the repo root; it is not
   ours to commit or delete.
+
+## What DID NOT get done
+- No human play-through, no real-phone test, no listening to the music: all still Chris's (F12, E1 to E5, E3, U6).
+- Difficulty untouched on purpose (still too easy by the bot) until Chris has played.
+- The U13 3D extras left out on purpose (plain vignette, darkened corridors, the classic hunter look in 3D).

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arise Status Report</title>
+<style>
+  @page { size: letter; margin: 0.75in; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color: #222; background: #fff; max-width: 8in; margin: 0 auto; padding: 24px; font-size: 11.5px; line-height: 1.35; }
+  header { border-bottom: 3px solid #222; padding-bottom: 8px; margin-bottom: 10px; }
+  header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; }
+  header p { margin: 4px 0 0; color: #555; }
+  .scoreboard { display: flex; gap: 10px; margin: 10px 0 12px; }
+  .score { flex: 1; background: #f4f5f7; border-radius: 8px; padding: 8px 6px; text-align: center; }
+  .score .n { font-size: 32px; font-weight: 700; line-height: 1.1; }
+  .score .l { font-size: 10.5px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+  h2 { font-size: 14px; margin: 12px 0 6px; padding: 3px 0 3px 10px; border-left: 5px solid #999; }
+  h2.done { border-color: #2ecc71; } h2.next { border-color: #f39c12; } h2.issues { border-color: #e74c3c; }
+  h2.info { border-color: #3498db; } h2.handoff { border-color: #9b59b6; }
+  ul.check { list-style: none; padding-left: 0; margin: 0; }
+  ul.check li { margin: 2px 0; padding-left: 22px; text-indent: -22px; }
+  .two { display: flex; gap: 18px; } .two > div { flex: 1; }
+  .handoff-box { background: #fef9e7; border: 2px solid #f1c40f; border-radius: 6px; padding: 10px 12px; }
+  .handoff-box pre { white-space: pre-wrap; font-family: Menlo, Consolas, monospace; font-size: 10.5px; margin: 0; }
+  .infobox { background: #eaf2f8; border-radius: 6px; padding: 6px 10px; margin: 5px 0; }
+  .infobox b { display: block; margin-bottom: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  th { background: #2c3e50; color: #fff; text-align: left; padding: 5px 7px; }
+  td { padding: 5px 7px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f4f5f7; }
+  code { font-family: Menlo, Consolas, monospace; font-size: 10.5px; background: #f0f0f0; padding: 0 3px; border-radius: 3px; }
+  .page2 { page-break-before: always; }
+  footer { margin-top: 18px; border-top: 1px solid #ccc; padding-top: 6px; color: #777; font-size: 10.5px; display: flex; justify-content: space-between; }
+  @media print { body { padding: 0; } .scoreboard, .handoff-box, .infobox, table, ul.check { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>ARISE — Status Report</h1>
+  <p>A Solo Leveling browser action RPG, in a 2D view and a 3D view over the same rules · 20 October 2026</p>
+</header>
+
+<div class="scoreboard">
+  <div class="score"><div class="n">9 / 9</div><div class="l">V18 steps live</div></div>
+  <div class="score"><div class="n">6</div><div class="l">Bosses, 3 phases each</div></div>
+  <div class="score"><div class="n">51</div><div class="l">Commits since 15 Oct</div></div>
+  <div class="score"><div class="n">30</div><div class="l">Threads closed (14 open)</div></div>
+  <div class="score"><div class="n">0</div><div class="l">Human play-tests</div></div>
+</div>
+
+<h2 class="info">Where we are</h2>
+<p>V18 is complete and the 3D view has caught up with the 2D one; everything below is live at
+<b>cadidas333.github.io/Arise</b> and <b>/3d/</b> (stamp 20261020150450). All of it was built by free workers and checked by
+test scripts, a balance bot and captured frames at desktop and phone sizes. <b>Nobody has played it by hand, tried it on a real
+phone, or heard the music</b>, and by the bot it is still too easy. Difficulty waits on Chris's play-through.</p>
+
+<div class="two">
+<div>
+<h2 class="done">What's built (15 to 20 Oct)</h2>
+<ul class="check">
+  <li>✅ Three-phase boss fights: a scripted move at half and a last stand at a quarter, for all six bosses</li>
+  <li>✅ Floor hazards that stay: webs and rubble slow, fire and blood burn</li>
+  <li>✅ 3D view at parity: health bars, ARISE prompt, boss arrow, low-health edge, glowing shots</li>
+  <li>✅ 3D look: minimap, thick walls with a cutaway, torches, rubble, shadows, motes, warning rims</li>
+  <li>✅ Kevin's backpack: 24 slots, sell weaker gear, UPGRADE tags, a full-bag check</li>
+  <li>✅ The ARISE rise: a raised shadow climbs out of a dark pool</li>
+  <li>✅ The System's level-up window (violet for a rank-up)</li>
+  <li>✅ The stamp script refuses a broken build</li>
+</ul>
+</div>
+<div>
+<h2 class="next">What's next</h2>
+<ul class="check">
+  <li>▶️ Chris plays a gate and a boss on his phone and on desktop, and says how it feels</li>
+  <li>▶️ Tune difficulty from what he says (shadow damage, boss health, enemy damage)</li>
+  <li>▶️ Chris listens to the three music tracks; swap any take he names</li>
+  <li>▶️ Kevin's ideas as they arrive through the KevinNotary session</li>
+  <li>⏳ 3D extras kept out on purpose: a plain vignette, darkened corridors, the classic hunter in 3D</li>
+  <li>⏳ Parked: shared leaderboard and co-op (Chris's word to start)</li>
+</ul>
+</div>
+</div>
+
+<h2 class="issues">Known issues / gaps</h2>
+<ul class="check">
+  <li>⚠️ <b>Untested by a person.</b> The feel of combat, the boss phases, rooms per gate and gear drops are all unconfirmed.</li>
+  <li>⚠️ <b>Too easy by the bot:</b> it clears every gate with no deaths; the shadow army does most of the boss damage.</li>
+  <li>⚠️ <b>Never on a real phone:</b> frame rate, the two-finger 3D camera, the share sheet and music memory are unmeasured.</li>
+  <li>⚠️ <b>For Chris's art eye:</b> the Statue of God's eye-beam, and the Death Knight's greatsword at small size in 2D.</li>
+</ul>
+
+<div class="page2">
+<h2 class="handoff">Handoff prompt (paste into the next session)</h2>
+<div class="handoff-box"><pre>Arise, next session (after 2026-10-20). Run /uptospeed in ~/Projects/Arise, or read docs/context/NEXT_SESSION.md, MASTER_CONTEXT.md, ACTIVE_PROJECTS.md, SESSION_LOG.md and OPEN_THREADS.md.
+
+Last session (Arise S8, 15 to 20 Oct): V18 step 8 (three-phase boss fights, floor hazards), the 3D view brought to parity and dressed, Kevin's backpack ideas, the ARISE rise, the System level-up window, and tools/stamp.sh now refuses a broken build. Live at stamp 20261020150450; main = v18-world.
+
+Next: wait for Chris to play, then tune from what he says (never make enemies hit harder before he has).
+
+Build with free workers: worker run Arise &lt;slug&gt; &lt;brief&gt; --engine auto; review the diff, run the checks yourself, test both views at desktop and phone size, then ship (git branch -f main v18-world).</pre></div>
+
+<h2 class="info">Key technical notes</h2>
+<div class="infobox"><b>One global scope.</b> 16 classic scripts share it; a name declared twice stops a whole script. <code>tools/stamp.sh</code> now checks names, parses every script and loads them in Node before it stamps.</div>
+<div class="infobox"><b>Two views, one game.</b> <code>3d/index.html</code> is generated from <code>index.html</code>; never edit it. The 3D page swaps the 2D drawing scripts for <code>3d/render3d.js</code>; <code>js/12b-overlay.js</code> is shared.</div>
+<div class="infobox"><b>Testing in the hidden browser pane.</b> Drive the game with <code>step(1/60)</code> and <code>draw()</code>; wait out the 3.2-second boss intro; never let a test save on the public site.</div>
+<div class="infobox"><b>Rules from Chris.</b> Free rein (decide and ship). His: money, and the art rule: no star symbols, runes, occult or religious imagery, in pictures or words.</div>
+
+<h2 class="info">Where everything lives</h2>
+<table>
+  <tr><th>What</th><th>Where</th></tr>
+  <tr><td>Live game (2D / 3D)</td><td>cadidas333.github.io/Arise/ and /3d/</td></tr>
+  <tr><td>Repository</td><td>github.com/CAdidas333/Arise (branch <code>v18-world</code>; <code>main</code> is the public site)</td></tr>
+  <tr><td>Game code</td><td><code>index.html</code>, <code>js/</code> (16 scripts), <code>3d/render3d.js</code>, <code>assets/</code></td></tr>
+  <tr><td>Context docs</td><td><code>docs/context/</code>: NEXT_SESSION, MASTER_CONTEXT, ACTIVE_PROJECTS, SESSION_LOG, OPEN_THREADS, LESSONS</td></tr>
+  <tr><td>Worker briefs</td><td><code>docs/briefs/</code></td></tr>
+  <tr><td>Review frames</td><td><code>docs/previews/</code> (68 files: frames and audio demos)</td></tr>
+  <tr><td>Checks</td><td><code>tools/check_names.sh</code>, <code>test_layout.js</code>, <code>test_gear.js</code>, <code>test_army.js</code>, <code>balance_bot.js</code>, <code>stamp.sh</code></td></tr>
+</table>
+</div>
+
+<footer><span>Arise · 20 October 2026</span><span>Built with Claude Code</span></footer>
+</body>
+</html>

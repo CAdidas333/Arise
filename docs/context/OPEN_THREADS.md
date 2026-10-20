@@ -70,7 +70,6 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 
 | # | Title | Status | Effort | Blocker | Why deferred |
 |---|---|---|---|---|---|
-| C1 | Printable status report (skipped at the Session 3, 4, 5 and 6 wraps) | OPEN | min | Weekly Claude usage having room | Skipped twice to save usage (76 percent on 2026-10-09 with two days to the reset) |
 
 ---
 
@@ -78,6 +77,7 @@ Threads F1 to F6, U1 to U4, E1 to E3, I1, I2, G1 to G5 and C1 were registered 20
 
 | # | Title | Shipped | Notes |
 |---|---|---|---|
+| C1 | Printable status report | ✅ DONE 2026-10-20 | Made at the Session 8 wrap: `docs/Status_Report_2026-10-20.html` (two printed pages: scoreboard, built, next, gaps, handoff prompt, technical notes, where things live). Skipped at the Session 3 to 7 wraps to save weekly usage |
 | G8 | `tools/stamp.sh` refuses to stamp a broken build | ✅ DONE 2026-10-20 | On Houston's word. Before stamping it runs `tools/check_names.sh` (which now exits 1 on a clash), `node --check` on every `js/*.js` file and `3d/render3d.js` (catches a name declared twice inside one function, the 2026-10-18 fault, in both views), and the headless load; any failure prints `stamp refused: ...`, exits 1 and changes nothing. One OpenCode pass, accepted (merge e76e29b). Proved in a throwaway worktree: a clean build stamps; a top-level clash in `js/01-data.js`, a clash inside `drawMinimap` and a clash inside the 3D `draw()` are each refused with `index.html` untouched |
 | F15 | The System announces a level-up in its own window | ✅ DONE 2026-10-20 | On Houston's word (free rein, next visible improvement): a level-up shows a blue System window, `[ LEVEL UP ]`, the new level and what was gained; a rank-up shows it in violet (`[ RANK UP ]`, `D-RANK HUNTER`). It replaced the two toasts; NEW SKILL and NEW GATE stay toasts. `#sys-pop` in `index.html`, `systemPop()` in `js/09-ui.js`, called from `playerGainXp`. Never takes touches; gone after 2 seconds. One OpenCode pass, accepted; by hand after, from frames: the big line kept on one line, placed below a full stack of four pop-ups and above the hunter (`top: max(26%, 220px)` on desktop, 28% on upright phones, the top edge on short landscape screens). Frames: `system_rankup_3d_v1.jpg`, `system_levelup_3d_phone_v1.jpg`, `system_rankup_landscape_v1.jpg` |
 | F14 | ARISE: a raised shadow climbs out of a dark pool | ✅ DONE 2026-10-18 | On Houston's overnight word (pick the most visible improvement, no harder enemies): pressing E by a remnant now shows the word ARISE over the spot and the soldier climbs up out of a dark pool over 0.8 seconds (0.5 when Arise: Legion or the Awakening calls the army); it neither moves nor attacks until it is up. `riseT`, `riseDur` in `js/07-skills-shadows.js` (not saved); 2D clips the body above the floor line in `drawShadowSoldier`; 3D lifts the figure from below the floor and draws `risePools3D`. One OpenCode pass (Gemini out of quota), accepted. Frames: `arise_rise_2d_v1.jpg`, `arise_rise_3d_v1.jpg`, `arise_rise_3d_phone_v1.jpg` |
