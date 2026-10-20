@@ -51,7 +51,7 @@ function gainUlt(n) {
 function playerGainXp(amount) {
   const multi = 1 + Math.min(comboCount, 50) * 0.02; // combo XP bonus
   player.xp += Math.floor(amount * multi);
-  let leveled = false, gotSp = 0;
+  let leveled = false, gotSp = 0, rankUp = null;
   while (player.xp >= player.xpToNext) {
     player.xp -= player.xpToNext;
     player.level++; player.statPoints += 5;
@@ -60,7 +60,7 @@ function playerGainXp(amount) {
     leveled = true;
     const r = rankFor(player.level);
     if (r !== player.rank) {
-      toast(`RANK UP: ${player.rank} → ${r}`, 'purple', 3000); say('rank_'+r.toLowerCase(), true);
+      rankUp = r; say('rank_'+r.toLowerCase(), true);
       player.rank = r; flash('#8844ff', 0.6); spawnBurst(player.x, player.y, COLORS.accent, 50, 420);
     }
     SKILL_DEFS.forEach(s => { if (player.level === s.unlockLevel && s.unlockLevel > 1) { toast(`NEW SKILL: ${s.name} [${s.key}]`, 'blue', 3200); say('skill_unlocked'); } });
@@ -68,7 +68,9 @@ function playerGainXp(amount) {
   }
   if (leveled) {
     recalcPlayer(player); healPlayer(player.maxHp*0.35); player.mp = player.maxMp; // a second wind, not a full reset
-    toast(`LEVEL UP — LV.${player.level}  (+5 stat${gotSp ? ` · +${gotSp} skill point${gotSp > 1 ? 's' : ''}` : ''})`, 'gold', 2500); playSfx('levelup'); say('level_up');
+    const sub = '+5 STAT POINTS' + (gotSp ? ' · +' + gotSp + ' SKILL POINT' + (gotSp > 1 ? 'S' : '') : '');
+    if (rankUp) systemPop('RANK UP', rankUp + '-RANK HUNTER', 'LV. ' + player.level + ' · ' + sub, 'violet'); else systemPop('LEVEL UP', 'LV. ' + player.level, sub);
+    playSfx('levelup'); say('level_up');
     spawnBurst(player.x, player.y, COLORS.xp, 30, 360); spawnBurst(player.x, player.y, COLORS.primary, 20, 260);
     ring(player.x, player.y, COLORS.xp, 10, 180, 0.5, 5);
     flash('#ffcc00', 0.3); shake(10);
