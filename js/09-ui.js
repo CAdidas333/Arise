@@ -9,6 +9,20 @@ function setW(id, pct) { const v = clamp(pct, 0, 100).toFixed(1)+'%'; if (hudCac
 function setD(id, on, mode = 'block') { const v = on ? mode : 'none'; if (hudCache[id+':d'] !== v) { hudCache[id+':d'] = v; $(id).style.display = v; } }
 function setC(id, cls, on) { const k = id+':c:'+cls; if (hudCache[k] !== on) { hudCache[k] = on; $(id).classList.toggle(cls, on); } }
 
+// The System's own window for a level-up / rank-up. Plays again from the start if it is already up.
+let sysPopTimer = null;
+function systemPop(head, big, sub, tone) {
+  const el = $('sys-pop');
+  if (!el) return; // the Node test harness has no DOM
+  el.querySelector('.sp-head').textContent = `[ ${head} ]`;
+  el.querySelector('.sp-big').textContent = big;
+  el.querySelector('.sp-sub').textContent = sub;
+  el.classList.toggle('violet', tone === 'violet');
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(sysPopTimer);
+  sysPopTimer = setTimeout(() => el.classList.remove('on'), 1950);
+}
+
 const SHORT = { slash:'Slash', dash_strike:'Dash', shadow_strike:'Strike', rulers:'Domain', legion:'Legion', ult:'Awaken' };
 let skillEls = [];
 function buildSkillBar() {
