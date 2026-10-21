@@ -115,6 +115,7 @@ const wallMeshes = [], floorGroup = new THREE.Group();
 scene.add(floorGroup);
 let lastArenaW = 0, lastArenaH = 0, lastLine = '';
 let lastFloorKey = '', lastLayoutRef = null;
+let vignette3D = 0.15; // the dark at the screen edge in 3D, eased like the 2D view
 const layoutMeshes = []; // floor pieces, door bars and the exit light of a layout
 
 function clearFloorAndWalls() {
@@ -161,6 +162,7 @@ function rebuildLayout3D(line) {
   const L = layout;
   if (floorTexture) floorTexture.repeat.set(1, 1);
   for (const r of L.rooms) floorPiece(r.x0, r.y0, r.x1, r.y1);
+  const hallRects = [];
   for (const h of L.halls) { // only the part of a hall that lies outside the rooms, so two floors never share the same spot
     let x0 = h.x0, y0 = h.y0, x1 = h.x1, y1 = h.y1;
     for (const r of L.rooms) {
@@ -168,7 +170,39 @@ function rebuildLayout3D(line) {
       if (r.x0 <= h.x0 && r.x1 >= h.x1) { if (r.y0 <= y0) y0 = Math.max(y0, r.y1); else y1 = Math.min(y1, r.y0); } // the hall runs north-south
       else { if (r.x0 <= x0) x0 = Math.max(x0, r.x1); else x1 = Math.min(x1, r.x0); }                               // the hall runs east-west
     }
-    if (x1 > x0 && y1 > y0) floorPiece(x0, y0, x1, y1);
+    if (x1 > x0 && y1 > y0) { floorPiece(x0, y0, x1, y1); hallRects.push([x0, y0, x1, y1]); }
+  }
+
+  // 2. Corridors and rooms not yet reached lie a little darker, so the way on reads as unknown
+  const dummy = new THREE.Object3D();
+  if (hallRects.length) {
+    const g = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+    const mesh = new THREE.InstancedMesh(g, mat, hallRects.length);
+    for (let i = 0; i < hallRects.length; i++) {
+      const [x0, y0, x1, y1] = hallRects[i];
+      dummy.position.set((x0 + x1) / 2, 0.2, (y0 + y1) / 2);
+      dummy.scale.set(x1 - x0, 1, y1 - y0);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    }
+    mesh.count = hallRects.length; mesh.instanceMatrix.needsUpdate = true;
+    floorGroup.add(mesh); layoutMeshes.push(mesh);
+  }
+  const darkRooms = L.rooms.filter(r => r.i > L.cleared && r.i !== L.lock);
+  if (darkRooms.length) {
+    const g = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+    const mesh = new THREE.InstancedMesh(g, mat, darkRooms.length);
+    for (let i = 0; i < darkRooms.length; i++) {
+      const r = darkRooms[i];
+      dummy.position.set((r.x0 + r.x1) / 2, 0.2, (r.y0 + r.y1) / 2);
+      dummy.scale.set(r.x1 - r.x0, 1, r.y1 - r.y0);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    }
+    mesh.count = darkRooms.length; mesh.instanceMatrix.needsUpdate = true;
+    floorGroup.add(mesh); layoutMeshes.push(mesh);
   }
 
   const WT = 30, WH = 70;
@@ -1025,6 +1059,7 @@ const Fig = (function () {
   const CYAN = (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : '#00d4ff';
   const HUE = { vest: 0x2b2a58, trim: 0x3d3c78, pants: 0x32325a, boot: 0x15131f, sole: 0x262438, skin: 0x54407a, wrap: 0x7a72b4, wrapLine: 0x3f3a6c, hair: 0x0d0915, strap: 0x0c0a16, pommel: 0x6b4a3a, steel: 0xd4d6ea };
   const HM = {}, HB = {};
+  const CM = {}, CB = {};
   for (const k in HUE) HM[k] = new THREE.MeshStandardMaterial({ color: HUE[k], roughness: 0.7 });
   HM.glow = new THREE.MeshBasicMaterial({ color: CYAN });                           // the zip line
   HM.eye = new THREE.MeshBasicMaterial({ color: 0xaaeeff });
@@ -1072,6 +1107,38 @@ const Fig = (function () {
     hunterGroup.scale.setScalar(1.25);
   })();
 
+  // 5. The original stick figure: cyan limbs and outline, a dark body and cape, one blade in the right hand
+  (function buildClassic() {
+    CM.line = new THREE.MeshBasicMaterial({ color: CYAN });
+    CM.rim = new THREE.MeshBasicMaterial({ color: CYAN, side: THREE.BackSide });
+    CM.body = new THREE.MeshBasicMaterial({ color: 0x0b1020 });
+    CM.eye = new THREE.MeshBasicMaterial({ color: 0xaaeeff });
+    CM.cape = new THREE.MeshBasicMaterial({ color: 0x0a0a18, side: THREE.DoubleSide });
+    CM.core = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    CM.glow = new THREE.MeshBasicMaterial({ color: 0xaaddff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false });
+    CB.root = new THREE.Group(); CB.root.visible = false; hunterGroup.add(CB.root);
+    CB.hip = B(CB.root, 'hip', 0, 16, 0);
+    const legGeo = new THREE.CylinderGeometry(1.3, 1.3, 16, 8), armGeo = new THREE.CylinderGeometry(1.2, 1.2, 13, 8);
+    CB.legL = B(CB.hip, 'legL', 1.6, 0, 0); CB.legR = B(CB.hip, 'legR', -1.6, 0, 0);
+    const legL = new THREE.Mesh(legGeo, CM.line); legL.position.y = -8; CB.legL.add(legL);
+    const legR = new THREE.Mesh(legGeo, CM.line); legR.position.y = -8; CB.legR.add(legR);
+    const torsoGeo = new THREE.CylinderGeometry(4.5, 3, 18, 8);
+    const torso = new THREE.Mesh(torsoGeo, CM.body); torso.position.y = 8; CB.hip.add(torso);
+    const torsoRim = new THREE.Mesh(torsoGeo, CM.rim); torsoRim.position.y = 8; torsoRim.scale.set(1.12, 1.04, 1.12); CB.hip.add(torsoRim);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(7, 16, 12), CM.body); head.position.y = 26; CB.hip.add(head);
+    const headRim = new THREE.Mesh(new THREE.SphereGeometry(7.7, 16, 12), CM.rim); headRim.position.y = 26; CB.hip.add(headRim);
+    const eye = new THREE.Mesh(new THREE.BoxGeometry(5, 1.6, 0.6), CM.eye); eye.position.set(0, 25.5, 6.9); CB.hip.add(eye);
+    CB.armL = B(CB.hip, 'armL', 4.6, 16, 0); CB.armR = B(CB.hip, 'armR', -4.6, 16, 0);
+    CB.armL.rotation.order = 'YXZ'; CB.armR.rotation.order = 'YXZ';
+    const armL = new THREE.Mesh(armGeo, CM.line); armL.position.y = -6.5; CB.armL.add(armL);
+    const armR = new THREE.Mesh(armGeo, CM.line); armR.position.y = -6.5; CB.armR.add(armR);
+    CB.blade = B(CB.armR, 'blade', 0, -13, 0);
+    const core = new THREE.Mesh(new THREE.BoxGeometry(0.8, 19, 0.5), CM.core); core.position.y = 10; CB.blade.add(core);
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(3.2, 19, 1.6), CM.glow); glow.position.y = 10; CB.blade.add(glow);
+    const capeGeo = new THREE.PlaneGeometry(9, 20); capeGeo.translate(0, -10, 0);
+    CB.cape = B(CB.hip, 'cape', 0, 16, -3.2); CB.cape.add(new THREE.Mesh(capeGeo, CM.cape));
+  })();
+
   // 0 = as he is, 1 = struck (red for an instant), 2 = awakened (violet). The blades take the colour of the weapon carried.
   let tintNow = -1, bladeNow = '';
   function tintHunter(state, blade) {
@@ -1080,8 +1147,11 @@ const Fig = (function () {
       const glow = state === 1 ? 0xff2222 : state === 2 ? 0xbb66ff : CYAN;
       for (const k in HUE) { const m = HM[k]; m.emissive.set(state ? glow : HUE[k]); m.emissiveIntensity = state === 1 ? 0.9 : state === 2 ? 0.55 : 0.45; }
       HM.glow.color.set(glow); HM.eye.color.set(state === 1 ? 0xff5555 : state === 2 ? 0xff66ff : 0xaaeeff);
+      CM.line.color.set(glow); CM.rim.color.set(glow);
+      CM.eye.color.set(state === 1 ? 0xff5555 : state === 2 ? 0xff66ff : 0xaaeeff);
+      CM.cape.color.set(state === 2 ? 0x1a0633 : 0x0a0a18);
     }
-    if (blade !== bladeNow) { bladeNow = blade; HM.edge.color.set(blade); HM.blade.emissive.set(blade); }
+    if (blade !== bladeNow) { bladeNow = blade; HM.edge.color.set(blade); HM.blade.emissive.set(blade); CM.glow.color.set(blade); }
   }
   // Pose: swings are positive forwards. l/r = left/right; A arm, Y arm sweep, E elbow, W wrist (blade angle), L leg
   const HP = { lA: 0.2, rA: 0.1, lY: 0, rY: 0, lE: 0.7, rE: 0.7, lW: 1.5, rW: 1.5, lL: 0, rL: 0, lean: 0, bob: 0, twist: 0 }, HT = Object.assign({}, HP);
@@ -1110,9 +1180,33 @@ const Fig = (function () {
     HB.armL.rotation.set(-HP.lA, HP.lY, 0.1); HB.armR.rotation.set(-HP.rA, HP.rY, -0.1);
     HB.foreL.rotation.x = -HP.lE; HB.foreR.rotation.x = -HP.rE; HB.swordL.rotation.x = HP.lW; HB.swordR.rotation.x = HP.rW;
     HB.legL.rotation.x = -HP.lL; HB.legR.rotation.x = -HP.rL; HB.shinL.rotation.x = knee(HP.lL); HB.shinR.rotation.x = knee(HP.rL);
+    poseClassic(p, dt);
   }
 
-  return { forEnemy, enemy, forShadow, shadow, tintHunter, poseHunter, turn, ease };
+  // 6. The stick figure follows the same eased pose: legs, the one blade in the right hand, and a cape that trails behind
+  function poseClassic(p, dt) {
+    CB.hip.position.y = 16 + HP.bob; CB.hip.rotation.x = HP.lean; CB.hip.rotation.y = HP.twist;
+    CB.legL.rotation.x = -HP.lL; CB.legR.rotation.x = -HP.rL;
+    const swing = HP.lA > HP.rA, atk = p.atkT > 0 && p.anim !== 'dash';
+    const rA = atk && swing ? HP.lA : HP.rA, rY = atk && swing ? HP.lY : HP.rY, rW = atk && swing ? HP.lW : HP.rW;
+    const lA = atk && swing ? HP.rA : HP.lA, lY = atk && swing ? HP.rY : HP.lY;
+    CB.armR.rotation.set(-rA, rY, -0.1); CB.armL.rotation.set(-lA, lY, 0.1); CB.blade.rotation.x = rW;
+    const fast = p.moving || p.dodgeT > 0;
+    const want = (fast ? 0.6 : 0.15) + Math.sin((p.animT || 0) * (fast ? 14 : 3)) * 0.06;
+    const k = dt > 0 ? 1 - Math.exp(-dt * 26) : 1;
+    CB.cape.rotation.x += (want - CB.cape.rotation.x) * k;
+  }
+
+  // 8. The System menu swaps between the new hunter and the classic stick figure
+  let lookClassic = null;
+  function setLook(classic) {
+    if (classic === lookClassic) return;
+    lookClassic = classic;
+    HB.hip.visible = !classic;
+    CB.root.visible = classic;
+  }
+
+  return { forEnemy, enemy, forShadow, shadow, tintHunter, poseHunter, setLook, turn, ease };
 })();
 
 // Shared geometries
@@ -1255,7 +1349,7 @@ function draw() {
     ? dungeon.gate.theme.line
     : ((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : '#00d4ff');
   const L3 = (typeof layout !== 'undefined') ? layout : null;
-  const floorKey = L3 ? 'L' + L3.seed + '|' + L3.lock + '|' + dungeon.wave + '|' + curLine : 'A' + curArenaW + 'x' + curArenaH + '|' + curLine;
+  const floorKey = L3 ? 'L' + L3.seed + '|' + L3.lock + '|' + dungeon.wave + '|' + curLine + '|' + L3.cleared : 'A' + curArenaW + 'x' + curArenaH + '|' + curLine;
   if (floorKey !== lastFloorKey || L3 !== lastLayoutRef || (!L3 && !floorMesh)) {
     lastFloorKey = floorKey; lastLayoutRef = L3;
     if (L3) rebuildLayout3D(curLine); else rebuildFloorAndWalls(curArenaW, curArenaH, curLine);
@@ -1268,6 +1362,7 @@ function draw() {
     const ult = player.ultT > 0;
     Fig.tintHunter(player.hitFlash > 0 ? 1 : ult ? 2 : 0,
       ult ? '#dd88ff' : ((typeof WEAPONS !== 'undefined' && WEAPONS[player.weapon]) ? WEAPONS[player.weapon].color : '#aaddff'));
+    Fig.setLook(typeof settings !== 'undefined' && settings.hunter === 'classic');
     Fig.poseHunter(player, dt);
     hunterGroup.visible = !(dungeon.state === 'dead')
       && !(player.inv > 0 && player.dodgeT <= 0 && player.hitFlash <= 0 && Math.sin(clock * 40) < -0.3); // 7. i-frames: the hunter blinks out
@@ -1922,15 +2017,14 @@ function drawFx3D() {
     ctx.globalAlpha = 1;
     drawMinimap();
 
-    // 4. The screen edge closes in red when the hunter is close to death, violet while Awakened; a red pulse under 25%
-    const hp = player.hp / player.maxHp;
+    // 4. The dark presses in from the screen edge, red at low health and violet while Awakened; a red pulse under 25%
+    const hp = player.hp / player.maxHp, low = hp < 0.3;
     const c = toScreen(player.x, player.y, 30) || [w / 2, h / 2], R = Math.max(w, h);
-    if (hp < 0.3 || player.ultT > 0) {
-      const vg = ctx.createRadialGradient(c[0], c[1], R * 0.16, c[0], c[1], R * 0.75);
-      vg.addColorStop(0, 'rgba(0,0,0,0)');
-      vg.addColorStop(1, hp < 0.3 ? 'rgba(50,0,0,0.78)' : 'rgba(22,0,48,0.5)');
-      ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
-    }
+    vignette3D = lerp(vignette3D, low ? 0.78 : 0.4, 0.05);
+    const vg = ctx.createRadialGradient(c[0], c[1], R * 0.16, c[0], c[1], R * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, `rgba(${low ? '50,0,0' : player.ultT > 0 ? '22,0,48' : '0,0,6'},${vignette3D})`);
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
     if (hp < 0.25 && player.hp > 0) {
       ctx.globalAlpha = (Math.sin(clock * 4) * 0.5 + 0.5) * 0.14;
       ctx.fillStyle = '#ff0000'; ctx.fillRect(0, 0, w, h);
