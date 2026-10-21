@@ -622,18 +622,31 @@ function drawBoss(name, r, t, fx, fy, pal) {
     ctx.fillStyle = pal.eye;
     disc(-0.1 * r + ox, -0.52 * r + oy, 0.05 * r);
     disc(0.1 * r + ox, -0.52 * r + oy, 0.05 * r);
+    // The greatsword is held low in the right hand, point down and out, with a guard swept toward the blade,
+    // so it never sits upright on the body's centre line, where blade and guard could read as a cross (art rule)
+    ctx.save();
+    ctx.translate(0.72 * r, 0.2 * r);
+    ctx.rotate(-0.38);
     ctx.fillStyle = pal.light;
     ctx.beginPath();
-    ctx.moveTo(-0.12 * r, -0.1 * r);
-    ctx.lineTo(0.12 * r, -0.1 * r);
-    ctx.lineTo(0.08 * r, 1.3 * r);
-    ctx.lineTo(0, 1.45 * r);
-    ctx.lineTo(-0.08 * r, 1.3 * r);
+    ctx.moveTo(-0.14 * r, 0.06 * r);
+    ctx.lineTo(0.14 * r, 0.06 * r);
+    ctx.lineTo(0.1 * r, 1.12 * r);
+    ctx.lineTo(0, 1.32 * r);
+    ctx.lineTo(-0.1 * r, 1.12 * r);
     ctx.closePath();
     ctx.fill();
-    ctx.fillRect(-0.3 * r, -0.1 * r, 0.6 * r, 0.08 * r);
     ctx.strokeStyle = pal.dark;
-    ctx.beginPath(); ctx.moveTo(0, -0.1 * r); ctx.lineTo(0, 1.4 * r); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, 0.1 * r); ctx.lineTo(0, 1.15 * r); ctx.stroke();
+    ctx.fillStyle = pal.light;
+    ctx.beginPath();
+    ctx.moveTo(-0.26 * r, 0.22 * r);
+    ctx.quadraticCurveTo(0, -0.1 * r, 0.26 * r, 0.22 * r);
+    ctx.quadraticCurveTo(0, 0.04 * r, -0.26 * r, 0.22 * r);
+    ctx.fill();
+    disc(0, -0.08 * r, 0.1 * r);
+    disc(0, -0.25 * r, 0.06 * r);
+    ctx.restore();
   } else if (bossName === 'Demon Lord') {
     for (let side of [-1, 1]) {
       for (let pass = 0; pass < 2; pass++) {
