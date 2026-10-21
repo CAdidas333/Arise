@@ -1,5 +1,22 @@
 # Arise — Session Log
 
+## Session 9 — 2026-10-20 (Tuesday evening) — Renewed from Session 8; the 3D leftovers built, the Death Knight's sword moved, the music terms read
+
+### Focus
+Renewal of Session 8 (archived on Chris's word). Chris set his play-test aside for later ("skip me doing that ... work on the other things"), so the session worked the items that need no player.
+
+### What Changed
+- **Death Knight greatsword, 2D** (0cfa77e, thread U14): it stood upright on the body's centre line with a flat crossguard and could read as a cross (art rule). Now held low in the right hand, angled out, with a swept guard. Done by hand from frames at four sizes in boss and shadow colours.
+- **G6, ElevenLabs music terms** (0a836b4): read in full by a research sub-agent from the raw pages (all last updated 09 October 2026), key quotes checked by the orchestrator. OK for the game; `assets/CREDITS.md` now says the three tracks are there only for the game and not licensed for reuse (the terms forbid a "Music Library").
+- **G4 kept on purpose**: preview frames stay on the public site (the repo is public anyway; Chris can open review frames by link).
+- **3D leftovers** (5cb2508 merge, 47bb00c ship, stamp 20261020205147, thread U15): the dark screen edge, darker corridors and rooms ahead, and the classic hunter look in 3D with its switch on the 3D page. One free OpenCode pass, accepted.
+
+### Checks
+`check_names.sh`, `node --check`, `test_layout.js` (PASS 8000), `test_gear.js` (PASS 626220), `test_army.js` (PASS 570), the headless load, the stamp's own guard. Browser: 3D in both looks (attack, dodge, hit, Awakening, low health, the darkening on and off), 2D in the Death Knight's fight with a dodge, a hit, an attack and the Awakening; no console errors in either view. Public pages on the new stamp.
+
+### Not Done
+Chris's play-test, real-phone test and listening are still his, for later (F12, E1 to E5, E3, U6). Difficulty untouched.
+
 ## Session 8, continued — 2026-10-20 (Tuesday) — The session log caught up, the System announces a level-up, and the stamp refuses a broken build
 
 ### What Changed

@@ -19,8 +19,7 @@ Nobody has played any of this by hand, tried it on a real phone, or heard the mu
    scripts that do not load together). A refused stamp prints `stamp refused: ...`; fix the cause, never work around it.
 3. **Kevin's ideas** as they arrive from the KevinNotary session: weigh them, build what Chris approves or free rein covers,
    reply through that session.
-4. Low, when there is nothing better: the U13 leftovers kept out on purpose (a plain dark vignette, darkened corridors,
-   the classic hunter look in 3D); G4 (preview frames served on the public site, harmless); G6 (read ElevenLabs' music terms).
+4. Done 2026-10-20 (Session 9): the U13 leftovers (now U15), G4 (kept on purpose), G6 (read). Nothing low-priority is left in the register except I1, I2, G3, which wait on outside triggers.
 5. Parked: shared leaderboard and co-op (F1, Chris's word to start). The printable status report (C1) was made at this wrap:
    `docs/Status_Report_2026-10-20.html`.
 
