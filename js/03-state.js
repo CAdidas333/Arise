@@ -18,7 +18,7 @@ let gameState = 'TITLE'; // TITLE | CREATE | STORY (the opening) | HUB | DUNGEON
 let player = null, paused = false;
 let viewYaw = 0; // camera turn in radians, set by the 3D view; 0 in the 2D game
 let enemies = [], projectiles = [], particles = [], texts = [], rings = [], arcs = [], ghosts = [], bolts = [];
-let telegraphs = [], orbs = [], remnants = [], spawnQueue = [], timers = [];
+let telegraphs = [], orbs = [], remnants = [], rewardBoxes = [], spawnQueue = [], timers = [];
 let camera = { x:0, y:0, shake:0, zoom:1, targetZoom:1, focus:null };
 let dungeon = null, run = null;
 let questProgress = { kills:0, damageTaken:0, gatesCleared:0 }, questDate = '';
