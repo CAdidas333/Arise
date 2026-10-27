@@ -7,6 +7,8 @@ const VERSION = 17, SAVE_KEY = 'arise_save';
 const COLORS = { bg:'#06060c', primary:'#00d4ff', secondary:'#2244ff', accent:'#8844ff', danger:'#ff4455', health:'#44ff66', mana:'#4488ff', xp:'#ffcc00', gold:'#ffd866', text:'#e0e8ff' };
 const RANKS = ['E','D','C','B','A','S'];
 const RANK_LEVELS = [1,10,25,45,70,100];
+const BOX_CHANCE = 0.35, BOX_RISE = 0.8, BOX_REACH = 46;
+function boxDue(roomI, nFight, given, roll) { return roomI >= 1 && (roll < BOX_CHANCE || (roomI === nFight && given === 0)); }
 // Quadratic early, cubic late, and a steep soft cap past the S-rank threshold
 // XP_PACE 2 (2026-10-12): at 1 a bot filled the whole skill tree in 17 gate runs, about 14 minutes of fighting; at 2 it takes about 31 runs and 24 minutes (node tools/balance_bot.js)
 const XP_PACE = 2, xpNeed = L => Math.floor(XP_PACE * (80 + 40*L + 2.2*L*L + 0.008*L*L*L) * (1 + Math.max(0, L-100)*0.08));

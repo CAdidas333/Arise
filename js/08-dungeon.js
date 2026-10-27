@@ -12,9 +12,9 @@ const endlessGate = floor => GATE_DEFS[Math.min(GATE_DEFS.length-1, Math.floor((
 function startDungeon(gateDef, endless = false) {
   arenaW = 1400; arenaH = 1000; // reset to normal, expands for boss
   layout = endless ? null : genLayout(gateDef.waves - 1); // rooms and corridors; the open arena stays for endless mode and boss fights
-  enemies = []; projectiles = []; telegraphs = []; zones = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
+  enemies = []; projectiles = []; telegraphs = []; zones = []; orbs = []; remnants = []; rewardBoxes = []; spawnQueue = []; timers = [];
   particles = []; texts = []; rings = []; arcs = []; ghosts = []; bolts = [];
-  run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0, loot:[] };
+  run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0, loot:[], boxes:0 };
   dungeon = { gate:endless ? endlessGate(1) : gateDef, wave:1, maxWaves:endless ? Infinity : gateDef.waves, state:'fight', wait:0, bossRef:null, endless, scale:1, introT:0, alive:0, picks:[] };
   Object.assign(player, { x:0, y:0, hp:player.maxHp, mp:player.maxMp, cds:{}, ult:0, ultT:0, inv:0, combo:0, comboWin:0, dodgeCd:0, dodgeT:0, atkT:0, perfect:false, hitFlash:0, target:null, counterT:0, dodgeAt:-9 });
   comboCount = 0; comboTimer = 0; legionTimer = 0; lastPlayerAttackTime = -99; lastMoveTime = gameTime; lastMovePos = { x:0, y:0 };
@@ -54,6 +54,14 @@ function checkWave() {
 }
 function nextWave() {
   if (layout) { layout.cleared = dungeon.wave; layout.lock = -1; } // the chamber is clear: its doors open
+  if (layout && !dungeon.endless) { // system reward box
+    if (boxDue(layout.cleared, layout.rooms.length - 1, run.boxes || 0, Math.random())) {
+      const r = layout.rooms[layout.cleared];
+      const x = (r.x0 + r.x1)/2, y = (r.y0 + r.y1)/2;
+      rewardBoxes.push({ x, y, t: 0, open: -1 });
+      run.boxes = (run.boxes || 0) + 1;
+    }
+  }
   dungeon.wave++;
   if (dungeon.endless) {
     highScores.bestFloor = Math.max(highScores.bestFloor, dungeon.wave-1);
@@ -63,6 +71,19 @@ function nextWave() {
   // A System reward every second wave, and always right before the boss
   if ((dungeon.wave-1) % 2 === 0 || isBossWave()) showBoons(); else { dungeon.wait = 1.2; say('wave_clear'); }
   if (layout && isBossWave()) toast('THE WAY TO THE BOSS IS OPEN', 'red', 2600);
+}
+function openRewardBox(b) { // system reward box
+  let g = Math.max(20, Math.ceil(run.gold * 0.2));
+  player.gold += g; run.gold += g;
+  let gear = false;
+  if (Math.random() < 0.15) { dropGear(b.x, b.y, 0); gear = true; }
+  systemPop('REWARD BOX', '+' + fmtNum(g) + ' GOLD', gear ? 'AND AN ITEM' : 'THE SYSTEM REWARDS THE HUNTER');
+  playSfx('buy');
+  floatText(b.x, b.y - 40, '+' + fmtNum(g), '#ffcc33', 16);
+  for (let i = 0; i < 24; i++) {
+    const vx = rand(-60, 60), vy = rand(-160, -60);
+    spawnParticle(b.x, b.y, COLORS.primary, { vx, vy, size: rand(2, 4), alpha: 0.9, life: rand(0.6, 1.1) });
+  }
 }
 
 // Between chambers nothing spawns. When the hunter walks into the next chamber its doors shut and the wave starts.
@@ -76,7 +97,7 @@ function roomStep() {
 // The way out of the last chamber leads to the open arena, where the boss hunt runs as it always has
 function enterBossArena() {
   layout = null; dungeon.wait = 0;
-  remnants = []; projectiles = []; telegraphs = []; zones = [];
+  remnants = []; rewardBoxes = []; projectiles = []; telegraphs = []; zones = [];
   player.x = 0; player.y = 0; camera.x = 0; camera.y = 0; lastMovePos = { x:0, y:0 }; lastMoveTime = gameTime;
   player.shadows.forEach(s => { if (s.active) { s.x = rand(-50, 50); s.y = rand(20, 70); } });
   flash('#ffffff', 0.5); playSfx('tele');
@@ -221,7 +242,7 @@ function returnToHub() {
   gameState = 'HUB'; paused = false; timeScale = 1; slowT = 0; hitStop = 0;
   ['hud','victory-overlay','death-overlay','extraction-overlay','boon-overlay','pause-overlay','cine'].forEach(hide);
   show('system-menu');
-  enemies = []; projectiles = []; telegraphs = []; zones = []; orbs = []; remnants = []; spawnQueue = []; timers = [];
+  enemies = []; projectiles = []; telegraphs = []; zones = []; orbs = []; remnants = []; rewardBoxes = []; spawnQueue = []; timers = [];
   dungeon = null; run = null; layout = null; legionTimer = 0; pendingExtraction = null; camera.focus = null; mouse.down = false; touchAttack = false;
   player.hp = player.maxHp; player.mp = player.maxMp;
   player.shadows.forEach(s => { s.active = false; });

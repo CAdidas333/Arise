@@ -62,6 +62,14 @@ function updatePlayer(dt) {
   if ((mouse.down || touchAttack || keys['x'] || keys['j']) && (player.cds.slash || 0) <= 0) useSkill(SKILL.slash);
 
   if (remnants.length) { for (const r of remnants) r.t += dt; remnants = remnants.filter(r => r.t < r.dur); }
+  if (rewardBoxes && rewardBoxes.length) { // system reward box
+    for (const b of rewardBoxes) b.t += dt;
+    for (let i = rewardBoxes.length - 1; i >= 0; i--) {
+      const b = rewardBoxes[i];
+      if (b.open < 0 && b.t >= BOX_RISE && dist(player.x, player.y, b.x, b.y) < BOX_REACH) { b.open = 0; openRewardBox(b); }
+      if (b.open >= 0) { b.open += dt; if (b.open > 0.7) rewardBoxes.splice(i, 1); }
+    }
+  }
   if (player.moving && Math.random() < 12*dt) spawnParticle(player.x, player.y + 10, COLORS.primary, { vx:-dx*30, vy:-dy*30, size:rand(1,3), alpha:0.3, life:0.5 });
 }
 

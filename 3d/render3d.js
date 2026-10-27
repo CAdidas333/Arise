@@ -1212,11 +1212,13 @@ const Fig = (function () {
 // Shared geometries
 const geoProjectile = new THREE.SphereGeometry(1, 10, 10), geoOrb = new THREE.SphereGeometry(6, 12, 12);
 const geoGear = new THREE.OctahedronGeometry(8, 0), geoRemnant = new THREE.ConeGeometry(7, 14, 12);
+const geoBox3D = new THREE.BoxGeometry(22, 16, 22), geoBoxLid3D = new THREE.BoxGeometry(22, 3, 22), edgesBox3D = new THREE.EdgesGeometry(geoBox3D), edgesLid3D = new THREE.EdgesGeometry(geoBoxLid3D);
 const GEAR_HEX3D = [0xcfd8e3, 0x4aa8ff, 0xbb66ff, 0xffcc33]; // by rarity
 
 // Entity tracking maps
 const enemyMeshes = new Map(), shadowMeshes = new Map(), projectileMeshes = new Map();
 const orbMeshes = new Map(), remnantMeshes = new Map(), telegraphMeshes = new Map(), zoneMeshes = new Map();
+const boxMeshes = new Map();
 const seenFigures = new Set(); // the enemies, then the shadows, drawn this frame; reused so a frame allocates nothing for them
 
 // 6. A soft dark disc on the floor under the hunter, every living enemy and every shadow soldier, so nobody floats
@@ -1237,18 +1239,16 @@ scene.add(risePools3D);
 
 function disposeNode(node) {
   scene.remove(node);
-  if (node.geometry && node.userData?.disposeGeom) node.geometry.dispose();
-  if (node.material && !node.material.userData?.shared) {
-    (Array.isArray(node.material) ? node.material : [node.material]).forEach(m => m.dispose());
-  }
-  if (node.userData?.mat && node.userData.mat !== node.material) node.userData.mat.dispose();
-  if (node.userData?.ringMat) node.userData.ringMat.dispose();
-  if (node.children) {
-    for (const c of node.children) {
-      if (c.geometry && c.userData?.disposeGeom) c.geometry.dispose();
-      if (c.material && !c.material.userData?.shared) c.material.dispose();
+  const free = n => {
+    if (n.geometry && n.userData?.disposeGeom) n.geometry.dispose();
+    if (n.material && !n.material.userData?.shared) {
+      (Array.isArray(n.material) ? n.material : [n.material]).forEach(m => m.dispose());
     }
-  }
+    if (n.userData?.mat && n.userData.mat !== n.material) n.userData.mat.dispose();
+    if (n.userData?.ringMat) n.userData.ringMat.dispose();
+    if (n.children) for (const c of n.children) free(c);
+  };
+  free(node);
 }
 
 function pruneMap(map, activeSet) {
@@ -1296,7 +1296,7 @@ function draw() {
     groundShadows3D.count = 0;
     risePools3D.count = 0;
     const emptySet = new Set();
-    [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, telegraphMeshes, zoneMeshes].forEach(m => pruneMap(m, emptySet));
+    [enemyMeshes, shadowMeshes, projectileMeshes, orbMeshes, remnantMeshes, boxMeshes, telegraphMeshes, zoneMeshes].forEach(m => pruneMap(m, emptySet));
     renderer.render(scene, camera3D);
     drawFx3D();
     return;
@@ -1480,6 +1480,44 @@ function draw() {
     m.position.set(r.x, 7, r.y);
   }
   pruneMap(remnantMeshes, activeRem);
+
+  // System reward boxes — a cyan cube with a lifting lid over a pool of light
+  const activeBoxes = new Set();
+  for (const b of (rewardBoxes || [])) {
+    activeBoxes.add(b);
+    let g = boxMeshes.get(b);
+    if (!g) {
+      g = new THREE.Group();
+      const part = new THREE.Group();
+      const bodyMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.16, depthWrite: false });
+      const edgeMat = new THREE.LineBasicMaterial({ color: 0x66e6ff, transparent: true });
+      const lidMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.16, depthWrite: false });
+      const lidEdgeMat = new THREE.LineBasicMaterial({ color: 0x66e6ff, transparent: true });
+      const glowMat = new THREE.MeshBasicMaterial({ map: glowTex3D(), color: 0x00d4ff, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
+      const lid = new THREE.Group();
+      lid.position.y = 9.5;
+      part.add(new THREE.Mesh(geoBox3D, bodyMat));
+      part.add(new THREE.LineSegments(edgesBox3D, edgeMat));
+      lid.add(new THREE.Mesh(geoBoxLid3D, lidMat));
+      lid.add(new THREE.LineSegments(edgesLid3D, lidEdgeMat));
+      part.add(lid);
+      g.add(part);
+      const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), glowMat);
+      glow.scale.setScalar(70); glow.userData.disposeGeom = true;
+      g.add(glow);
+      g.userData = { part, lid, glow, mats: [bodyMat, edgeMat, lidMat, lidEdgeMat, glowMat], base: [0.16, 1, 0.16, 1, 0.3] };
+      scene.add(g); boxMeshes.set(b, g);
+    }
+    const k = Math.min(1, b.t / BOX_RISE), bob = Math.sin(clock * 2.4 + b.x) * 3, o = b.open >= 0 ? b.open / 0.7 : 0;
+    const u = g.userData;
+    g.position.set(b.x, 12*k + 2 + bob, b.y);
+    u.part.rotation.y = clock * 0.8;
+    u.part.scale.setScalar(Math.max(0.01, k));
+    u.lid.position.y = 9.5 + (b.open >= 0 ? o * 18 : 0);
+    u.glow.position.y = 0.6 - g.position.y;
+    u.mats.forEach((m, i) => { m.opacity = u.base[i] * (1 - o); });
+  }
+  pruneMap(boxMeshes, activeBoxes);
 
   // Telegraphs
   const activeTele = new Set();

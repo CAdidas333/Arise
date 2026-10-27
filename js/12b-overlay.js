@@ -85,6 +85,7 @@ function drawMinimap() {
   enemies.forEach(e => { if (!e.alive || e.isBoss) return; ctx.fillStyle = e.elite ? '#ffcc66' : COLORS.danger; ctx.globalAlpha = 0.7; dot2(px(e.x), py(e.y), e.elite ? 2.6 : 1.8); });
   ctx.fillStyle = '#bb88ff'; ctx.globalAlpha = 0.9;
   remnants.forEach(r => dot2(px(r.x), py(r.y), 2));
+  rewardBoxes.forEach(b => { if (b.open < 0) { ctx.fillStyle = COLORS.primary; ctx.globalAlpha = 0.9; ctx.fillRect(px(b.x) - 2, py(b.y) - 2, 4, 4); } }); // unopened reward boxes
   const b = dungeon.bossRef;
   if (b && b.alive) { // pulsing boss marker
     const bx = px(b.x), by = py(b.y);
