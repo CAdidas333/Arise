@@ -1070,6 +1070,20 @@ function drawPickups() {
       ctx.fillText(isMobile ? 'ARISE' : '[E]  ARISE', r.x, r.y - 44);
     }
   }
+  for (const b of rewardBoxes) { // system reward box — a cyan cube rising out of the chamber floor
+    const k = Math.min(1, b.t / BOX_RISE), bob = Math.sin(clock * 2.4 + b.x) * 3, o = b.open >= 0 ? b.open / 0.7 : 0, fade = k * (1 - o);
+    const x = b.x, y = b.y + bob, w = 26*k, h = 22*k, d = 8*k, lift = o * 18;
+    ctx.globalAlpha = 0.18 * fade; ctx.fillStyle = COLORS.primary; disc(x, y, 34);
+    ctx.globalAlpha = fade; ctx.fillStyle = 'rgba(0,212,255,0.12)';
+    ctx.beginPath(); ctx.rect(x - w/2, y - h, w, h); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x - w/2, y - h); ctx.lineTo(x + w/2, y - h); ctx.lineTo(x + w/2 - d*0.7, y - h - d - lift); ctx.lineTo(x - w/2 - d*0.7, y - h - d - lift); ctx.closePath(); ctx.fill();
+    ctx.shadowColor = COLORS.primary; ctx.shadowBlur = 12; ctx.strokeStyle = COLORS.primary; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - w/2, y - h, w, h);
+    ctx.beginPath(); ctx.moveTo(x - w/2, y - h); ctx.lineTo(x + w/2, y - h); ctx.lineTo(x + w/2 - d*0.7, y - h - d - lift); ctx.lineTo(x - w/2 - d*0.7, y - h - d - lift); ctx.closePath(); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#66e6ff'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x - w/2, y - h); ctx.lineTo(x + w/2, y - h); ctx.stroke();
+  }
   for (const o of orbs) {
     if (o.type === 'gear') { // a dropped item: a cut gem in its rarity colour, bobbing over a soft glow
       const s = 9, x = o.x, y = o.y - 5 + Math.sin(clock*3 + o.x*0.05)*3, col = GEAR_COLORS[o.item.rarity] || GEAR_COLORS[0];

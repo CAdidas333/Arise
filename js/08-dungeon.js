@@ -69,10 +69,9 @@ function nextWave() {
     if (g !== dungeon.gate) { dungeon.gate = g; buildFloor(g); toast(`THE CASTLE SHIFTS — ${g.name.toUpperCase()}`, 'purple', 2500); say('castle_shifts', true); }
   }
   // A System reward every second wave, and always right before the boss
-  if ((dungeon.wave-1) % 2 === 0 || isBossWave()) showBoons();   else { dungeon.wait = 1.2; say('wave_clear'); }
+  if ((dungeon.wave-1) % 2 === 0 || isBossWave()) showBoons(); else { dungeon.wait = 1.2; say('wave_clear'); }
   if (layout && isBossWave()) toast('THE WAY TO THE BOSS IS OPEN', 'red', 2600);
 }
-// system reward box
 function openRewardBox(b) { // system reward box
   let g = Math.max(20, Math.ceil(run.gold * 0.2));
   player.gold += g; run.gold += g;
