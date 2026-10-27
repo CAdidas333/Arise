@@ -276,15 +276,27 @@ function syncMusic() {
   }
 }
 
+// Where the music in a track really ends. A recorded track can close on a fade-out (the hub take decays for its last 10 s), and looping
+// the whole file would leave that hole in the music every time round. The track's typical level is the median of its quarter-second
+// windows; the loop ends 1 s after the last window within 6 dB of it, so the crossfade covers the fade-out. Worked out once per decode.
+function trackLen(buf) {
+  if (buf.loopLen) return buf.loopLen;
+  const d = buf.getChannelData(0), W = Math.floor(buf.sampleRate / 4), n = Math.floor(d.length / W), lv = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let s = 0; for (let j = i*W, e = j + W; j < e; j++) s += d[j]*d[j]; lv[i] = s / W; }
+  const med = Float32Array.from(lv).sort()[n >> 1], floor = med * 0.25; // 6 dB below the median, in power
+  let k = n - 1; while (k > 0 && lv[k] < floor) k--;
+  return (buf.loopLen = clamp((k + 1) / 4 + 1, Math.max(3, buf.duration - 15), buf.duration)); // never trims more than 15 s
+}
+
 function startTrack(mode) {
-  const buf = musicBuf[mode], P = { mode, buf, bus:AC.createGain(), live:new Set(), last:null, nextT:0, dead:false, xf:Math.min(2.5, buf.duration/4) };
+  const buf = musicBuf[mode], len = trackLen(buf), P = { mode, buf, len, bus:AC.createGain(), live:new Set(), last:null, nextT:0, dead:false, xf:Math.min(2.5, len/4) };
   P.bus.gain.value = 0; P.bus.connect(trkVol); fadeParam(P.bus.gain, 1, 0.8);
   players.push(P); trk = P; trkCopy(P, AC.currentTime + 0.03, 0);
 }
 
 // Start one copy of the track at AudioContext time t; the previous copy fades out under it over xf seconds
 function trkCopy(P, t, xf) {
-  const src = AC.createBufferSource(), vg = AC.createGain(), v = { src, vg, end:t + P.buf.duration };
+  const src = AC.createBufferSource(), vg = AC.createGain(), v = { src, vg, end:t + P.len };
   src.buffer = P.buf; src.connect(vg); vg.connect(P.bus);
   if (P.last) {
     fadeParam(vg.gain, 1, xf, t, 0); fadeParam(P.last.vg.gain, 0, xf, t, 1);

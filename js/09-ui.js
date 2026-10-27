@@ -30,7 +30,9 @@ function buildSkillBar() {
   skillEls = SKILL_DEFS.map(s => { const el = $('slot-'+s.id); return { s, el, ov:el.querySelector('.cd-overlay'), num:el.querySelector('.cd-num'), cls:'', h:'', n:'' }; });
 }
 
+let touchShown = true; // the touch controls show only inside a gate (on the title, name and story screens they sat faintly behind the text)
 function updateHUD() {
+  if (isMobile && touchShown !== (gameState === 'DUNGEON')) { touchShown = !touchShown; $('touch-controls').style.visibility = touchShown ? '' : 'hidden'; }
   if (!player || gameState !== 'DUNGEON' || !dungeon) return;
   setT('hud-name', player.name); setT('hud-rank', `RANK ${player.rank} — HUNTER`);
   setW('hud-hp-fill', player.hp/player.maxHp*100); setT('hud-hp-text', `${fmtNum(Math.ceil(player.hp))} / ${fmtNum(player.maxHp)}`);

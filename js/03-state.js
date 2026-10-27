@@ -163,7 +163,10 @@ addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('visibilitychange', () => { if (document.hidden && gameState === 'DUNGEON' && !paused && dungeon && dungeon.state === 'fight') togglePause(); });
 
 // --- MOBILE TOUCH CONTROLS ---
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && innerWidth < 1024);
+// An iPad reports itself as a Mac and is 1180 to 1366 wide held sideways, so it is caught by its touch screen being the main pointer.
+// ?touch=1 in the address forces the touch layout, to test it on a desktop browser.
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && innerWidth < 1024)
+  || (navigator.maxTouchPoints > 1 && matchMedia('(pointer: coarse)').matches) || /[?&]touch=1/.test(location.search);
 const touchJoystick = { active:false, dx:0, dy:0 };
 
 // One entry point for every action button, on any device
@@ -176,6 +179,7 @@ function act(a) {
 }
 
 if (isMobile) {
+  document.body.classList.add('touch'); // bigger tap targets (index.html, `.touch` rules)
   document.body.style.cursor = 'default';
   document.body.style.height = '100dvh';
   const tc = $('touch-controls'); tc.style.display = 'block'; tc.style.height = '100dvh';
