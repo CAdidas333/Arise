@@ -1212,7 +1212,7 @@ const Fig = (function () {
 // Shared geometries
 const geoProjectile = new THREE.SphereGeometry(1, 10, 10), geoOrb = new THREE.SphereGeometry(6, 12, 12);
 const geoGear = new THREE.OctahedronGeometry(8, 0), geoRemnant = new THREE.ConeGeometry(7, 14, 12);
-const geoBox3D = new THREE.BoxGeometry(22, 16, 22), geoBoxLid3D = new THREE.BoxGeometry(22, 3, 22), edgesBox3D = new THREE.EdgesGeometry(geoBox3D), edgesLid3D = new THREE.EdgesGeometry(geoBoxLid3D);
+const geoBoxCore3D = new THREE.SphereGeometry(3.6, 12, 10), geoBox3D = new THREE.BoxGeometry(22, 16, 22), geoBoxLid3D = new THREE.BoxGeometry(22, 3, 22), edgesBox3D = new THREE.EdgesGeometry(geoBox3D), edgesLid3D = new THREE.EdgesGeometry(geoBoxLid3D);
 const GEAR_HEX3D = [0xcfd8e3, 0x4aa8ff, 0xbb66ff, 0xffcc33]; // by rarity
 
 // Entity tracking maps
@@ -1489,23 +1489,24 @@ function draw() {
     if (!g) {
       g = new THREE.Group();
       const part = new THREE.Group();
-      const bodyMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.16, depthWrite: false });
+      const bodyMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false });
+      const coreMat = new THREE.MeshBasicMaterial({ color: 0xc8f6ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }); // the light inside
       const edgeMat = new THREE.LineBasicMaterial({ color: 0x66e6ff, transparent: true });
       const lidMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.16, depthWrite: false });
       const lidEdgeMat = new THREE.LineBasicMaterial({ color: 0x66e6ff, transparent: true });
-      const glowMat = new THREE.MeshBasicMaterial({ map: glowTex3D(), color: 0x00d4ff, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
+      const glowMat = new THREE.MeshBasicMaterial({ map: glowTex3D(), color: 0x00d4ff, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
       const lid = new THREE.Group();
       lid.position.y = 9.5;
-      part.add(new THREE.Mesh(geoBox3D, bodyMat));
+      part.add(new THREE.Mesh(geoBox3D, bodyMat)); const core = new THREE.Mesh(geoBoxCore3D, coreMat); part.add(core);
       part.add(new THREE.LineSegments(edgesBox3D, edgeMat));
       lid.add(new THREE.Mesh(geoBoxLid3D, lidMat));
       lid.add(new THREE.LineSegments(edgesLid3D, lidEdgeMat));
       part.add(lid);
       g.add(part);
       const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), glowMat);
-      glow.scale.setScalar(70); glow.userData.disposeGeom = true;
+      glow.scale.setScalar(90); glow.userData.disposeGeom = true;
       g.add(glow);
-      g.userData = { part, lid, glow, mats: [bodyMat, edgeMat, lidMat, lidEdgeMat, glowMat], base: [0.16, 1, 0.16, 1, 0.3] };
+      g.userData = { part, lid, glow, core, mats: [bodyMat, edgeMat, lidMat, lidEdgeMat, glowMat, coreMat], base: [0.24, 1, 0.16, 1, 0.55, 0.9] };
       scene.add(g); boxMeshes.set(b, g);
     }
     const k = Math.min(1, b.t / BOX_RISE), bob = Math.sin(clock * 2.4 + b.x) * 3, o = b.open >= 0 ? b.open / 0.7 : 0;
@@ -1516,6 +1517,7 @@ function draw() {
     u.lid.position.y = 9.5 + (b.open >= 0 ? o * 18 : 0);
     u.glow.position.y = 0.6 - g.position.y;
     u.mats.forEach((m, i) => { m.opacity = u.base[i] * (1 - o); });
+    const pulse = 0.5 + 0.5 * Math.sin(clock * 3.2 + b.x); u.core.scale.setScalar(1 + 0.25 * pulse + 1.6 * o); u.mats[5].opacity = (0.55 + 0.35 * pulse) * (1 - o * 0.6); // the core pulses, then flares as the box opens
   }
   pruneMap(boxMeshes, activeBoxes);
 

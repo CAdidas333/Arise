@@ -1070,19 +1070,23 @@ function drawPickups() {
       ctx.fillText(isMobile ? 'ARISE' : '[E]  ARISE', r.x, r.y - 44);
     }
   }
-  for (const b of rewardBoxes) { // system reward box — a cyan cube rising out of the chamber floor
+  for (const b of rewardBoxes) { // system reward box: a glowing cyan cube rising out of the chamber floor, a light at its heart
     const k = Math.min(1, b.t / BOX_RISE), bob = Math.sin(clock * 2.4 + b.x) * 3, o = b.open >= 0 ? b.open / 0.7 : 0, fade = k * (1 - o);
-    const x = b.x, y = b.y + bob, w = 26*k, h = 22*k, d = 8*k, lift = o * 18;
-    ctx.globalAlpha = 0.18 * fade; ctx.fillStyle = COLORS.primary; disc(x, y, 34);
-    ctx.globalAlpha = fade; ctx.fillStyle = 'rgba(0,212,255,0.12)';
-    ctx.beginPath(); ctx.rect(x - w/2, y - h, w, h); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(x - w/2, y - h); ctx.lineTo(x + w/2, y - h); ctx.lineTo(x + w/2 - d*0.7, y - h - d - lift); ctx.lineTo(x - w/2 - d*0.7, y - h - d - lift); ctx.closePath(); ctx.fill();
-    ctx.shadowColor = COLORS.primary; ctx.shadowBlur = 12; ctx.strokeStyle = COLORS.primary; ctx.lineWidth = 1.5;
-    ctx.strokeRect(x - w/2, y - h, w, h);
-    ctx.beginPath(); ctx.moveTo(x - w/2, y - h); ctx.lineTo(x + w/2, y - h); ctx.lineTo(x + w/2 - d*0.7, y - h - d - lift); ctx.lineTo(x - w/2 - d*0.7, y - h - d - lift); ctx.closePath(); ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = '#66e6ff'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x - w/2, y - h); ctx.lineTo(x + w/2, y - h); ctx.stroke();
+    const x = b.x, y = b.y - 6 + bob, w = 26*k, h = 22*k, d = 9*k, lift = o * 18, pulse = 0.5 + 0.5*Math.sin(clock * 3.2 + b.x);
+    ctx.save(); ctx.translate(x + d/2, b.y); ctx.scale(1, 0.45); // the pool of light stays on the floor while the box bobs
+    const pg = ctx.createRadialGradient(0, 0, 0, 0, 0, 48); pg.addColorStop(0, 'rgba(0,212,255,0.42)'); pg.addColorStop(1, 'rgba(0,212,255,0)');
+    ctx.globalAlpha = fade * (0.75 + 0.25*pulse); ctx.fillStyle = pg; disc(0, 0, 48); ctx.restore();
+    const face = (pts, fill) => { ctx.beginPath(); ctx.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i+1]); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.stroke(); };
+    const L = x - w/2, R = x + w/2, T = y - h, B = y, dx = d, dy = d*0.8;
+    ctx.globalAlpha = fade; ctx.strokeStyle = COLORS.primary; ctx.lineWidth = 1.6; ctx.shadowColor = COLORS.primary; ctx.shadowBlur = 14;
+    face([R, T, R + dx, T - dy, R + dx, B - dy, R, B], 'rgba(0,120,170,0.22)');                       // the right side, a little darker
+    const fg = ctx.createLinearGradient(0, T, 0, B); fg.addColorStop(0, 'rgba(0,212,255,0.34)'); fg.addColorStop(1, 'rgba(0,212,255,0.08)');
+    face([L, T, R, T, R, B, L, B], fg);                                                                 // the front
+    ctx.shadowBlur = 18 + 20*o; ctx.fillStyle = '#c8f6ff'; ctx.globalAlpha = fade * (0.55 + 0.35*pulse) + o*0.4;
+    disc(x + dx/2, y - h/2 - dy/2, (3.5 + 6*o) * k);                                                    // the light inside, flaring as it opens
+    ctx.globalAlpha = fade; ctx.shadowBlur = 14;
+    face([L, T - lift, R, T - lift, R + dx, T - dy - lift, L + dx, T - dy - lift], 'rgba(120,235,255,0.30)'); // the lid, lifting off
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
   }
   for (const o of orbs) {
     if (o.type === 'gear') { // a dropped item: a cut gem in its rarity colour, bobbing over a soft glow
