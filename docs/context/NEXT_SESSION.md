@@ -1,5 +1,16 @@
 # Next Session Handoff
-_Written: 2026-10-20 16:28 (Tuesday) by the Arise project manager session (Session 8, wrapped for renewal), for Chris Whitney_
+_Written: 2026-10-20 16:28 by Session 8; updated 2026-10-27 01:25 by Session 9 (overnight, for Houston), for Chris Whitney_
+
+**Session 9 (10-20 evening and 10-27 overnight):** live at stamp 20261027012303, `main` = `v18-world`. Built: the classic hunter look, dark edge and darker rooms ahead in 3D (U15), the Death Knight's sword at its side (U14), phone and iPad fixes (U16), the music loop fix (U17), System reward boxes (F16); G6 read, G4 kept. Chris set his play-test aside for later ("I'll do that later"); do not push him for it.
+
+### Try this first (for Chris, plain words)
+1. **On an iPad:** it works now. Before tonight an iPad held sideways got no joystick or buttons (it tells websites it is a Mac).
+2. **Clear a chamber and look for a glowing blue box** in the middle of it (about one chamber in three, always once per gate). Walk into it: the lid lifts, the System says REWARD BOX, and you get gold, sometimes an item.
+3. **Stay in the hub for a minute and a half:** the hub music no longer drops out for six seconds each time it loops (the fight music had a smaller dip; both fixed).
+4. **On your phone:** the name box fits, buttons are bigger to tap, the controls no longer show on the title screen, and the ARISE button sits above the joystick.
+5. **In 3D, System menu, Controls tab, Hunter look:** the classic stick-figure hunter now works in 3D too.
+
+Still nobody has played, tried a real phone or iPad, or listened (F12, E1 to E5, E3, U6).
 
 ## Where we left off
 V18 is complete and the 3D view has caught up with the 2D one. Live at https://cadidas333.github.io/Arise/ and `/3d/`,
@@ -59,7 +70,7 @@ Nobody has played any of this by hand, tried it on a real phone, or heard the mu
   and run the checks yourself.
 - **After every merge, before `tools/stamp.sh`:** `bash tools/check_names.sh`, `node -e "require('./tools/lib/headless.js').createGame()"`
   (catches names declared twice inside a function), `node tools/test_layout.js` (PASS 8000), `node tools/test_gear.js`,
-  `node tools/test_army.js`, the bot when balance or levelling changes. Start the next job only when these are green.
+  `node tools/test_army.js`, `node tools/test_boxes.js` (PASS 3595), the bot when balance or levelling changes. Start the next job only when these are green.
 - **Before every ship:** the browser in both views (a dodge, an attack, the Awakening and a hit), frames at desktop and phone
   size checked against the art rule, then `tools/stamp.sh`, commit, push, `git branch -f main v18-world && git push origin main`,
   `gh run watch`, and the stamp on both public pages.

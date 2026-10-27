@@ -259,3 +259,11 @@
 **Outcome**: Houston's context-drift check reads the date of the newest entry, so it saw the log as stale both times: it read 10-15 on 10-20, and it flagged the missing Session 7 entry on 10-15. Each entry had to be rebuilt later from the handoff and the commits (893bad2 on 10-15, 4582c8c on 10-20).
 
 **Next time**: Give each wake its own dated entry header in `SESSION_LOG.md` as soon as it ships something, and put its bullets under that header, not under an older one.
+
+## 2026-10-27 — An iPad is not caught by a user-agent check, and the pane's tablet size does not emulate touch
+
+**Tried**: The phone and iPad check in the browser pane at its tablet size (768 by 1024).
+
+**Outcome**: The game said it was not a touch device and showed no touch controls. The pane only emulates touch below 768 wide, so that alone proved nothing, but the code showed the real fault: `isMobile` tested the user agent for iPad and a width under 1024, and an iPad on iPadOS reports a Mac user agent and is 1180 to 1366 wide held sideways. Every iPad held sideways would have had no joystick or buttons.
+
+**Next time**: Detect touch by the device (`navigator.maxTouchPoints > 1` with `(pointer: coarse)`), never by the user agent alone. Test wide touch layouts with `?touch=1` at the real iPad sizes (820 by 1180, 1180 by 820, 1366 by 1024).

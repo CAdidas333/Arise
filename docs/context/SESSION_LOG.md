@@ -1,5 +1,18 @@
 # Arise — Session Log
 
+## Session 9, continued — 2026-10-27 (overnight, Houston: Chris asked for more) — iPads get touch controls, the hub music stops dropping out, System reward boxes
+
+### What Changed
+- **Phone and iPad check** (100ca52, stamp 20261027003037, thread U16): every screen measured by script at six phone and iPad sizes, 2D and 3D. iPads had no touch controls at all (an iPad reports itself as a Mac and is 1180 to 1366 wide held sideways); now caught by its touch screen being the main pointer, and `?touch=1` forces the touch layout for testing. Also: touch controls hidden outside a gate, the name box fits a 375 phone, 40-pixel tap targets on touch, bigger sliders, the ARISE button above the joystick's touch area, the desktop skill bar, key hints, second pause button and gate label hidden on touch, landscape phone skill buttons 42.
+- **Sound check** (same commit, thread U17): all 46 audio files screened with the local classifier and measured; nothing silent, clipped or wrong. The hub track's last 10 s fade to silence and the game looped the whole file, so the hub music dropped to about -63 dB for some 6 s at every loop (the fight track dipped to -33 dB). `trackLen` now loops at the end of the music.
+- **System reward boxes** (ba85961 brief, 6b7fec1 merge, 4dfa462 ship, stamp 20261027012303, thread F16): a glowing System box in some cleared chambers (always one per gate) gives gold and sometimes an item. Two free OpenCode passes (the first timed out halfway); the look brightened by hand from headless frames.
+
+### Checks
+`check_names.sh`, `node --check` on every script, the headless load, `test_layout.js` (PASS 8000), `test_gear.js` (PASS 626220), `test_army.js` (PASS 570), new `test_boxes.js` (PASS 3595), the balance bot (no errors). Browser: the phone and iPad measurements, the two-finger 3D camera, a full E gate in 3D with a box opened and every box and enemy mesh freed; two 2D gates in headless Chrome with two boxes opened; no console errors. Frames by headless Chrome (the pane stayed hidden and stuck under the night's load). Public pages on the new stamp.
+
+### Not Done
+Real phone and iPad, a human ear on the music, a human play-through: still Chris's (E3, U6, F12, E1 to E5).
+
 ## Session 9 — 2026-10-20 (Tuesday evening) — Renewed from Session 8; the 3D leftovers built, the Death Knight's sword moved, the music terms read
 
 ### Focus
