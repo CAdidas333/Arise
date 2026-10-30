@@ -70,6 +70,7 @@ function updatePlayer(dt) {
       if (b.open >= 0) { b.open += dt; if (b.open > 0.7) rewardBoxes.splice(i, 1); }
     }
   }
+  titleTick(dt);
   if (player.moving && Math.random() < 12*dt) spawnParticle(player.x, player.y + 10, COLORS.primary, { vx:-dx*30, vy:-dy*30, size:rand(1,3), alpha:0.3, life:0.5 });
 }
 

@@ -73,6 +73,7 @@ function nextWave() {
   if (layout && isBossWave()) toast('THE WAY TO THE BOSS IS OPEN', 'red', 2600);
 }
 function openRewardBox(b) { // system reward box
+  player.feats.boxes++;
   let g = Math.max(20, Math.ceil(run.gold * 0.2));
   player.gold += g; run.gold += g;
   let gear = false;
@@ -154,6 +155,8 @@ function clearGate(b) {
   dungeon.state = 'cleared';
   questProgress.gatesCleared++; highScores.gatesCleared++;
   player.cleared[g.id] = (player.cleared[g.id] || 0) + 1;
+  if (run && run.dmgTaken === 0) player.feats.flawless++;
+  checkTitles(false);
   if (RANKS.indexOf(g.rank) > RANKS.indexOf(highScores.bestGate)) highScores.bestGate = g.rank;
   setMusic('off'); playSfx('victory');
   if (g.boss.shadow) { pendingExtraction = { def:g.boss, x:b.x, y:b.y }; extractTries = 3; showExtraction(); }

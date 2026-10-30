@@ -23,6 +23,31 @@ function systemPop(head, big, sub, tone) {
   sysPopTimer = setTimeout(() => el.classList.remove('on'), 1950);
 }
 
+let titleQueue = [], titleGap = 0, titleCheckT = 0;
+// Grants every title whose feat is met. silent: grant without the System window (used once on load, for deeds done before titles existed). Returns the number granted.
+function checkTitles(silent) {
+  if (!player) return 0;
+  let granted = 0;
+  for (const t of TITLES) {
+    if (player.titles.includes(t.id) || !t.has(player, highScores)) continue;
+    player.titles.push(t.id); granted++;
+    if (!silent) titleQueue.push(t.id);
+  }
+  if (granted) saveGame();
+  return granted;
+}
+// Called every frame in a gate: re-checks every 0.5 s and shows queued titles one at a time, 2.4 s apart
+function titleTick(dt) {
+  titleCheckT -= dt; if (titleCheckT <= 0) { titleCheckT = 0.5; checkTitles(false); }
+  titleGap -= dt;
+  if (titleGap <= 0 && titleQueue.length) {
+    const t = TITLES.find(x => x.id === titleQueue[0]);
+    titleQueue.shift();
+    systemPop('TITLE ACQUIRED', t.name, t.how.toUpperCase());
+    playSfx('boon'); titleGap = 2.4;
+  }
+}
+
 const SHORT = { slash:'Slash', dash_strike:'Dash', shadow_strike:'Strike', rulers:'Domain', legion:'Legion', ult:'Awaken' };
 let skillEls = [];
 function buildSkillBar() {
@@ -34,7 +59,7 @@ let touchShown = true; // the touch controls show only inside a gate (on the tit
 function updateHUD() {
   if (isMobile && touchShown !== (gameState === 'DUNGEON')) { touchShown = !touchShown; $('touch-controls').style.visibility = touchShown ? '' : 'hidden'; }
   if (!player || gameState !== 'DUNGEON' || !dungeon) return;
-  setT('hud-name', player.name); setT('hud-rank', `RANK ${player.rank} — HUNTER`);
+  setT('hud-name', player.name); setT('hud-rank', `RANK ${player.rank} — ${titleName(player)}`);
   setW('hud-hp-fill', player.hp/player.maxHp*100); setT('hud-hp-text', `${fmtNum(Math.ceil(player.hp))} / ${fmtNum(player.maxHp)}`);
   setW('hud-mp-fill', player.mp/player.maxMp*100); setT('hud-mp-text', `${fmtNum(Math.ceil(player.mp))} / ${fmtNum(player.maxMp)}`);
   setW('hud-xp-fill', player.xp/player.xpToNext*100); setT('hud-xp-text', `${fmtNum(player.xp)} / ${fmtNum(player.xpToNext)}`);
@@ -103,6 +128,12 @@ function tabStatus() {
   for (const [k, v] of Object.entries(player.stats)) left += `<div class="stat-row"><span class="stat-name">${k} <span style="font-size:10px;opacity:.4;letter-spacing:1px">${hint[k]}</span></span><span class="stat-value">${v}${player.statPoints > 0 ? `<button class="stat-btn" data-act="stat" data-v="${k}">+</button>` : ''}</span></div>`;
   left += '<h3>Records</h3>' + row('Best Level', highScores.bestLevel) + row('Best Combo', highScores.bestCombo+'x') + row('Total Kills', fmtNum(highScores.totalKills))
     + row('Gates Cleared', highScores.gatesCleared) + row('Best Gate', highScores.bestGate+'-RANK') + row('Demon Castle', highScores.bestFloor ? 'FLOOR '+highScores.bestFloor : '—');
+  left += '<h3>Titles <span style="font-size:11px;opacity:.5">' + player.titles.length + ' / ' + TITLES.length + '</span></h3>';
+  for (const t of TITLES) {
+    const shown = player.title === t.id;
+    if (player.titles.includes(t.id)) left += `<div class="stat-row"><span class="stat-name" style="color:#00d4ff">${t.name}<span style="display:block;font-size:10px;opacity:.4;letter-spacing:1px">${t.how}</span></span><span class="stat-value"><button class="sys-btn${shown ? ' on' : ''}" data-act="title" data-v="${t.id}">${shown ? 'SHOWN' : 'SHOW'}</button></span></div>`;
+    else left += `<div class="stat-row" style="opacity:.35"><span class="stat-name">${t.name}<span style="display:block;font-size:10px;letter-spacing:1px">${t.how}</span></span></div>`;
+  }
 
   const now = new Date(), midnight = new Date(now); midnight.setHours(24,0,0,0);
   const ms = midnight - now, hL = Math.floor(ms/3600000), mL = Math.floor((ms%3600000)/60000);

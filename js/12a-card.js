@@ -80,7 +80,7 @@ function cardData(kind) {
   const mm = Math.floor(run.time/60), ss = String(Math.floor(run.time%60)).padStart(2, '0'), now = new Date();
   const d = {
     kind, endless, gateId:g.id, theme:g.theme, rank:g.rank, gateName:g.name,
-    hunter:String(player.name || 'HUNTER'), level:player.level, hunterRank:player.rank,
+    hunter:String(player.name || 'HUNTER'), level:player.level, hunterRank:player.rank, title:titleName(player),
     time:`${mm}:${ss}`, kills:run.kills|0, combo:run.bestCombo|0, gold:Math.round((run.gold || 0) + (kind === 'victory' ? (run.bonus || 0) : 0)), xp:Math.round(run.xp || 0),
     lootCount:loot.length, lootBest:best, shadows:Array.isArray(player.shadows) ? player.shadows.length : 0,
     grade:kind === 'victory' && CARD_GRADE_COLORS[run.grade] ? run.grade : '', boss:endless ? '' : (g.boss && g.boss.name) || '',
@@ -89,7 +89,7 @@ function cardData(kind) {
     date:`${now.getDate()} ${CARD_MONTHS[now.getMonth()]} ${now.getFullYear()}`,
   };
   d.kicker = endless ? `DEMON CASTLE — FLOOR ${dungeon.wave}` : `${g.rank}-RANK GATE`;
-  d.title = g.name.toUpperCase();
+  d.gateTitle = g.name.toUpperCase();
   d.tag = kind === 'victory' ? 'GATE CLEARED' : endless ? 'RUN ENDED' : 'HUNTER FALLEN';
   d.shareText = kind === 'victory'
     ? `${d.hunter} cleared the ${g.name} (${g.rank}-rank gate)${d.grade ? ' with grade ' + d.grade : ''} in ARISE. cadidas333.github.io/Arise`
@@ -152,7 +152,7 @@ function cardPaint(c, d) {
 
   // title block
   c.fillStyle = accent; c.font = cardFont(700, 19); cardSpaced(c, d.kicker, 72, 172, 8);
-  const t = cardFit(c, d.title, 900, 76, 38, 700, 0.03);
+  const t = cardFit(c, d.gateTitle, 900, 76, 38, 700, 0.03);
   c.save(); c.fillStyle = WHITE; c.shadowColor = line; c.shadowBlur = 26;
   cardSpaced(c, t.text, 72, 252, t.sp); c.restore();
   const ar = c.createLinearGradient(72, 0, 440, 0); ar.addColorStop(0, line); ar.addColorStop(1, cardRgba(line, 0));
@@ -161,7 +161,7 @@ function cardPaint(c, d) {
   // hunter
   const nm = cardFit(c, d.hunter, 700, 38, 22, 660, 0.04);
   c.fillStyle = WHITE; cardSpaced(c, nm.text, 72, 336, nm.sp);
-  c.fillStyle = MUTED; c.font = cardFont(700, 17); cardSpaced(c, `LEVEL ${d.level}  ·  ${d.hunterRank}-RANK HUNTER`, 72, 370, 5);
+  c.fillStyle = MUTED; c.font = cardFont(700, 17); cardSpaced(c, `LEVEL ${d.level}  ·  ${d.hunterRank}-RANK ${d.title}`, 72, 370, 5);
 
   // right panel: the grade, or the floor / wave where the hunter fell
   const px = 836, py = 128, pw = 292, ph = 252, cx = px + pw/2;

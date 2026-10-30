@@ -130,6 +130,7 @@ $('system-menu').addEventListener('click', e => {
     case 'gear-sell-weaker': sellWeakerGear(); break;
     case 'aim': cycleAim(); break;
     case 'look': cycleLook(); break;
+    case 'title': player.title = player.title === v ? '' : (player.titles.includes(v) ? v : player.title); saveGame(); playSfx('ui'); break;
     case 'gate': enterGate(v); return;
     case 'endless': enterEndless(); return;
     case 'gate-go': { const a = gateAsk; gateAsk = { ...a, ok:true }; if (a.endless) enterEndless(); else enterGate(a.id); gateAsk = null; return; }
