@@ -70,7 +70,6 @@ function updatePlayer(dt) {
       if (b.open >= 0) { b.open += dt; if (b.open > 0.7) rewardBoxes.splice(i, 1); }
     }
   }
-  titleTick(dt);
   if (player.moving && Math.random() < 12*dt) spawnParticle(player.x, player.y + 10, COLORS.primary, { vx:-dx*30, vy:-dy*30, size:rand(1,3), alpha:0.3, life:0.5 });
 }
 
@@ -96,6 +95,7 @@ function step(raw) {
   if (slowT > 0) { slowT -= raw; if (slowT <= 0) timeScale = 1; }
   const dt = raw*timeScale;
   runTimers(dt, raw);
+  titleTick(raw); // titles earned by clearing a gate show over the victory screen too, so this runs in every gate state
   if (!dungeon) return;
   if (dungeon.state === 'intro') updateIntro(raw);
   if (dungeon.state === 'fight') {

@@ -20,9 +20,8 @@ later"); do not push him for it.
 5. **In 3D, System menu, Controls tab, Hunter look:** the classic stick-figure hunter now works in 3D too.
 
 ## Ranked next actions
-1. **System Titles (F17):** when the queued worker finishes, review the diff line by line against the brief, run its checks
-   (`node tools/test_titles.js` and the rest), test both views (a title earned in a gate, the STATUS list, SHOW and SHOWN, the HUD
-   line with the longest name, THE MONARCH'S HEIR, at phone width, an old save getting past titles quietly), then stamp and ship.
+1. Done 2026-10-29: **System Titles (F17)**, live. Tell Chris: clear a gate and the System grants a title; pick one to show in
+   the STATUS tab (it replaces HUNTER under the name). Add `node tools/test_titles.js` (PASS 71) to the checks after every merge.
 2. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
    E4 rooms per gate, E5 gear drops). Do not make enemies hit harder before he has (his word, 2026-10-12). Levers when he asks:
    `shadowDmg`, boss health, enemy damage.
