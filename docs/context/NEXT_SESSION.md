@@ -1,38 +1,36 @@
 # Next Session Handoff
-_Written: 2026-10-20 16:28 by Session 8; updated 2026-10-27 01:25 by Session 9 (overnight, for Houston), for Chris Whitney_
+_Written: 2026-10-29 21:05 (Thursday) by Session 9 (the Arise project manager), for Chris Whitney. Supersedes the 10-20 and 10-27 versions._
 
-**Session 9 (10-20 evening and 10-27 overnight):** live at stamp 20261027012303, `main` = `v18-world`. Built: the classic hunter look, dark edge and darker rooms ahead in 3D (U15), the Death Knight's sword at its side (U14), phone and iPad fixes (U16), the music loop fix (U17), System reward boxes (F16); G6 read, G4 kept. Chris set his play-test aside for later ("I'll do that later"); do not push him for it.
+## Where we left off
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261027012303 (commit 4dfa462; docs to 1c7b125, the Titles brief
+ec65c2f; `main` = `v18-world`). Session 9 built, all live: the classic hunter look, dark screen edge and darker rooms ahead in 3D
+(U15), the Death Knight's sword held at its side (U14), phone and iPad fixes including touch controls for iPads (U16), the hub and
+fight music looping without a hole (U17), System reward boxes in cleared chambers (F16); G6 read (credits note), G4 kept.
+**In flight:** System Titles (`docs/briefs/v18-titles.md`), queued behind Houston's power hold: a background job in this session
+starts `worker run Arise titles ...` by itself when the battery is 50 percent or more and not discharging (gives up after 6 hours).
+If this session is gone, run it by hand from `~/Projects`: `worker run Arise titles /Users/ChrisJody/Projects/Arise/docs/briefs/v18-titles.md --engine auto --timeout 40m`,
+then review (`worker diff`), merge, browser-check both views, stamp, ship. Chris set his play-test aside for later ("I'll do that
+later"); do not push him for it.
 
 ### Try this first (for Chris, plain words)
-1. **On an iPad:** it works now. Before tonight an iPad held sideways got no joystick or buttons (it tells websites it is a Mac).
+1. **On an iPad:** it works now. Before 10-27 an iPad held sideways got no joystick or buttons (it tells websites it is a Mac).
 2. **Clear a chamber and look for a glowing blue box** in the middle of it (about one chamber in three, always once per gate). Walk into it: the lid lifts, the System says REWARD BOX, and you get gold, sometimes an item.
 3. **Stay in the hub for a minute and a half:** the hub music no longer drops out for six seconds each time it loops (the fight music had a smaller dip; both fixed).
 4. **On your phone:** the name box fits, buttons are bigger to tap, the controls no longer show on the title screen, and the ARISE button sits above the joystick.
 5. **In 3D, System menu, Controls tab, Hunter look:** the classic stick-figure hunter now works in 3D too.
 
-Still nobody has played, tried a real phone or iPad, or listened (F12, E1 to E5, E3, U6).
-
-## Where we left off
-V18 is complete and the 3D view has caught up with the 2D one. Live at https://cadidas333.github.io/Arise/ and `/3d/`,
-stamp 20261020150450, commit 7eee5b6 (docs eca9e42 and this file after it; `main` = `v18-world`). Nothing is in flight and no
-worker worktrees are left. Everything since 10-15 is in SESSION_LOG ("Session 8, continued" entries) and OPEN_THREADS:
-- 10-15: three-phase boss fights with floor hazards (F7), 3D minimap, afterimages, Arise pillars, hub backdrop, thick walls and dressing.
-- 10-16: the 3D view shows every warning, target and prompt 2D shows (U11); Kevin's ideas welcome again; his four backpack ideas (F13).
-- 10-18: the edge arrow kept off the minimap (U12), the last 3D decoration (U13), the ARISE rise (F14).
-- 10-20: the System's level-up window, violet for a rank-up (F15).
-Nobody has played any of this by hand, tried it on a real phone, or heard the music.
-
 ## Ranked next actions
-1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
-   E4 rooms per gate, E5 gear drops). Do not make enemies hit harder before he has (his word, 2026-10-12). The bot still dies
-   0 times and the shadows do most of the boss damage; levers when he asks: `shadowDmg`, boss health, enemy damage.
-2. Done 2026-10-20: G8, `tools/stamp.sh` now refuses to stamp a broken build (names clash, a script that cannot parse, or
-   scripts that do not load together). A refused stamp prints `stamp refused: ...`; fix the cause, never work around it.
-3. **Kevin's ideas** as they arrive from the KevinNotary session: weigh them, build what Chris approves or free rein covers,
-   reply through that session.
-4. Done 2026-10-20 (Session 9): the U13 leftovers (now U15), G4 (kept on purpose), G6 (read). Nothing low-priority is left in the register except I1, I2, G3, which wait on outside triggers.
-5. Parked: shared leaderboard and co-op (F1, Chris's word to start). The printable status report (C1) was made at this wrap:
-   `docs/Status_Report_2026-10-20.html`.
+1. **System Titles (F17):** when the queued worker finishes, review the diff line by line against the brief, run its checks
+   (`node tools/test_titles.js` and the rest), test both views (a title earned in a gate, the STATUS list, SHOW and SHOWN, the HUD
+   line with the longest name, THE MONARCH'S HEIR, at phone width, an old save getting past titles quietly), then stamp and ship.
+2. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
+   E4 rooms per gate, E5 gear drops). Do not make enemies hit harder before he has (his word, 2026-10-12). Levers when he asks:
+   `shadowDmg`, boss health, enemy damage.
+3. **Kevin's ideas** as they arrive from the KevinNotary session (it messages the newest "Arise S<n>" session): weigh them, build
+   what Chris approves or free rein covers, reply through that session.
+4. **More variety without difficulty, our call under free rein,** once Titles is in: gate ambience per theme, a bestiary, room
+   variety. Keep jobs light while the Mac is on battery (Houston's holds are in `_brain/Comms/broadcast.md`).
+5. Parked: shared leaderboard and co-op (F1, Chris's word to start).
 
 ## Tell Chris when he plays (plain words; his list, none of it blocks the work)
 - **Try first: raise a shadow.** Beat an enemy, walk to the purple wisp it leaves and press E (ARISE on a phone): the word
