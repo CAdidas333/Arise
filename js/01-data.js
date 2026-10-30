@@ -8,6 +8,22 @@ const COLORS = { bg:'#06060c', primary:'#00d4ff', secondary:'#2244ff', accent:'#
 const RANKS = ['E','D','C','B','A','S'];
 const RANK_LEVELS = [1,10,25,45,70,100];
 const BOX_CHANCE = 0.35, BOX_RISE = 0.8, BOX_REACH = 46;
+// System titles: earned by feats, shown under the hunter's name; cosmetic only. has(p, h): p = the player, h = highScores
+const TITLES = [
+  { id:'gate_walker', name:'GATE WALKER',       how:'Clear your first gate',              has:(p, h) => h.gatesCleared >= 1 },
+  { id:'cuts_100',    name:'HUNDRED CUTS',      how:'Defeat 100 enemies',                 has:(p, h) => h.totalKills >= 100 },
+  { id:'cuts_1000',   name:'THOUSAND CUTS',     how:'Defeat 1,000 enemies',               has:(p, h) => h.totalKills >= 1000 },
+  { id:'chain_50',    name:'UNBROKEN CHAIN',    how:'Reach a 50-hit combo',               has:(p, h) => h.bestCombo >= 50 },
+  { id:'ghost_step',  name:'GHOST STEP',        how:'Make 25 perfect dodges',             has:(p) => p.feats.perfects >= 25 },
+  { id:'captain',     name:'SHADOW CAPTAIN',    how:'Raise an army of 10 shadows',        has:(p) => p.shadows.length >= 10 },
+  { id:'commander',   name:'LEGION COMMANDER',  how:'Raise an army of 40 shadows',        has:(p) => p.shadows.length >= 40 },
+  { id:'seeker',      name:'TREASURE SEEKER',   how:'Open 10 reward boxes',               has:(p) => p.feats.boxes >= 10 },
+  { id:'breaker',     name:'GATE BREAKER',      how:'Clear 25 gates',                     has:(p, h) => h.gatesCleared >= 25 },
+  { id:'untouchable', name:'UNTOUCHABLE',       how:'Clear a gate without taking damage', has:(p) => p.feats.flawless >= 1 },
+  { id:'climber',     name:'CASTLE CLIMBER',    how:'Reach floor 20 of the Demon Castle', has:(p, h) => h.bestFloor >= 20 },
+  { id:'heir',        name:"THE MONARCH'S HEIR", how:'Clear the S-rank gate',             has:(p) => (p.cleared.s_gate | 0) >= 1 },
+];
+const titleName = p => { const t = p && p.title && TITLES.find(x => x.id === p.title); return t ? t.name : 'HUNTER'; };
 function boxDue(roomI, nFight, given, roll) { return roomI >= 1 && (roll < BOX_CHANCE || (roomI === nFight && given === 0)); }
 // Quadratic early, cubic late, and a steep soft cap past the S-rank threshold
 // XP_PACE 2 (2026-10-12): at 1 a bot filled the whole skill tree in 17 gate runs, about 14 minutes of fighting; at 2 it takes about 31 runs and 24 minutes (node tools/balance_bot.js)

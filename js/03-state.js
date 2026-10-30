@@ -51,6 +51,7 @@ function saveGame() {
     v:VERSION, spv:2, name:player.name, level:player.level, xp:player.xp, rank:player.rank,
     stats:{...player.stats}, statPoints:player.statPoints, skillPoints:player.skillPoints, tree:{...player.tree},
     weapon:player.weapon, gold:player.gold, potions:player.potions, cleared:{...player.cleared},
+    titles:[...player.titles], title:player.title, feats:{...player.feats},
     gear:{...player.gear}, bag:[...player.bag], story:{ opening:!!player.story.opening, gates:{...player.story.gates}, arose:!!player.story.arose },
     shadows:player.shadows.map(s => ({ name:s.name, kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })),
     questProgress:{...questProgress}, questDate, highScores:{...highScores},
@@ -111,8 +112,14 @@ function loadGame() {
   (d.bonusCompleted || []).forEach(id => { const q = BONUS_QUESTS.find(x => x.id === id); if (q) q.completed = true; });
   bonusQuestsUnlocked = !!d.bonusQuestsUnlocked;
   allQuestsJustCompleted = BONUS_QUESTS.every(q => q.completed);
+  const knownTitles = new Set(TITLES.map(t => t.id));
+  player.titles = [...new Set((Array.isArray(d.titles) ? d.titles : []).filter(id => knownTitles.has(id)))];
+  const f = d.feats && typeof d.feats === 'object' ? d.feats : {};
+  player.feats = { perfects:Math.max(0, f.perfects|0), boxes:Math.max(0, f.boxes|0), flawless:Math.max(0, f.flawless|0) };
+  player.title = player.titles.includes(d.title) ? d.title : '';
   checkDailyReset();
   recalcPlayer(player); player.hp = player.maxHp; player.mp = player.maxMp;
+  const past = checkTitles(true); if (past) toast(`THE SYSTEM GRANTS ${past} TITLE${past > 1 ? 'S' : ''} FOR PAST DEEDS`, 'purple', 4500);
   return true;
 }
 
