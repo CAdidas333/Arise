@@ -1,5 +1,14 @@
 # Arise — Session Log
 
+## Session 9, continued — 2026-10-29 (Thursday evening) — System Titles
+
+### What Changed
+- **System Titles** (ec65c2f brief, 38e97f2 merge, 93787a4 ship, stamp 20261029234540, thread F17): twelve cosmetic titles earned by feats, announced by the System, chosen in the STATUS tab, shown under the hunter's name on the HUD and the result card. The worker job waited behind Houston's power hold (a battery gate, then a 60 W charger gate on Houston's word) and started on Chris's word when he plugged in; the Mac reported 20 W. By hand after the merge: titles earned at a gate clear are announced at once over the victory and extraction screens.
+- **Handoff** (09df673): NEXT_SESSION rewritten as of 10-29 on Houston's drift flag.
+
+### Checks
+`check_names.sh`, `node --check`, the headless load, `test_titles.js` (PASS 71), `test_boxes.js` (PASS 3595), `test_layout.js` (PASS 8000), `test_gear.js` (PASS 626220), `test_army.js` (PASS 570). Headless Chrome, 2D and 3D: a flawless first clear grants GATE WALKER and UNTOUCHABLE and shows the first at once; the longest HUD line fits at 520 wide; the STATUS list; no errors. Public pages on the new stamp.
+
 ## Session 9, continued — 2026-10-27 (overnight, Houston: Chris asked for more) — iPads get touch controls, the hub music stops dropping out, System reward boxes
 
 ### What Changed
