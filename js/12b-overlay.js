@@ -18,6 +18,79 @@ function drawMotes(c1, c2, par) {
   ctx.globalAlpha = 1;
 }
 
+// One soft white blob, made the first time weather is drawn
+let weatherBlob = null;
+function weatherSprite() {
+  if (!weatherBlob) {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    rg.addColorStop(0, 'rgba(255,255,255,0.9)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
+    weatherBlob = c;
+  }
+  return weatherBlob;
+}
+
+const weather = [];
+for (let i = 0; i < 48; i++) weather.push({ x:Math.random(), y:Math.random(), z:rand(0.4,1), ph:rand(0,TAU), s:rand(0.6,1.6) });
+function drawWeather(id, par) {
+  if (id === 'e_gate') { // water drips off the cave roof
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#9fe8a8';
+    for (const m of weather) {
+      const x = (((m.x*W - camera.x*m.z*par) % W) + W) % W, y = (((m.y*H + clock*(220 + m.z*260) - camera.y*m.z*par) % H) + H) % H;
+      ctx.globalAlpha = 0.08 + 0.14*m.z; ctx.fillRect(x, y, 1, 5 + m.s*7);
+    }
+  } else if (id === 'd_gate') { // grey ash flakes drift sideways
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#cfcfcf';
+    for (const m of weather) {
+      const x = (((m.x*W + clock*(14 + m.z*20) - camera.x*m.z*par) % W) + W) % W, y = (((m.y*H + clock*(26 + m.z*34) - camera.y*m.z*par) % H) + H) % H;
+      ctx.globalAlpha = 0.12 + 0.2*m.z; dot2(x, y, m.s*0.9);
+    }
+  } else if (id === 'c_gate') { // low violet-grey fog drifts across the lower half
+    ctx.globalCompositeOperation = 'source-over';
+    const img = weatherSprite(), span = W*1.6;
+    for (let i = 0; i < 5; i++) {
+      const m = weather[i], x = ((((m.x*W + clock*(8 + m.z*10) - camera.x*m.z*par) % span) + span) % span) - W*0.3;
+      const w = W*(0.35 + m.z*0.2), h = H*(0.16 + m.z*0.12);
+      ctx.globalAlpha = 0.05 + m.z*0.06; ctx.drawImage(img, x - w/2, H*(0.6 + m.y*0.34) - h/2, w, h);
+    }
+  } else if (id === 'b_gate') { // embers rise and flicker, warm glow along the floor
+    ctx.globalCompositeOperation = 'lighter';
+    for (const m of weather) {
+      const x = (((m.x*W + Math.sin(clock*1.6 + m.ph)*22*m.z - camera.x*m.z*par) % W) + W) % W, y = (((m.y*H - clock*(180 + m.z*280) - camera.y*m.z*par) % H) + H) % H;
+      const f = 0.5 + 0.5*Math.sin(clock*(7 + m.z*6) + m.ph);
+      ctx.globalAlpha = (0.16 + 0.3*m.z)*f; ctx.fillStyle = m.z > 0.7 ? '#ffaa33' : '#ff5522';
+      dot2(x, y, m.s*(0.8 + f*0.8));
+    }
+    const img = weatherSprite();
+    for (let i = 0; i < 5; i++) {
+      const m = weather[i], w = W*(0.5 + m.z*0.3), h = H*(0.16 + m.z*0.1);
+      ctx.globalAlpha = 0.05 + 0.05*(0.5 + 0.5*Math.sin(clock*1.5 + m.ph));
+      ctx.drawImage(img, W*(i/4) + Math.sin(clock*0.7 + m.ph)*20 - w/2, H - h*0.5, w, h);
+    }
+  } else if (id === 'a_gate') { // gold cinders fall slowly, swaying
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#ffcc55';
+    for (const m of weather) {
+      const x = (((m.x*W + Math.sin(clock*0.9 + m.ph)*26*m.z - camera.x*m.z*par) % W) + W) % W, y = (((m.y*H + clock*(30 + m.z*46) - camera.y*m.z*par) % H) + H) % H;
+      ctx.globalAlpha = 0.14 + 0.24*m.z; dot2(x, y, m.s*0.9);
+      ctx.globalAlpha *= 0.3; dot2(x, y, m.s*3);
+    }
+  } else if (id === 's_gate') { // cold pale-blue dust hangs, faint mist low
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#a9d4ee';
+    for (const m of weather) {
+      const x = (((m.x*W + Math.sin(clock*0.5 + m.ph)*14*m.z - camera.x*m.z*par) % W) + W) % W, y = (((m.y*H + Math.sin(clock*0.4 + m.ph)*10*m.z - camera.y*m.z*par) % H) + H) % H;
+      ctx.globalAlpha = 0.1 + 0.18*m.z; dot2(x, y, m.s*0.8);
+    }
+    const img = weatherSprite(), span = W*1.6;
+    for (let i = 0; i < 5; i++) {
+      const m = weather[i], x = ((((m.x*W + clock*(6 + m.z*8) - camera.x*m.z*par) % span) + span) % span) - W*0.3;
+      const w = W*(0.4 + m.z*0.2), h = H*(0.14 + m.z*0.1);
+      ctx.globalAlpha = 0.05 + m.z*0.04; ctx.drawImage(img, x - w/2, H*(0.68 + m.y*0.26) - h/2, w, h);
+    }
+  }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+}
+
 // Title + hub backdrop: a gate, breathing
 function drawPortal(hub) {
   if (hub) {

@@ -111,6 +111,7 @@ function drawPost() {
   vg.addColorStop(1, `rgba(${low ? '50,0,0' : player.ultT > 0 ? '22,0,48' : '0,0,6'},${vignetteIntensity})`);
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = 'lighter'; drawMotes(floorTheme.ember, floorTheme.line, 0.5); ctx.globalCompositeOperation = 'source-over';
+  if (dungeon && dungeon.gate) drawWeather(dungeon.gate.id, 0.5);
   if (hpPct < 0.25 && player.hp > 0) { ctx.globalAlpha = (Math.sin(clock*4)*0.5 + 0.5)*0.14; ctx.fillStyle = '#ff0000'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
 }
 

@@ -1987,6 +1987,7 @@ function drawFx3D() {
     // 11. The same drifting motes as the 2D view, in the gate's colours, floating over the dungeon floor
     const moteTh = (dungeon.gate && dungeon.gate.theme) || {};
     drawMotes(moteTh.ember || COLORS.accent, moteTh.line || COLORS.primary, 0.5);
+    if (dungeon && dungeon.gate) drawWeather(dungeon.gate.id, 0.5);
 
     // 7. Reset to source-over
     ctx.globalCompositeOperation = 'source-over';
