@@ -1,5 +1,20 @@
 # Arise — Session Log
 
+## Session 9, continued — 2026-10-31 (night, Houston's orders: Chris asleep, push hard) — weather, shadow names, the Hunter's Record, gate dressing, EQUIP BEST, a 3D culling fix
+
+### What Changed
+- **Gate weather** (F18; brief 08f6fb5, merge f7a6498, ship 29d7caf): drips, ash, fog, embers, cinders, cold dust per gate, both views. Free OpenCode pass; fog and glow tinted by hand.
+- **Shadow names** (F19; same ship): NAME, OK, CLEAR in the SHADOWS tab, saved as `nick`. Free OpenCode pass; by hand: volume sliders no longer swallow movement keys.
+- **The Hunter's Record** (F20; brief 93ad323, merge 4da3cbe, fixes 198f7ca) and **gate dressing** (F21; merge dc0faa2), live at 50bd89e: the free tiers returned nothing (Gemini out of quota, the free OpenCode model silent for 40 minutes), so Claude Sonnet sub-agents built both in worktrees. By hand: RECORD last on key 7, raised boss shadows count as met.
+- **3D dressing culled away from the origin** (G9, same ship): three.js r149 culls an InstancedMesh by its base geometry at the origin, so pilasters, torches, rubble and the dark overlays could vanish in most rooms; `frustumCulled = false` on all of them.
+- **EQUIP BEST** (F22; merge 6b56d9c, ship f10d695, stamp 20261031014753): Sonnet sub-agent, accepted as is.
+
+### Checks
+Every merge: `check_names.sh`, `node --check`, the headless load, `test_layout` (PASS 8000), `test_gear` (PASS 626220), `test_army` (PASS 570), `test_boxes` (PASS 3595), `test_titles` (PASS 71), `test_shadow_names` (PASS 16), `test_record` (PASS 123), `test_equip_best` (PASS 22). Headless Chrome frames: weather in all six gates, props in a room about 5,000 from the origin in 3D, the naming flow end to end; no errors. Public pages on each new stamp.
+
+### Not Done
+Chris has not played; real phone and iPad, the music by ear (F12, E1 to E5, E3, U6).
+
 ## Session 9, continued — 2026-10-29 (Thursday evening) — System Titles
 
 ### What Changed

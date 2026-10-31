@@ -1,35 +1,42 @@
 # Next Session Handoff
-_Written: 2026-10-29 21:05 (Thursday) by Session 9 (the Arise project manager), for Chris Whitney. Supersedes the 10-20 and 10-27 versions._
+_Written: 2026-10-31 01:50 (Saturday) by Session 9 (wrapped for renewal at 67 percent context), for Chris Whitney. Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261027012303 (commit 4dfa462; docs to 1c7b125, the Titles brief
-ec65c2f; `main` = `v18-world`). Session 9 built, all live: the classic hunter look, dark screen edge and darker rooms ahead in 3D
-(U15), the Death Knight's sword held at its side (U14), phone and iPad fixes including touch controls for iPads (U16), the hub and
-fight music looping without a hole (U17), System reward boxes in cleared chambers (F16); G6 read (credits note), G4 kept.
-**In flight:** System Titles (`docs/briefs/v18-titles.md`), queued behind Houston's power hold: a background job in this session
-starts `worker run Arise titles ...` by itself when the battery is 50 percent or more and not discharging (gives up after 6 hours).
-If this session is gone, run it by hand from `~/Projects`: `worker run Arise titles /Users/ChrisJody/Projects/Arise/docs/briefs/v18-titles.md --engine auto --timeout 40m`,
-then review (`worker diff`), merge, browser-check both views, stamp, ship. Chris set his play-test aside for later ("I'll do that
-later"); do not push him for it.
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261031014753 (commit f10d695; `main` = `v18-world`). Nothing in
+flight, no worker or sub-agent worktrees left, preview server stopped. Session 9 shipped, all live: the classic hunter in 3D, dark
+edge and darker rooms ahead (U15); the Death Knight's sword at its side (U14); phone and iPad fixes, iPads now get touch controls
+(U16); the music loops without a hole (U17); System reward boxes (F16); System Titles (F17); gate weather (F18); shadow names (F19);
+the Hunter's Record tab (F20); gate dressing (F21); EQUIP BEST (F22); 3D dressing no longer culled away from the origin (G9).
+Chris set his play-test aside for later; do not push him for it. Houston ran the night (10-31) under "push hard"; the routing that
+worked when the free tiers were dead: Claude Sonnet sub-agents with `isolation: worktree`, briefs in `docs/briefs/`.
 
 ### Try this first (for Chris, plain words)
-1. **On an iPad:** it works now. Before 10-27 an iPad held sideways got no joystick or buttons (it tells websites it is a Mac).
-2. **Clear a chamber and look for a glowing blue box** in the middle of it (about one chamber in three, always once per gate). Walk into it: the lid lifts, the System says REWARD BOX, and you get gold, sometimes an item.
-3. **Stay in the hub for a minute and a half:** the hub music no longer drops out for six seconds each time it loops (the fight music had a smaller dip; both fixed).
-4. **On your phone:** the name box fits, buttons are bigger to tap, the controls no longer show on the title screen, and the ARISE button sits above the joystick.
-5. **In 3D, System menu, Controls tab, Hunter look:** the classic stick-figure hunter now works in 3D too.
+1. **On an iPad:** it works now (before 10-27 an iPad held sideways got no joystick or buttons).
+2. **Clear a chamber and look for a glowing blue box** in the middle of it; walk into it for gold, sometimes an item.
+3. **Clear a gate:** the System grants a title; pick one in STATUS and it replaces HUNTER under your name.
+4. **Each gate has its own weather and props now:** drips and glowing mushrooms in the Goblin Cavern, cobwebs and fog in the Crypt, embers and glowing vents in the Demon Realm, gold heaps and cinders in the Dragon's Lair.
+5. **Name your shadows** in the SHADOWS tab (NAME), and open the new **RECORD** tab (key 7) to see every enemy you have slain.
+6. **ARMORY: EQUIP BEST** puts on every upgrade in your bag at once.
+7. **In 3D, Controls tab, Hunter look:** the classic stick-figure hunter works in 3D too.
 
 ## Ranked next actions
-1. Done 2026-10-29: **System Titles (F17)**, live. Tell Chris: clear a gate and the System grants a title; pick one to show in
-   the STATUS tab (it replaces HUNTER under the name). Add `node tools/test_titles.js` (PASS 71) to the checks after every merge.
-2. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
+1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
    E4 rooms per gate, E5 gear drops). Do not make enemies hit harder before he has (his word, 2026-10-12). Levers when he asks:
    `shadowDmg`, boss health, enemy damage.
-3. **Kevin's ideas** as they arrive from the KevinNotary session (it messages the newest "Arise S<n>" session): weigh them, build
+2. **Kevin's ideas** as they arrive from the KevinNotary session (it messages the newest "Arise S<n>" session): weigh them, build
    what Chris approves or free rein covers, reply through that session.
-4. **More variety without difficulty, our call under free rein,** once Titles is in: gate ambience per theme, a bestiary, room
-   variety. Keep jobs light while the Mac is on battery (Houston's holds are in `_brain/Comms/broadcast.md`).
-5. Parked: shared leaderboard and co-op (F1, Chris's word to start).
+3. **More variety without difficulty, our call under free rein** (Houston: push hard while weekly usage allows): ideas not yet built:
+   a bestiary picture for each Record entry (2D only, the 3D page has no 2D figure drawing), a treasure gate (no boss, fleeing
+   gold goblins, timed), more room shapes, shadow abilities that add style not power. One or two jobs at a time; brief, worker
+   (`--engine auto`), else a Sonnet sub-agent in a worktree; review, test both views, stamp, ship.
+4. Parked: shared leaderboard and co-op (F1, Chris's word to start).
+
+### Checks after every merge (all must pass before `tools/stamp.sh`)
+`bash tools/check_names.sh`, `node -e "require('./tools/lib/headless.js').createGame()"`, `node tools/test_layout.js` (PASS 8000),
+`test_gear` (PASS 626220), `test_army` (PASS 570), `test_boxes` (PASS 3595), `test_titles` (PASS 71), `test_shadow_names` (PASS 16),
+`test_record` (PASS 123), `test_equip_best` (PASS 22); the bot when balance or levelling changes. Frames: the headless Chrome recipe
+(LESSONS 2026-10-15; the browser pane hangs under heavy load, so prefer headless; give each run its own `--user-data-dir` and a
+`perl -e 'alarm 100; exec @ARGV'` guard).
 
 ## Tell Chris when he plays (plain words; his list, none of it blocks the work)
 - **Try first: raise a shadow.** Beat an enemy, walk to the purple wisp it leaves and press E (ARISE on a phone): the word
