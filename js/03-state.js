@@ -152,7 +152,7 @@ const keys = {};
 const mouse = { x:W/2, y:H/2, down:false, moved:false, lastMove:-99, ax:0, ay:0 };
 let touchAttack = false;
 addEventListener('keydown', e => {
-  if (e.target && e.target.tagName === 'INPUT') { if (e.key === 'Enter') onKey('enter', e); return; } // a text box takes its own keys; only Enter goes on to the game
+  if (e.target && e.target.tagName === 'INPUT' && (e.target.type || 'text') === 'text') { if (e.key === 'Enter') onKey('enter', e); return; } // a text box takes its own keys (only Enter goes on to the game); a volume slider does not, so movement keeps working after one is touched
   const k = e.key.toLowerCase(); if (e.repeat && k !== 'tab') { if (k === ' ') e.preventDefault(); return; } keys[k] = true; onKey(k, e);
 });
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });

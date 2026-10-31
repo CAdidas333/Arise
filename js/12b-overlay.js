@@ -18,17 +18,17 @@ function drawMotes(c1, c2, par) {
   ctx.globalAlpha = 1;
 }
 
-// One soft white blob, made the first time weather is drawn
-let weatherBlob = null;
-function weatherSprite() {
-  if (!weatherBlob) {
+// Soft round blobs, one per colour, each made the first time it is drawn (fog, mist, the warm glow)
+const weatherBlobs = {};
+function weatherSprite(rgb) {
+  if (!weatherBlobs[rgb]) {
     const c = document.createElement('canvas'); c.width = c.height = 128;
     const g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-    rg.addColorStop(0, 'rgba(255,255,255,0.9)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+    rg.addColorStop(0, `rgba(${rgb},0.9)`); rg.addColorStop(1, `rgba(${rgb},0)`);
     g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
-    weatherBlob = c;
+    weatherBlobs[rgb] = c;
   }
-  return weatherBlob;
+  return weatherBlobs[rgb];
 }
 
 const weather = [];
@@ -48,7 +48,7 @@ function drawWeather(id, par) {
     }
   } else if (id === 'c_gate') { // low violet-grey fog drifts across the lower half
     ctx.globalCompositeOperation = 'source-over';
-    const img = weatherSprite(), span = W*1.6;
+    const img = weatherSprite('170,150,210'), span = W*1.6;
     for (let i = 0; i < 5; i++) {
       const m = weather[i], x = ((((m.x*W + clock*(8 + m.z*10) - camera.x*m.z*par) % span) + span) % span) - W*0.3;
       const w = W*(0.35 + m.z*0.2), h = H*(0.16 + m.z*0.12);
@@ -62,7 +62,7 @@ function drawWeather(id, par) {
       ctx.globalAlpha = (0.16 + 0.3*m.z)*f; ctx.fillStyle = m.z > 0.7 ? '#ffaa33' : '#ff5522';
       dot2(x, y, m.s*(0.8 + f*0.8));
     }
-    const img = weatherSprite();
+    const img = weatherSprite('255,110,50');
     for (let i = 0; i < 5; i++) {
       const m = weather[i], w = W*(0.5 + m.z*0.3), h = H*(0.16 + m.z*0.1);
       ctx.globalAlpha = 0.05 + 0.05*(0.5 + 0.5*Math.sin(clock*1.5 + m.ph));
@@ -81,7 +81,7 @@ function drawWeather(id, par) {
       const x = (((m.x*W + Math.sin(clock*0.5 + m.ph)*14*m.z - camera.x*m.z*par) % W) + W) % W, y = (((m.y*H + Math.sin(clock*0.4 + m.ph)*10*m.z - camera.y*m.z*par) % H) + H) % H;
       ctx.globalAlpha = 0.1 + 0.18*m.z; dot2(x, y, m.s*0.8);
     }
-    const img = weatherSprite(), span = W*1.6;
+    const img = weatherSprite('170,210,240'), span = W*1.6;
     for (let i = 0; i < 5; i++) {
       const m = weather[i], x = ((((m.x*W + clock*(6 + m.z*8) - camera.x*m.z*par) % span) + span) % span) - W*0.3;
       const w = W*(0.4 + m.z*0.2), h = H*(0.14 + m.z*0.1);
