@@ -253,7 +253,7 @@ try {
   ok(at('paused') === true && els['pause-stats'].innerHTML.includes('Goblins Caught: 0 / 8') && !els['pause-stats'].innerHTML.includes('Infinity'), 'the pause window is wrong in a rift');
   at('togglePause()');
   at('updateHUD()');
-  ok(els['hud-wave'].textContent === '0:55' && els['hud-enemies'].textContent === '', `the HUD showed "${els['hud-wave'].textContent}" / "${els['hud-enemies'].textContent}"`);
+  ok(els['hud-wave'].textContent === '0:55 · 0/8' && els['hud-enemies'].textContent === '', `the HUD clock and catch count showed "${els['hud-wave'].textContent}" / "${els['hud-enemies'].textContent}"`);
   at('returnToHub()');
   ok(at('gameState') === 'HUB' && p.rift === false && p.rifts === 1, 'quitting a rift gave the rift back or broke the hub');
 

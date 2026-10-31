@@ -67,7 +67,7 @@ function updateHUD() {
   setD('hud-ult', ultOn); setW('hud-ult-fill', player.ultT > 0 ? player.ultT/(8+2*tr('sovereign'))*100 : player.ult); setC('hud-ult', 'full', player.ult >= 100);
   setT('hud-level', player.ultT > 0 ? `LV. ${player.level}  👁️ MONARCH ${Math.ceil(player.ultT)}s` : legionTimer > 0 ? `LV. ${player.level}  ☠️ LEGION ${Math.ceil(legionTimer)}s` : `LV. ${player.level}`);
   setT('hud-gold', `◈ ${fmtNum(player.gold)}`); setT('hud-potions', `✚ ${player.potions}`);
-  setT('hud-wave', dungeon.rift ? riftClock(dungeon.rift.t) : dungeon.bossRef ? 'BOSS HUNT' : dungeon.endless ? `FLOOR ${dungeon.wave}` : `WAVE ${Math.min(dungeon.wave, dungeon.maxWaves)} / ${dungeon.maxWaves}`); // the rift has no waves: the clock instead
+  setT('hud-wave', dungeon.rift ? `${riftClock(dungeon.rift.t)} · ${dungeon.rift.caught}/${dungeon.rift.total}` :dungeon.bossRef ? 'BOSS HUNT' : dungeon.endless ? `FLOOR ${dungeon.wave}` : `WAVE ${Math.min(dungeon.wave, dungeon.maxWaves)} / ${dungeon.maxWaves}`); // the rift has no waves: the clock instead
   setT('hud-enemies', dungeon.alive > 0 ? `ENEMIES: ${dungeon.alive}` : '');
   if (dungeon.bossRef) { const p = dungeon.bossRef.hp/dungeon.bossRef.maxHp*100; setW('boss-bar-fill', p); setW('boss-bar-ghost', p); }
 
