@@ -209,7 +209,7 @@ function onKey(key, e) {
   if (key === '`') { window.devBoost(); return; }
   if (key === '~') { window.devDown(); return; }
   if (key === 'm' && !isMobile) { cycleAim(); if (gameState === 'HUB') renderSystemMenu(); return; }
-  if (gameState === 'HUB') { const i = key.length === 1 ? '123456'.indexOf(key) : -1; if (i >= 0) { menuTab = TABS[i][0]; gateAsk = null; playSfx('ui'); renderSystemMenu(); } return; }
+  if (gameState === 'HUB') { const i = key.length === 1 ? '1234567'.indexOf(key) : -1; if (i >= 0) { menuTab = TABS[i][0]; gateAsk = null; playSfx('ui'); renderSystemMenu(); } return; }
   if (gameState !== 'DUNGEON') return;
   if (key === 'tab') { e.preventDefault(); return; }
   if (key === 'escape' || key === 'p') { e.preventDefault(); togglePause(); return; }

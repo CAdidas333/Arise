@@ -96,9 +96,9 @@ try {
     checked++;
   }
 
-  // 9. the RECORD tab: seventh slot after SHADOWS in the list, drawn by tabRecord
+  // 9. the RECORD tab: the last of the seven (so number keys 1 to 6 keep their old tabs and 7 opens it), drawn by tabRecord
   const tabs = at('TABS.map(t => t[0])');
-  if (tabs.indexOf('record') !== tabs.indexOf('shadows') + 1) fail(`the RECORD tab is at ${tabs.indexOf('record')}, not right after SHADOWS: ${tabs.join(',')}`);
+  if (tabs.length !== 7 || tabs[6] !== 'record') fail(`the RECORD tab is not the seventh and last: ${tabs.join(',')}`);
   if (at('TABS.find(t => t[0] === "record")[1]') !== 'RECORD') fail('the tab label is not RECORD');
   at('tabRecord = (orig => function () { __recordDrawn = true; return orig(); })(tabRecord); menuTab = "record"; renderSystemMenu();');
   if (at('__recordDrawn') !== true) fail('renderSystemMenu did not draw the RECORD tab');
