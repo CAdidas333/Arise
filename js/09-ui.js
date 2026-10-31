@@ -283,6 +283,7 @@ function gearSection() {
   h += `<h3>Bag — ${bag.length} / ${BAG_MAX}</h3>`;
   if (!room) h += '<div class="g-total">The bag is full. New finds in a gate are sold on the spot.</div>';
   const weaker = bag.filter(it => gearWeaker(it));
+  if (bag.some(it => gearBetter(it))) h += '<button class="sys-btn" data-act="gear-best" style="margin:0 8px 10px 0">EQUIP BEST</button>'; // shown only when the bag holds an upgrade
   if (weaker.length) h += `<button class="sys-btn gold" data-act="gear-sell-weaker" style="margin-bottom:10px">SELL ALL WEAKER THAN EQUIPPED &nbsp; ◈ ${fmtNum(weaker.reduce((a, it) => a + gearValue(it), 0))}</button>`;
   if (!bag.length) h += '<div class="g-total">The bag is empty. When it is full, new finds are sold on the spot.</div>';
   bag.forEach((it, i) => { h += gearRow(it, `<button class="sys-btn" data-act="gear-equip" data-v="${i}">EQUIP</button><button class="sys-btn gold" data-act="gear-sell" data-v="${i}">SELL ◈ ${fmtNum(gearValue(it))}</button>`, gearBetter(it)); });
