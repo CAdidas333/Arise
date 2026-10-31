@@ -407,13 +407,15 @@ const distSeg = (px, py, x0, y0, x1, y1) => {
 
 function buildLayoutDecor(L) {
   const dc = { rooms: [], pil: [], runners: [] };
+  const gid = (typeof dungeon !== 'undefined' && dungeon && dungeon.gate) ? dungeon.gate.id : ''; // each gate dresses its rooms its own way; no gate (or no match), no props
+  const kind = { e_gate:'shroom', d_gate:'crate', c_gate:'web', b_gate:'vent', a_gate:'gold', s_gate:'column' }[gid];
   for (const r of L.rooms) {
     const rng = mulberry32((L.seed*31 + r.i) | 0), rr = (a, b) => a + rng()*(b - a);
     const doors = L.doors.filter(d => d.room === r.i);
     const halls = L.halls.filter(h => h.x0 < r.x1 && h.x1 > r.x0 && h.y0 < r.y1 && h.y1 > r.y0); // corridors that join this room
     const nearDoor = (x, y, m) => doors.some(d => distSeg(x, y, d.x0, d.y0, d.x1, d.y1) < m);
     const inHall = (x, y, m) => halls.some(h => x > h.x0 - m && x < h.x1 + m && y > h.y0 - m && y < h.y1 + m);
-    const rd = { r, inlay: [[], []], rubble: [], cracks: [] };
+    const rd = { r, inlay: [[], []], rubble: [], cracks: [], props: [] };
 
     // Pilasters along the north wall, one every 240 to 300 units, never within 40 of a door on that wall; every second one carries a torch
     const nd = doors.filter(d => d.y0 === r.y0 && d.y1 === r.y0);
@@ -435,8 +437,8 @@ function buildLayoutDecor(L) {
       }
     });
 
-    // Rubble: 3 to 5 clusters of 3 to 6 small stones near a wall or in a corner, none within 60 of a door or in a corridor mouth
-    for (let n = 3 + Math.floor(rng()*3), tries = 0; n > 0 && tries < 60; tries++) {
+    // A spot near a wall or in a corner, 36 to 100 in from the wall
+    const spot = () => {
       let cx, cy;
       if (rng() < 0.5) { cx = rng() < 0.5 ? r.x0 + rr(36, 100) : r.x1 - rr(36, 100); cy = rng() < 0.5 ? r.y0 + rr(36, 100) : r.y1 - rr(36, 100); } // a corner
       else {
@@ -444,6 +446,12 @@ function buildLayoutDecor(L) {
         if (side < 2) { cx = r.x0 + t*(r.x1 - r.x0); cy = side ? r.y1 - rr(36, 100) : r.y0 + rr(36, 100); }
         else { cy = r.y0 + t*(r.y1 - r.y0); cx = side === 2 ? r.x0 + rr(36, 100) : r.x1 - rr(36, 100); }
       }
+      return [cx, cy];
+    };
+
+    // Rubble: 3 to 5 clusters of 3 to 6 small stones near a wall or in a corner, none within 60 of a door or in a corridor mouth
+    for (let n = 3 + Math.floor(rng()*3), tries = 0; n > 0 && tries < 60; tries++) {
+      const [cx, cy] = spot();
       if (nearDoor(cx, cy, 100) || inHall(cx, cy, 60)) continue;
       n--;
       for (let s = 3 + Math.floor(rng()*4); s > 0; s--) {
@@ -472,6 +480,23 @@ function buildLayoutDecor(L) {
         pts.push(x, y);
       }
       if (pts.length >= 10) { rd.cracks.push(pts); n--; }
+    }
+
+    // Gate props: 3 to 5 a room, { t, x, y, s: size 0.8..1.3, ph: phase }, placed like the rubble but never within 100 of a door or
+    // in a corridor mouth, and 50 apart. A cobweb takes a whole corner (x, y the corner, q 0 NW, 1 NE, 2 SE, 3 SW), so it stops at 4.
+    for (let n = 3 + Math.floor(rng()*3), tries = 0; kind && n > 0 && tries < 60; tries++) {
+      let x, y, q = -1;
+      if (kind === 'web') {
+        q = Math.floor(rng()*4); x = q === 0 || q === 3 ? r.x0 : r.x1; y = q < 2 ? r.y0 : r.y1;
+        const sx = q === 0 || q === 3 ? 1 : -1, sy = q < 2 ? 1 : -1; // the web reaches about 44 along both walls, so those ends count too
+        if (rd.props.some(o => o.q === q) || [[0, 0], [44*sx, 0], [0, 44*sy]].some(([u, v]) => nearDoor(x + u, y + v, 100) || inHall(x + u, y + v, 40))) continue;
+      } else {
+        const [cx, cy] = spot(); x = clamp(cx, r.x0 + 30, r.x1 - 30); y = clamp(cy, r.y0 + 30, r.y1 - 30); // inside the room by at least 30
+        if (nearDoor(x, y, 100) || inHall(x, y, 60) || rd.props.some(o => dist(x, y, o.x, o.y) < 50)) continue;
+      }
+      const o = { t: kind, x, y, s: rr(0.8, 1.3), ph: rr(0, TAU) };
+      if (q >= 0) o.q = q;
+      rd.props.push(o); n--;
     }
     dc.rooms.push(rd);
   }

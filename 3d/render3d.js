@@ -103,7 +103,7 @@ if (hintEl) hintEl.innerHTML += ' &nbsp;·&nbsp; Z / C TURN CAMERA &nbsp;·&nbsp
 
 // Floor and walls
 let currentGate = null, floorTexture = null, floorMesh = null;
-let torchFlameMat3D = null, torchGlowMat3D = null, torchGlowTex3D = null, torchPoolMat3D = null;
+let torchFlameMat3D = null, torchGlowMat3D = null, torchGlowTex3D = null, torchPoolMat3D = null, ventGlowMat3D = null;
 const glowTex3D = () => torchGlowTex3D || (torchGlowTex3D = (() => { // a soft round falloff, made once; additive, so the black edge adds nothing
   const c = document.createElement('canvas'); c.width = c.height = 64;
   const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -125,6 +125,7 @@ function clearFloorAndWalls() {
   torchFlameMat3D = null;
   torchGlowMat3D = null;
   torchPoolMat3D = null;
+  ventGlowMat3D = null;
 }
 
 function rebuildFloorAndWalls(w, h, line) {
@@ -154,6 +155,72 @@ function floorPiece(x0, y0, x1, y1) {
   for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / 384, -pos.getZ(i) / 384);
   uv.needsUpdate = true;
   const m = new THREE.Mesh(g, floorMaterial); floorGroup.add(m); layoutMeshes.push(m);
+}
+
+// Gate props (kinds are chosen in buildLayoutDecor): unit-size geometry made once, sized per instance. Every solid shape stands on y = 0.
+const propGeo3D = (() => {
+  const up = g => g.translate(0, 0.5, 0), stump = up(new THREE.CylinderGeometry(1, 1, 1, 10)), q = stump.attributes.position;
+  for (let i = 0; i < q.count; i++) if (q.getY(i) > 0.5) q.setY(i, q.getY(i) + q.getX(i) * 0.32); // the top slants, like a column that snapped
+  stump.computeVertexNormals();
+  return { box: up(new THREE.BoxGeometry(1, 1, 1)), cyl: up(new THREE.CylinderGeometry(1, 1, 1, 10)), stump,
+    cap: new THREE.SphereGeometry(1, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), blob: new THREE.SphereGeometry(1, 8, 6), flat: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+    ring: new THREE.RingGeometry(0.68, 1, 18).rotateX(-Math.PI / 2), hole: new THREE.CircleGeometry(0.68, 18).rotateX(-Math.PI / 2) };
+})();
+
+// Builds the props of one layout: a few instanced meshes per kind, pushed into layoutMeshes so clearFloorAndWalls frees them
+function buildGateProps3D(dc, ember) {
+  const G = propGeo3D, TAU2 = Math.PI * 2, dummy = new THREE.Object3D(), L = {}; // L: flat [x, y, z, sx, sy, sz, turn] lists, one per mesh
+  const put = (k, x, y, z, sx, sy, sz, ry) => (L[k] || (L[k] = [])).push(x, y, z, sx, sy, sz, ry);
+  const flush = (k, geo, mat) => { // mat: a function that makes the material, so a kind that is not here costs nothing
+    const a = L[k];
+    if (!a) return;
+    const m = new THREE.InstancedMesh(geo, mat(), a.length / 7);
+    for (let i = 0, j = 0; i < a.length; i += 7, j++) { dummy.position.set(a[i], a[i + 1], a[i + 2]); dummy.scale.set(a[i + 3], a[i + 4], a[i + 5]); dummy.rotation.set(0, a[i + 6], 0); dummy.updateMatrix(); m.setMatrixAt(j, dummy.matrix); }
+    m.instanceMatrix.needsUpdate = true; m.frustumCulled = false; // three r149 culls an instanced mesh by its unit geometry at the origin, so it would vanish with the origin off screen
+    floorGroup.add(m); layoutMeshes.push(m);
+  };
+  const lit = (op) => new THREE.MeshBasicMaterial({ color: ember, map: glowTex3D(), transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false });
+  const lam = (c, e) => new THREE.MeshLambertMaterial({ color: c, emissive: e || 0 });
+  const web = [];
+  for (const rd of dc.rooms) for (const p of rd.props) {
+    const x = p.x, z = p.y, s = p.s, ph = p.ph;
+    if (p.t === 'shroom') { // a huddle of three small pale-green mushrooms with softly lit caps and a green glow on the floor
+      for (let i = 0; i < 3; i++) {
+        const a = ph + i * 2.1, k = 1 - i * 0.22, px = x + Math.cos(a) * (6 + 3 * i) * s, pz = z + Math.sin(a) * (6 + 3 * i) * s * 0.8, h = 8 * k * s;
+        put('stem', px, 0, pz, 1.4 * k * s, h, 1.4 * k * s, 0); put('cap', px, h, pz, 6.5 * k * s, 4 * k * s, 6.5 * k * s, 0);
+      }
+      put('glow', x, 0.6, z, 36 * s, 1, 36 * s, 0);
+    } else if (p.t === 'crate') { // one wooden crate, two stacked, or a banded barrel
+      const v = (ph / TAU2 * 3) | 0;
+      if (v === 0) put('box', x, 0, z, 24 * s, 16 * s, 22 * s, ph);
+      else if (v === 1) { put('box', x, 0, z, 26 * s, 16 * s, 24 * s, ph); put('box', x + 1.5 * s, 16 * s, z, 21 * s, 14 * s, 20 * s, ph + 0.35); }
+      else { put('barrel', x, 0, z, 8 * s, 18 * s, 8 * s, 0); put('band', x, 4 * s, z, 8.5 * s, 1.6 * s, 8.5 * s, 0); put('band', x, 12 * s, z, 8.5 * s, 1.6 * s, 8.5 * s, 0); }
+    } else if (p.t === 'web') { // a cobweb across a room corner: five spokes and three rings of thread, hung 30 to 40 up and drooping a little
+      const sx = p.q === 0 || p.q === 3 ? 1 : -1, sy = p.q < 2 ? 1 : -1, hy = 30 + 10 * (s - 0.8) / 0.5, len = 34 * s;
+      const at = (k, f) => { const a = k * Math.PI / 8, l = len * f * (0.86 + 0.14 * Math.sin(ph * 3 + k * 2)); return [x + sx * Math.cos(a) * l, hy - 5 * f, z + sy * Math.sin(a) * l]; };
+      for (let k = 0; k < 5; k++) web.push(x, hy, z, ...at(k, 1));
+      for (let j = 1; j <= 3; j++) for (let k = 0; k < 4; k++) web.push(...at(k, 0.12 + 0.26 * j), ...at(k + 1, 0.12 + 0.26 * j));
+    } else if (p.t === 'vent') { // a round floor vent: a dark rim over a black hole with an orange-red glow that breathes
+      put('rim', x, 0.5, z, 16 * s, 1, 16 * s, 0); put('hole', x, 0.45, z, 16 * s, 1, 16 * s, 0); put('vglow', x, 1.2, z, 50 * s, 1, 50 * s, 0);
+      for (let k = -1; k <= 1; k++) put('slit', x, 0.6, z + k * 4.5 * s, (k ? 14 : 20) * s, 0.8, 1.6 * s, 0); // parallel slits in the grate, no crossing bars
+    } else if (p.t === 'gold') { // a low heap of gold coins: three flattened lumps of gold and a warm glow
+      put('gold', x, 3 * s, z, 14 * s, 5 * s, 12 * s, ph); put('gold', x - 3 * s, 6 * s, z + 2 * s, 9 * s, 4 * s, 8 * s, ph + 1); put('gold', x + 4 * s, 7.5 * s, z - 2 * s, 6 * s, 3 * s, 6 * s, ph + 2);
+      put('gglow', x, 0.6, z, 40 * s, 1, 40 * s, 0);
+    } else if (p.t === 'column') { // the stump of a broken stone column: a drum with a slanted top and two fallen chips
+      put('stump', x, 0, z, 11 * s, (17 + 8 * ((ph * 7) % 1)) * s, 11 * s, ph); put('chip', x + 15 * s, 0, z + 2 * s, 6 * s, 3 * s, 5 * s, ph); put('chip', x - 13 * s, 0, z + 3 * s, 5 * s, 2.5 * s, 4 * s, ph + 1);
+    }
+  }
+  flush('stem', G.cyl, () => lam(0xc4d6b4)); flush('cap', G.cap, () => lam(0x8fdca0, 0x2f8a48)); flush('glow', G.flat, () => lit(0.2));
+  flush('box', G.box, () => lam(0x6a4b2c)); flush('barrel', G.cyl, () => lam(0x5a3d22)); flush('band', G.cyl, () => lam(0x25201c));
+  flush('rim', G.ring, () => new THREE.MeshBasicMaterial({ color: 0x2d1a16 })); flush('hole', G.hole, () => new THREE.MeshBasicMaterial({ color: 0x050303 }));
+  flush('slit', G.box, () => new THREE.MeshBasicMaterial({ color: ember })); flush('vglow', G.flat, () => ventGlowMat3D = lit(0.5)); // the one material the vents share: its opacity breathes each frame
+  flush('gold', G.blob, () => new THREE.MeshStandardMaterial({ color: 0xc58f1c, metalness: 0.5, roughness: 0.4, emissive: 0x2a1a00 })); flush('gglow', G.flat, () => lit(0.1));
+  flush('stump', G.stump, () => lam(0x6a7384)); flush('chip', G.box, () => lam(0x434956));
+  if (web.length) {
+    const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(web, 3));
+    const wm = new THREE.LineSegments(wg, new THREE.LineBasicMaterial({ color: 0xe6ecf6, transparent: true, opacity: 0.5, depthWrite: false }));
+    floorGroup.add(wm); layoutMeshes.push(wm);
+  }
 }
 
 // Rooms and corridors: a floor piece per rectangle, a wall box per outline segment, a bar across each shut door, a slab of light at the exit
@@ -368,6 +435,8 @@ function rebuildLayout3D(line) {
     floorGroup.add(rubMesh);
     layoutMeshes.push(rubMesh);
   }
+
+  buildGateProps3D(dc, ember);
 
   // Cracks
   const crackPos = [];
@@ -1341,6 +1410,7 @@ function draw() {
   if (torchFlameMat3D) torchFlameMat3D.opacity = 0.75 + 0.2 * Math.sin(clk * 11);
   if (torchGlowMat3D) torchGlowMat3D.opacity = 0.5 + 0.15 * Math.sin(clk * 7);
   if (torchPoolMat3D) torchPoolMat3D.opacity = 0.18 + 0.05 * Math.sin(clk * 5);
+  if (ventGlowMat3D) ventGlowMat3D.opacity = 0.5 + 0.25 * Math.sin(clk * 1.5); // the vents breathe, slowly
 
   // Floor and walls are rebuilt when the arena size, the layout, a door, the wave or the wall colour changes
   const curArenaW = typeof arenaW !== 'undefined' ? arenaW : 1400;

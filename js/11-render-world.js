@@ -256,7 +256,103 @@ function decorGradients(ember) {
   return decorLight = { key: ember, glow, pool, hot, ember: `rgb(${c})` };
 }
 
-// Floor detail (inlay, rubble, cracks, corridor runners) and the light of the wall torches
+// Gate props (kinds are chosen in buildLayoutDecor). Each drawer works in the prop's own space: origin on the floor, already moved and scaled by p.s.
+// The glows reuse the torch gradients (the gate's ember colour) with 'lighter' and low alpha; nothing is created per frame.
+const propGlow = (grad, x, y, rx, ry, a) => { ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.scale(rx, ry); ctx.fillStyle = grad; ctx.fillRect(-1, -1, 2, 2); ctx.restore(); };
+const propShadow = (x, y, rx, ry) => { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TAU); ctx.fill(); };
+const propBox = (x, y, w, h) => { // a wooden crate seen from the south: front, a sliver of side, a lit top, planks
+  const t = w*0.12, d = h*0.38; ctx.lineWidth = 1;
+  ctx.fillStyle = '#4a3321'; ctx.fillRect(x - w/2, y - h, w, h);
+  ctx.fillStyle = '#34231a'; ctx.beginPath(); ctx.moveTo(x + w/2, y - h); ctx.lineTo(x + w/2 + t, y - h - d); ctx.lineTo(x + w/2 + t, y - d); ctx.lineTo(x + w/2, y); ctx.fill();
+  ctx.fillStyle = '#6b4c2e'; ctx.beginPath(); ctx.moveTo(x - w/2, y - h); ctx.lineTo(x - w/2 + t, y - h - d); ctx.lineTo(x + w/2 + t, y - h - d); ctx.lineTo(x + w/2, y - h); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.moveTo(x - w/2, y - h*0.5); ctx.lineTo(x + w/2, y - h*0.5); ctx.moveTo(x - w/2 + 2.5, y - h); ctx.lineTo(x - w/2 + 2.5, y); ctx.moveTo(x + w/2 - 2.5, y - h); ctx.lineTo(x + w/2 - 2.5, y); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.moveTo(x - w/2 + t, y - h - d); ctx.lineTo(x + w/2 + t, y - h - d); ctx.stroke();
+};
+const PROP_COINS = [-10, -1, -3, -1.5, 6, -2.5, 11, -0.5, -6, -6, 1, -5.5, 7, -6, -2, -10, 3, -9.5]; // x, y pairs of the coins on a heap
+const GATE_PROP_2D = {
+  // Goblin Cavern: a huddle of three small pale-green mushrooms, each cap glowing a little, with green light on the floor around them
+  shroom: (p, g) => {
+    propShadow(0, 1, 15, 6);
+    for (let i = 0; i < 3; i++) {
+      const a = p.ph + i*2.1, x = Math.cos(a)*(6 + 3*i), y = Math.sin(a)*3.5, k = 1 - i*0.22, h = 7*k;
+      propShadow(x, y + 1, 5*k, 2*k);
+      ctx.fillStyle = '#c4d6b4'; ctx.fillRect(x - 1.2*k, y - h, 2.4*k, h);
+      ctx.fillStyle = '#8fdca0'; ctx.beginPath(); ctx.ellipse(x, y - h, 6.5*k, 5*k, 0, Math.PI, TAU); ctx.ellipse(x, y - h, 6.5*k, 1.6*k, 0, 0, Math.PI); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(x, y - h, 4*k, 3.2*k, 0, Math.PI*1.15, Math.PI*1.7); ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    propGlow(g.glow, 0, -3, 30, 19, 0.2);
+    for (let i = 0; i < 3; i++) { const a = p.ph + i*2.1, k = 1 - i*0.22; propGlow(g.glow, Math.cos(a)*(6 + 3*i), Math.sin(a)*3.5 - 7*k, 10*k, 7*k, 0.26); }
+  },
+  // Orc Fortress: one wooden crate, two crates stacked, or a banded barrel
+  crate: (p) => {
+    const v = (p.ph/TAU*3) | 0;
+    if (v < 2) propShadow(2, 1, 18, 6); else propShadow(0, 1, 11, 4.5);
+    if (v === 0) propBox(0, 0, 24, 16);
+    else if (v === 1) { propBox(-1, 0, 26, 16); propBox(2, -16, 21, 14); }
+    else {
+      ctx.fillStyle = '#4e3520'; ctx.beginPath(); ctx.rect(-7.5, -16, 15, 15); ctx.ellipse(0, -1, 7.5, 3, 0, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#25201c'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(0, -11, 7.5, 3, 0, 0, Math.PI); ctx.moveTo(7.5, -4); ctx.ellipse(0, -4, 7.5, 3, 0, 0, Math.PI); ctx.stroke();
+      ctx.fillStyle = '#6e4d2d'; ctx.beginPath(); ctx.ellipse(0, -16, 7.5, 3.2, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#35241a'; ctx.beginPath(); ctx.ellipse(0, -16, 5.6, 2.2, 0, 0, TAU); ctx.fill();
+    }
+  },
+  // Undead Crypt: a cobweb across a room corner, a fan of pale threads (five spokes, three rings between them) reaching into the room from the corner
+  web: (p) => {
+    const sx = p.q === 0 || p.q === 3 ? 1 : -1, sy = p.q < 2 ? 1 : -1, L = 34;
+    ctx.strokeStyle = 'rgba(228,234,246,0.5)'; ctx.lineWidth = 0.9; ctx.beginPath();
+    for (let k = 0; k < 5; k++) { const a = k*Math.PI/8, l = L*(0.86 + 0.14*Math.sin(p.ph*3 + k*2)); ctx.moveTo(0, 0); ctx.lineTo(sx*Math.cos(a)*l, sy*Math.sin(a)*l); }
+    for (let j = 1; j <= 3; j++) for (let k = 0; k < 5; k++) { const a = k*Math.PI/8, l = L*(0.12 + 0.26*j)*(0.86 + 0.14*Math.sin(p.ph*3 + k*2)); ctx[k ? 'lineTo' : 'moveTo'](sx*Math.cos(a)*l, sy*Math.sin(a)*l); }
+    ctx.stroke();
+  },
+  // Demon Realm: a round floor vent, a dark rim over a grate of parallel slits glowing orange-red, the glow breathing slowly
+  vent: (p, g) => {
+    const b = 0.5 + 0.5*Math.sin(clock*1.5 + p.ph);
+    ctx.fillStyle = '#0b0707'; ctx.beginPath(); ctx.ellipse(0, 0, 17, 10, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#2d1a16'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(0, 0, 12.5, 7, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = g.ember; ctx.globalAlpha = 0.5 + 0.4*b;
+    for (let k = 0; k < 4; k++) { const w = k === 1 || k === 2 ? 20 : 12; ctx.fillRect(-w/2, -4 + k*3.1, w, 1.5); }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'lighter';
+    propGlow(g.pool, 0, 0, 42, 25, 0.1 + 0.12*b); propGlow(g.glow, 0, 0, 22, 13, 0.12 + 0.2*b);
+  },
+  // Dragon's Lair: a low heap of gold coins, a dark mound with a scatter of round gold coins on it, two of them catching the light
+  gold: (p, g) => {
+    if (p.ph > Math.PI) ctx.scale(-1, 1);
+    propShadow(0, 2, 18, 6.5);
+    ctx.fillStyle = '#6b4f12'; ctx.beginPath(); ctx.ellipse(0, 0, 16, 11, 0, Math.PI, TAU); ctx.ellipse(0, 0, 16, 4, 0, 0, Math.PI); ctx.fill();
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < PROP_COINS.length; i += 2) {
+      ctx.fillStyle = i === 6 ? '#f0cf6a' : '#d2a52b'; ctx.strokeStyle = '#8a6a14';
+      ctx.beginPath(); ctx.ellipse(PROP_COINS[i], PROP_COINS[i+1], 3.6, 1.9, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    propGlow(g.glow, 0, -5, 26, 15, 0.1); propGlow(g.glow, 11, -0.5, 6, 4, 0.4); propGlow(g.glow, -2, -10, 6, 4, 0.34);
+  },
+  // Cartenon Temple: the stump of a broken stone column, a fluted drum with a slanted, chipped top and a few fallen chips at its foot
+  column: (p, g, th) => {
+    propShadow(4, 2, 18, 6);
+    ctx.fillStyle = '#5d6676'; ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-10, -27); ctx.lineTo(10, -17); ctx.lineTo(10, 0); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 0, 10, 4, 0, 0, Math.PI); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.28)'; ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = -5; x <= 5; x += 5) { ctx.moveTo(x, -1); ctx.lineTo(x, -22 + x*0.5); }
+    ctx.stroke();
+    ctx.save(); ctx.translate(0, -22); ctx.rotate(0.46); ctx.fillStyle = '#8b94a4'; ctx.beginPath(); ctx.ellipse(0, 0, 11, 4, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = th.line; ctx.globalAlpha = 0.3; ctx.stroke(); ctx.restore();
+    ctx.fillStyle = 'rgba(6,5,10,0.55)'; ctx.beginPath(); ctx.moveTo(11, 1); ctx.lineTo(15, -2); ctx.lineTo(18, 2); ctx.lineTo(13, 4); ctx.moveTo(-14, 3); ctx.lineTo(-11, 0); ctx.lineTo(-8, 3); ctx.lineTo(-11, 5); ctx.fill();
+  },
+};
+function drawGateProps(seen, th, vx0, vy0, vx1, vy1) {
+  const g = decorGradients(th.ember);
+  for (const d of seen) for (const p of d.props) {
+    if (p.x < vx0 - 50 || p.x > vx1 + 50 || p.y < vy0 - 50 || p.y > vy1 + 50) continue; // out of view, like the rubble
+    ctx.save(); ctx.translate(p.x, p.y); ctx.scale(p.s, p.s); ctx.lineJoin = 'round';
+    GATE_PROP_2D[p.t](p, g, th);
+    ctx.restore();
+  }
+}
+
+// Floor detail (inlay, rubble, cracks, corridor runners, gate props) and the light of the wall torches
 function drawRoomDetail(dc, th, vx0, vy0, vx1, vy1) {
   const seen = dc.rooms.filter(d => d.r.x1 > vx0 && d.r.x0 < vx1 && d.r.y1 > vy0 && d.r.y0 < vy1);
   const runs = dc.runners.filter(u => u.x1 > vx0 && u.x0 < vx1 && u.y1 > vy0 && u.y0 < vy1);
@@ -277,6 +373,7 @@ function drawRoomDetail(dc, th, vx0, vy0, vx1, vy1) {
   ctx.strokeStyle = 'rgba(255,255,255,0.26)'; ctx.lineWidth = 1.2; ctx.beginPath();                             // ...with a lighter top edge
   for (const d of seen) for (let i = 0; i < d.rubble.length; i += 8) { ctx.moveTo(d.rubble[i], d.rubble[i+1]); ctx.lineTo(d.rubble[i+2], d.rubble[i+3]); }
   ctx.stroke();
+  drawGateProps(seen, th, vx0, vy0, vx1, vy1);                                                                   // gate props, after the rubble
 
   // Torches: a warm pool on the floor below, a wide soft glow, and a small flickering flame
   const ts = dc.pil.filter(p => p.torch && p.x > vx0 - 120 && p.x < vx1 + 120 && p.y + 80 > vy0 && p.y - 80 < vy1);
