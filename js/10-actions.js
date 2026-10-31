@@ -36,6 +36,12 @@ function respec() {
   player.tree = {}; player.skillPoints += spent; recalcPlayer(player); player.hp = player.maxHp;
   playSfx('ui'); toast(`SKILL TREE RESET — ${spent} POINTS REFUNDED`, 'blue', 2000); saveGame();
 }
+// A shadow's name: OK keeps what is typed, CLEAR drops it — the enemy name underneath never changes
+function saveNick(i) {
+  const s = player.shadows[i], e = $('nick-input');
+  if (s && e) s.nick = cleanNick(e.value);
+  nickEdit = -1; saveGame(); playSfx('ui');
+}
 function buyWeapon() {
   const w = WEAPONS[player.weapon+1];
   if (!w || player.gold < w.cost) { playSfx('deny'); return; }
@@ -117,7 +123,10 @@ $('system-menu').addEventListener('click', e => {
   if (e.detail > 1 && el.dataset.act.startsWith('gear-')) return; // the list re-renders under the pointer: a double click must not sell or equip the next item too
   const v = el.dataset.v;
   switch (el.dataset.act) {
-    case 'tab': menuTab = v; gateAsk = null; playSfx('ui'); break;
+    case 'tab': menuTab = v; gateAsk = null; nickEdit = -1; playSfx('ui'); break;
+    case 'nick': nickEdit = +v; break;
+    case 'nick-ok': saveNick(+v); break;
+    case 'nick-clear': { const s = player.shadows[+v]; if (s) s.nick = ''; nickEdit = -1; saveGame(); break; }
     case 'stat': allocateStat(v); break;
     case 'auto': autoAssign(); break;
     case 'node': buyNode(v); break;
@@ -189,6 +198,10 @@ function showOpening() {
 }
 
 function onKey(key, e) {
+  if (e && e.target && e.target.id === 'nick-input') { // the shadow name box confirms on Enter and fires no game key
+    if (key === 'enter') { saveNick(nickEdit); renderSystemMenu(); }
+    return;
+  }
   initAudio(); // Browser requires a user gesture to start audio
   if (storyRun) { storyKey(key, e); return; } // a story card is up: it alone takes the keys
   if (gameState === 'TITLE') { if (key === 'enter' || key === ' ') { e.preventDefault(); beginFromTitle(); } return; }

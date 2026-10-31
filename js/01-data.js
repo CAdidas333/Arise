@@ -172,6 +172,7 @@ const randInt = (a,b) => Math.floor(rand(a,b+1));
 const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 const angDiff = (a,b) => { let d = (a-b) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return d; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const cleanNick = v => String(v || '').replace(/[\u0000-\u001f<>&"'`]/g, '').trim().slice(0, 16); // a shadow's name as the player typed it — short, and inert in markup
 function fmtNum(n) {
   if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
   if (n >= 1e4) return (n/1e3).toFixed(1)+'K';

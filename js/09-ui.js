@@ -92,6 +92,7 @@ function updateHUD() {
 //  SYSTEM MENU — Status · Gates · Skill Tree · Shadows · Armory
 // ================================================================
 const TABS = [['status','STATUS'], ['gates','GATES'], ['tree','SKILL TREE'], ['shadows','SHADOWS'], ['armory','ARMORY'], ['controls','CONTROLS']];
+let nickEdit = -1; // the shadow being named, or -1
 const row = (k, v) => `<div class="stat-row"><span class="stat-name">${k}</span><span class="stat-value">${v}</span></div>`;
 const potionCost = () => 40 + player.level*6;
 
@@ -204,9 +205,17 @@ function tabShadows() {
   if (!ranked.length) return h + '<div style="color:rgba(255,255,255,0.35);font-size:14px;line-height:1.7">No shadows extracted yet.<br>Slain enemies sometimes leave a shadow behind — stand over it and press <b style="color:#bb88ff">E</b> to say the word.<br>Bosses can always be extracted. You get three attempts.</div>';
   h += '<div class="two-col" style="gap:0 22px">';
   roles.forEach(({ shadow: s, role }) => {
-    h += `<div class="shadow-item" style="opacity:${role === 'reserve' ? 0.4 : 1}"><div class="shadow-icon" style="color:${s.color}">☠</div><div><div class="shadow-name">${esc(s.name)}<span class="grade" style="color:${GRADE_COLOR[s.grade] || '#9988bb'}">${(s.grade || 'Soldier').toUpperCase()}</span></div>
-      <div class="shadow-level">DMG ${fmtNum(shadowDmg(s))} — ${role.toUpperCase()}</div></div></div>`;
+    const i = player.shadows.indexOf(s), naming = i === nickEdit; // each shadow can be named; a name sits over what it was
+    const name = naming
+      ? `<input id="nick-input" maxlength="16" value="${esc(s.nick || '')}" placeholder="${esc(s.name)}">`
+      : `${esc(s.nick || s.name)}<span class="grade" style="color:${GRADE_COLOR[s.grade] || '#9988bb'}">${(s.grade || 'Soldier').toUpperCase()}</span>${s.nick ? `<div class="shadow-level" style="opacity:.7">${esc(s.name)}</div>` : ''}`;
+    const btns = naming
+      ? `<button class="sys-btn" data-act="nick-ok" data-v="${i}">OK</button><button class="sys-btn" data-act="nick-clear" data-v="${i}">CLEAR</button>`
+      : `<button class="sys-btn" data-act="nick" data-v="${i}">NAME</button>`;
+    h += `<div class="shadow-item" style="opacity:${role === 'reserve' ? 0.4 : 1}"><div class="shadow-icon" style="color:${s.color}">☠</div><div><div class="shadow-name">${name}</div>
+      <div class="shadow-level">DMG ${fmtNum(shadowDmg(s))} — ${role.toUpperCase()}</div></div>${btns}</div>`;
   });
+  if (nickEdit >= 0) setTimeout(() => { const e = $('nick-input'); if (e) e.focus(); }, 0);
   return h + '</div><div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:1px">Three shadows walk with you. Arise: Legion calls the strongest for a short time. The Awakening calls every shadow you own.</div>';
 }
 
