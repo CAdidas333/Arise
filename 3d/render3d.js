@@ -245,7 +245,7 @@ function rebuildLayout3D(line) {
   if (hallRects.length) {
     const g = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-    const mesh = new THREE.InstancedMesh(g, mat, hallRects.length);
+    const mesh = new THREE.InstancedMesh(g, mat, hallRects.length); mesh.frustumCulled = false;
     for (let i = 0; i < hallRects.length; i++) {
       const [x0, y0, x1, y1] = hallRects[i];
       dummy.position.set((x0 + x1) / 2, 0.2, (y0 + y1) / 2);
@@ -260,7 +260,7 @@ function rebuildLayout3D(line) {
   if (darkRooms.length) {
     const g = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-    const mesh = new THREE.InstancedMesh(g, mat, darkRooms.length);
+    const mesh = new THREE.InstancedMesh(g, mat, darkRooms.length); mesh.frustumCulled = false;
     for (let i = 0; i < darkRooms.length; i++) {
       const r = darkRooms[i];
       dummy.position.set((r.x0 + r.x1) / 2, 0.2, (r.y0 + r.y1) / 2);
@@ -330,7 +330,7 @@ function rebuildLayout3D(line) {
     const pilCount = dc.pil.length;
     const pilGeo = new THREE.BoxGeometry(1, 1, 1);
     const pilMat = new THREE.MeshLambertMaterial({ color: 0x2a2a38 });
-    const pilMesh = new THREE.InstancedMesh(pilGeo, pilMat, pilCount);
+    const pilMesh = new THREE.InstancedMesh(pilGeo, pilMat, pilCount); pilMesh.frustumCulled = false;
     const dummy = new THREE.Object3D();
     for (let i = 0; i < pilCount; i++) {
       const p = dc.pil[i];
@@ -349,19 +349,19 @@ function rebuildLayout3D(line) {
       const tCount = torches.length;
       const bktGeo = new THREE.BoxGeometry(4, 10, 6);
       const bktMat = new THREE.MeshLambertMaterial({ color: 0x14141c });
-      const bktMesh = new THREE.InstancedMesh(bktGeo, bktMat, tCount);
+      const bktMesh = new THREE.InstancedMesh(bktGeo, bktMat, tCount); bktMesh.frustumCulled = false;
 
       const flameGeo = new THREE.ConeGeometry(4, 12, 6);
       torchFlameMat3D = new THREE.MeshBasicMaterial({ color: ember, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
-      const flameMesh = new THREE.InstancedMesh(flameGeo, torchFlameMat3D, tCount);
+      const flameMesh = new THREE.InstancedMesh(flameGeo, torchFlameMat3D, tCount); flameMesh.frustumCulled = false;
 
       const glowGeo = new THREE.PlaneGeometry(60, 60);
       torchGlowMat3D = new THREE.MeshBasicMaterial({ color: ember, map: glowTex3D(), transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false });
-      const glowMesh = new THREE.InstancedMesh(glowGeo, torchGlowMat3D, tCount);
+      const glowMesh = new THREE.InstancedMesh(glowGeo, torchGlowMat3D, tCount); glowMesh.frustumCulled = false;
 
       const poolGeo = new THREE.PlaneGeometry(1, 1); poolGeo.rotateX(-Math.PI / 2); // 5. a soft pool of torchlight spilling on the floor in front of each torch
       torchPoolMat3D = new THREE.MeshBasicMaterial({ color: ember, map: glowTex3D(), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
-      const poolMesh = new THREE.InstancedMesh(poolGeo, torchPoolMat3D, tCount);
+      const poolMesh = new THREE.InstancedMesh(poolGeo, torchPoolMat3D, tCount); poolMesh.frustumCulled = false;
 
       for (let i = 0; i < tCount; i++) {
         const p = torches[i];
@@ -408,7 +408,7 @@ function rebuildLayout3D(line) {
   if (totalStones > 0) {
     const rubGeo = new THREE.BoxGeometry(1, 1, 1);
     const rubMat = new THREE.MeshLambertMaterial({ color: 0x24242e });
-    const rubMesh = new THREE.InstancedMesh(rubGeo, rubMat, totalStones);
+    const rubMesh = new THREE.InstancedMesh(rubGeo, rubMat, totalStones); rubMesh.frustumCulled = false;
     const dummy = new THREE.Object3D();
     let idx = 0;
     for (const rd of dc.rooms) {
