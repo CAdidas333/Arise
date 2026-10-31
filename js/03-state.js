@@ -52,6 +52,7 @@ function saveGame() {
     stats:{...player.stats}, statPoints:player.statPoints, skillPoints:player.skillPoints, tree:{...player.tree},
     weapon:player.weapon, gold:player.gold, potions:player.potions, cleared:{...player.cleared},
     titles:[...player.titles], title:player.title, feats:{...player.feats}, slain:{...player.slain},
+    rift:!!player.rift, rifts:player.rifts|0, riftSeen:!!player.riftSeen,
     gear:{...player.gear}, bag:[...player.bag], story:{ opening:!!player.story.opening, gates:{...player.story.gates}, arose:!!player.story.arose },
     shadows:player.shadows.map(s => ({ name:s.name, nick:s.nick || '', kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })), // the names the player gave them are saved with the army
     questProgress:{...questProgress}, questDate, highScores:{...highScores},
@@ -120,6 +121,8 @@ function loadGame() {
   // The Hunter's Record: only names the game knows, never a count under 0 (a save from before the Record has none)
   const known = recordNames(), sl = d.slain && typeof d.slain === 'object' ? d.slain : {};
   for (const k in sl) if (known.has(k)) player.slain[k] = Math.max(0, sl[k]|0);
+  // The Gilded Rift: a save from before it has none open and none entered
+  player.rift = d.rift === true; player.rifts = Math.max(0, d.rifts|0); player.riftSeen = d.riftSeen === true || player.rifts > 0;
   checkDailyReset();
   recalcPlayer(player); player.hp = player.maxHp; player.mp = player.maxMp;
   const past = checkTitles(true); if (past) toast(`THE SYSTEM GRANTS ${past} TITLE${past > 1 ? 'S' : ''} FOR PAST DEEDS`, 'purple', 4500);

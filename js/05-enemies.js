@@ -90,6 +90,30 @@ const AI = {
     keepRange(e, dt, d, ux, uy, 280);
     if (e.cd <= 0 && d < 540) { e.state = 'wind'; e.st = 0.5; telegraph({ type:'circle', x:player.x, y:player.y, r:85, dur:1.0, dmg:e.damage, color:'#bb66ff', owner:e }); playSfx('tele'); }
   },
+  // Gilded Goblin (Gilded Rift): never attacks, so no windup, shot or swipe. Within 420 of the hunter it runs straight away, bending along the arena wall; further out it wanders.
+  // Every 2.5 to 4 s it stumbles and stands still for 0.6 s, so a hunter on foot can catch it. It sparkles gold while it moves.
+  flee(e, dt, d, ux, uy) {
+    if (e.state === 'stumble') { e.st -= dt; if (e.st <= 0) { e.state = 'chase'; e.cd = rand(2.5, 4); } return; }
+    if (e.cd <= 0) { e.state = 'stumble'; e.st = 0.6; spawnBurst(e.x, e.y + e.size*0.5, '#ffe58a', 6, 120); return; }
+    const hw = arenaW/2 - e.size - 20, hh = arenaH/2 - e.size - 20, band = 120;
+    let fx, fy, sp;
+    if (d < 420) {
+      fx = -ux; fy = -uy; sp = e.speed;
+      // at a wall, the part of the run that pushes into it turns to slide along it, the way that already leads away from the hunter
+      const wx = clamp((Math.abs(e.x) - (hw - band))/band, 0, 1), wy = clamp((Math.abs(e.y) - (hh - band))/band, 0, 1);
+      if (e.x*fx > 0) { const t = Math.abs(fx)*wx; fx -= Math.sign(fx)*t; fy += (Math.sign(fy) || e.strafe)*t; }
+      if (e.y*fy > 0) { const t = Math.abs(fy)*wy; fy -= Math.sign(fy)*t; fx += (Math.sign(fx) || e.strafe)*t; }
+    } else {
+      if ((e.wt = (e.wt ?? 0) - dt) <= 0) { e.wt = rand(1, 2.5); e.wa = (e.wa ?? rand(0, TAU)) + rand(-1.2, 1.2); } // a new heading every 1 to 2.5 s
+      if (Math.abs(e.x) > hw - band || Math.abs(e.y) > hh - band) e.wa = Math.atan2(-e.y, -e.x); // too near a wall: turn back to the middle
+      fx = Math.cos(e.wa); fy = Math.sin(e.wa); sp = e.speed*0.5;
+    }
+    const l = Math.hypot(fx, fy);
+    if (l < 0.2) return; // cornered: nowhere to run
+    fx /= l; fy /= l; e.facing = { x:fx, y:fy };
+    mv(e, fx, fy, sp, dt);
+    if (Math.random() < 14*dt) spawnParticle(e.x + rand(-6, 6), e.y + rand(-4, 8), '#ffe58a', { vx:rand(-20, 20), vy:rand(-50, -15), size:rand(1.5, 3), life:0.45, alpha:0.8 });
+  },
 };
 
 // --- BOSSES: pattern-driven, enrage at half health ---

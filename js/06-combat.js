@@ -23,6 +23,10 @@ function damageEnemy(e, dmg, o = {}) {
   floatText(e.x, e.y-e.size-8, isCrit ? `${fmtNum(fd)}!` : fmtNum(fd), o.shadow ? '#bb88ff' : isCrit ? '#ffcc00' : '#ffffff', isCrit ? 24 : o.shadow ? 13 : 16);
   spawnBurst(e.x, e.y, isCrit ? '#ffee88' : e.color, isCrit ? 9 : 4, isCrit ? 380 : 240);
   playSfx(isCrit ? 'crit' : 'hit');
+  if (e.kind === 'flee' && dungeon && dungeon.rift && (e.spills|0) < 5) { // a Gilded Goblin spills one small gold orb for each hit, up to 5
+    e.spills = (e.spills|0) + 1;
+    orbs.push({ type:'gold', val:dungeon.rift.hit, x:e.x, y:e.y, vx:rand(-240,240), vy:rand(-240,240), t:0 });
+  }
   if (direct) {
     gainUlt(isCrit ? 1.3 : 0.7);
     const leech = 0.01*tr('leech') + 0.02*bn('vamp');
@@ -45,7 +49,9 @@ function killEnemy(e, o = {}) {
   ring(e.x, e.y, e.color, e.size*0.5, e.size*(e.isBoss ? 6 : 2.6), e.isBoss ? 0.8 : 0.3, e.isBoss ? 10 : 3);
   playerGainXp(e.xp);
   run.xp += e.xp; run.kills++; questProgress.kills++; highScores.totalKills++;
-  const sn = e.isBoss ? e.def.name : (e.baseName || e.def.name); player.slain[sn] = (player.slain[sn] || 0) + 1; // the Hunter's Record: an elite counts under its base name
+  const flee = e.kind === 'flee'; // a Gilded Goblin, caught
+  if (flee && dungeon && dungeon.rift) dungeon.rift.caught++;
+  const sn = e.isBoss ? e.def.name : (e.baseName || e.def.name); if (!flee) player.slain[sn] = (player.slain[sn] || 0) + 1; // the Hunter's Record: an elite counts under its base name; a Gilded Goblin is no Record entry
   comboCount++; comboTimer = 3;
   if (comboCount > run.bestCombo) run.bestCombo = comboCount;
   if (comboCount > highScores.bestCombo) highScores.bestCombo = comboCount;
@@ -54,11 +60,15 @@ function killEnemy(e, o = {}) {
   // Drops
   const gold = Math.ceil(e.xp*0.35*(1 + 0.5*bn('greed'))*(1 + gearMod('gold'))*rand(0.8, 1.2)), n = e.isBoss ? 10 : e.elite ? 3 : 1;
   for (let i = 0; i < n; i++) orbs.push({ type:'gold', val:Math.ceil(gold/n), x:e.x, y:e.y, vx:rand(-240,240), vy:rand(-240,240), t:0 });
-  if (e.elite || e.isBoss || Math.random() < 0.07) orbs.push({ type:'hp', val:0, x:e.x, y:e.y, vx:rand(-200,200), vy:rand(-200,200), t:0 });
-  // Gear: a boss always drops one item, Rare or better; an elite often does; anything else rarely
-  if (Math.random() < (e.isBoss ? 1 : e.elite ? 0.22 : 0.015)) dropGear(e.x, e.y, e.isBoss ? 2 : e.elite ? 1 : 0);
-  // A fallen enemy sometimes leaves a shadow behind — walk over and say the word
-  if (!e.isBoss && remnants.length < 4 && (e.elite || Math.random() < 0.05)) {
+  if (e.elite || e.isBoss || (!flee && Math.random() < 0.07)) orbs.push({ type:'hp', val:0, x:e.x, y:e.y, vx:rand(-200,200), vy:rand(-200,200), t:0 });
+  if (flee && dungeon && dungeon.rift) { // a caught goblin spills 6 more gold orbs, worth the rift's spill together
+    const part = Math.floor(dungeon.rift.spill/6);
+    for (let i = 0; i < 6; i++) orbs.push({ type:'gold', val:i < 5 ? part : dungeon.rift.spill - part*5, x:e.x, y:e.y, vx:rand(-300,300), vy:rand(-300,300), t:0 });
+  }
+  // Gear: a boss always drops one item, Rare or better; an elite often does; anything else rarely; a caught Gilded Goblin 1 time in 4, at the elite odds
+  if (Math.random() < (flee ? 0.25 : e.isBoss ? 1 : e.elite ? 0.22 : 0.015)) dropGear(e.x, e.y, flee ? 1 : e.isBoss ? 2 : e.elite ? 1 : 0);
+  // A fallen enemy sometimes leaves a shadow behind — walk over and say the word (a Gilded Goblin never does)
+  if (!e.isBoss && !flee && remnants.length < 4 && (e.elite || Math.random() < 0.05)) {
     remnants.push({ x:e.x, y:e.y, name:e.baseName, kind:e.kind, damage:e.damage, color:e.color, size:e.size, elite:e.elite, t:0, dur:14 });
     // Until the hunter has raised one this way, say how it is done: once a gate
     if (!player.story.arose && !run.ariseHint) { run.ariseHint = true; toast(isMobile ? 'A SHADOW LINGERS — WALK TO IT AND TAP ARISE' : 'A SHADOW LINGERS — STAND ON IT AND PRESS E', 'purple', 5000); }
@@ -154,7 +164,8 @@ function updateOrbs(dt) {
 // --- GEAR DROPS ---
 // luck: 0 any enemy, 1 elite, 2 boss. The item's level is the gate's level.
 function dropGear(x, y, luck = 0) {
-  const item = rollGear(Math.max(1, (dungeon && dungeon.gate.reqLevel)|0), luck >= 2 ? 1 : 0, luck);
+  const g = dungeon && (dungeon.rift ? dungeon.rift.tier : dungeon.gate); // in a Gilded Rift the item's level is the hunter's top gate, since the rift has none of its own
+  const item = rollGear(Math.max(1, (g && g.reqLevel)|0), luck >= 2 ? 1 : 0, luck);
   orbs.push({ type:'gear', item, val:0, x, y, vx:rand(-200,200), vy:rand(-200,200), t:0 });
 }
 // A found item goes on if its slot is empty, into the bag if there is room, and is sold on the spot if there is not

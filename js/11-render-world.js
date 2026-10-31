@@ -17,6 +17,7 @@ function loadArt(key, src) {
   img.src = src;
 }
 GATE_DEFS.forEach(g => loadArt(g.id, 'assets/floors/' + (g.floor || g.id) + '.webp')); // g.floor names a regenerated tile; new art always gets a new file name
+loadArt(RIFT.id, 'assets/floors/' + RIFT.floor + '.webp'); // the Gilded Rift wears the Dragon's Lair floor
 loadArt('hub', 'assets/bg/hub.webp');
 
 // Each gate gets its own floor, painted once into a repeating tile
@@ -557,7 +558,7 @@ function drawHunter(x, y, o) {
 function enemyPath(e, r) {
   ctx.beginPath();
   switch (e.kind) {
-    case 'melee': ctx.arc(0, 0, r, 0, TAU); break;
+    case 'melee': case 'flee': ctx.arc(0, 0, r, 0, TAU); break; // a Gilded Goblin is a small round goblin
     case 'ranged': ctx.moveTo(0, -r*1.1); ctx.lineTo(r, 0); ctx.lineTo(0, r*1.1); ctx.lineTo(-r, 0); break;
     case 'charger': { const a = Math.atan2(e.facing.y, e.facing.x), c = Math.cos(a), s = Math.sin(a), P = (px, py) => ctx.lineTo(px*c - py*s, px*s + py*c);
       P(r*1.35, 0); P(-r*0.9, r*0.9); P(-r*0.45, 0); P(-r*0.9, -r*0.9); break; }
@@ -1011,13 +1012,17 @@ function drawEnemy(e) {
     ctx.globalAlpha = grow*0.7; ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(e.x, e.y, sz*1.5, clock*2, clock*2 + 4.2); ctx.stroke();
   }
+  if (e.kind === 'flee') { // a Gilded Goblin: a faint round gold glow, no ring
+    ctx.globalAlpha = grow*(0.14 + 0.05*Math.sin(clock*5 + e.animT)); ctx.fillStyle = e.color; disc(e.x, e.y, sz*1.9);
+    ctx.globalAlpha = grow*0.12; disc(e.x, e.y, sz*2.7);
+  }
   ctx.globalAlpha = grow;
   ctx.save(); ctx.translate(e.x, e.y + (e.isBoss ? 0 : Math.sin(e.animT*6)*1.5)); ctx.scale(grow, grow);
   if (e.isBoss) {
     drawBoss(e.def.name, sz, e.animT, e.facing.x, e.facing.y, { body: col, dark: e.hitFlash > 0 ? '#ffffff' : '#07070c', light: e.hitFlash > 0 ? '#ffffff' : bossTrim(e.color), eye: e.phase >= 2 ? '#ffee66' : '#ff3344' });
   } else {
     ctx.fillStyle = col;
-    if (e.kind === 'melee') { // horns
+    if (e.kind === 'melee' || e.kind === 'flee') { // horns
       ctx.beginPath(); ctx.moveTo(-sz*0.95, -sz*0.3); ctx.lineTo(-sz*0.75, -sz*1.35); ctx.lineTo(-sz*0.3, -sz*0.8);
       ctx.moveTo(sz*0.95, -sz*0.3); ctx.lineTo(sz*0.75, -sz*1.35); ctx.lineTo(sz*0.3, -sz*0.8); ctx.fill();
     }
@@ -1026,7 +1031,7 @@ function drawEnemy(e) {
     if (e.kind === 'caster') { ctx.fillStyle = col; for (let i = 0; i < 3; i++) { const a = e.animT*3 + i*TAU/3; disc(Math.cos(a)*sz*1.5, Math.sin(a)*sz*0.6 - sz*0.2, 2.5); } }
     // Eyes track the player
     const ox = e.facing.x*sz*0.16, oy = e.facing.y*sz*0.16 - sz*0.08, er = Math.max(1.6, sz*0.11);
-    ctx.fillStyle = e.elite ? '#ffdd66' : '#ff8844';
+    ctx.fillStyle = e.elite ? '#ffdd66' : e.kind === 'flee' ? '#fff3b0' : '#ff8844';
     disc(ox - sz*0.24, oy, er); disc(ox + sz*0.24, oy, er);
   }
   ctx.restore();
