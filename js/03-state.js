@@ -53,7 +53,7 @@ function saveGame() {
     weapon:player.weapon, gold:player.gold, potions:player.potions, cleared:{...player.cleared},
     titles:[...player.titles], title:player.title, feats:{...player.feats},
     gear:{...player.gear}, bag:[...player.bag], story:{ opening:!!player.story.opening, gates:{...player.story.gates}, arose:!!player.story.arose },
-    shadows:player.shadows.map(s => ({ name:s.name, kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })),
+    shadows:player.shadows.map(s => ({ name:s.name, nick:s.nick || '', kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })), // the names the player gave them are saved with the army
     questProgress:{...questProgress}, questDate, highScores:{...highScores},
     questsCompleted:DAILY_QUESTS.filter(q => q.completed).map(q => q.id),
     bonusCompleted:BONUS_QUESTS.filter(q => q.completed).map(q => q.id), bonusQuestsUnlocked,
@@ -75,7 +75,7 @@ function loadGame() {
   player.statPoints = d.statPoints|0; player.gold = Math.floor(d.gold || 0);
   player.xpToNext = xpNeed(player.level);
   const bossNames = GATE_DEFS.map(g => g.boss.name);
-  player.shadows = (d.shadows || []).map(s => ({ name:String(s.name).slice(0, 40),
+  player.shadows = (d.shadows || []).map(s => ({ name:String(s.name).slice(0, 40), nick:cleanNick(s.nick),
     kind:['melee','ranged','charger','bomber','brute','caster','boss'].includes(s.kind) ? s.kind : shadowKindFor(s.name),
     damage:+s.damage || 5, level:s.level|0 || 1, color:okColor(s.color), size:+s.size || 14,
     grade:GRADE_COLOR[s.grade] ? s.grade : (bossNames.includes(s.name) ? 'Marshal' : 'Soldier'), x:0, y:0, active:false, attackCd:0, animT:rand(0,9), facing:{ x:1, y:0 } }));
@@ -151,7 +151,10 @@ function toast(text, style = 'blue', duration = 2000, isStreak = false) {
 const keys = {};
 const mouse = { x:W/2, y:H/2, down:false, moved:false, lastMove:-99, ax:0, ay:0 };
 let touchAttack = false;
-addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (e.repeat && k !== 'tab') { if (k === ' ') e.preventDefault(); return; } keys[k] = true; onKey(k, e); });
+addEventListener('keydown', e => {
+  if (e.target && e.target.tagName === 'INPUT') { if (e.key === 'Enter') onKey('enter', e); return; } // a text box takes its own keys; only Enter goes on to the game
+  const k = e.key.toLowerCase(); if (e.repeat && k !== 'tab') { if (k === ' ') e.preventDefault(); return; } keys[k] = true; onKey(k, e);
+});
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouse.down = false; });
 addEventListener('mousemove', e => {
