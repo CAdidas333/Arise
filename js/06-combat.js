@@ -45,6 +45,7 @@ function killEnemy(e, o = {}) {
   ring(e.x, e.y, e.color, e.size*0.5, e.size*(e.isBoss ? 6 : 2.6), e.isBoss ? 0.8 : 0.3, e.isBoss ? 10 : 3);
   playerGainXp(e.xp);
   run.xp += e.xp; run.kills++; questProgress.kills++; highScores.totalKills++;
+  const sn = e.isBoss ? e.def.name : (e.baseName || e.def.name); player.slain[sn] = (player.slain[sn] || 0) + 1; // the Hunter's Record: an elite counts under its base name
   comboCount++; comboTimer = 3;
   if (comboCount > run.bestCombo) run.bestCombo = comboCount;
   if (comboCount > highScores.bestCombo) highScores.bestCombo = comboCount;
