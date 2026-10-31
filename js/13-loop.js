@@ -102,7 +102,8 @@ function step(raw) {
     gameTime += dt; run.time += dt;
     updatePlayer(dt); updateSpawns(dt); updateEnemies(dt); updateTelegraphs(dt); updateZones(dt); updateProjectiles(dt); updateShadows(dt);
     if (dungeon.state === 'fight') {
-      if (layout && layout.lock < 0) roomStep(); // between chambers: wait for the hunter to walk in
+      if (dungeon.rift) riftStep(dt); // the Gilded Rift: a clock and eight goblins, no waves
+      else if (layout && layout.lock < 0) roomStep(); // between chambers: wait for the hunter to walk in
       else if (dungeon.wait > 0) { dungeon.wait -= dt; if (dungeon.wait <= 0) spawnWave(); }
       else checkWave();
     }
@@ -122,7 +123,7 @@ function step(raw) {
 if (location.hash === '#debug') window.__arise = {
   get player() { return player; }, get dungeon() { return dungeon; }, get enemies() { return enemies; }, get run() { return run; },
   get gameState() { return gameState; }, get particles() { return particles; }, get remnants() { return remnants; }, get telegraphs() { return telegraphs; }, get zones() { return zones; }, get layout() { return layout; }, set layout(v) { layout = v; }, get orbs() { return orbs; },
-  GATE_DEFS, ENDLESS, SKILL, startDungeon, step, useSkill, damageEnemy, chooseBoon, returnToHub, addShadow, tryArise, dodge, hurtPlayer, makeEnemy, saveGame, genLayout, keepIn, inMap, roomAt, pointInRoom, mapRects, roomStep, enterBossArena,
+  GATE_DEFS, ENDLESS, RIFT, startRift, SKILL, startDungeon, step, useSkill, damageEnemy, chooseBoon, returnToHub, addShadow, tryArise, dodge, hurtPlayer, makeEnemy, saveGame, genLayout, keepIn, inMap, roomAt, pointInRoom, mapRects, roomStep, enterBossArena,
   rollGear, takeGear, gearMod, cleanGear, gearValue, dropGear, addZone, updateZones, zoneSlow,
 };
 

@@ -110,6 +110,13 @@ function enterEndless() {
   gateAsk = null;
   startDungeon(ENDLESS, true);
 }
+// The Gilded Rift is used up the moment the run starts, so a hunter who quits it has still spent it
+function enterRift() {
+  if (!player.rift || storyRun) return;
+  if (player.bag.length >= BAG_MAX && !(gateAsk && gateAsk.ok)) { gateAsk = { rift:true }; menuTab = 'gates'; playSfx('deny'); askGate(); return; }
+  gateAsk = null;
+  player.rift = false; player.rifts++; saveGame(); startRift();
+}
 
 // Dev mode: ` = +5 levels, ~ (Shift+`) = -5 levels
 function devBoost() {
@@ -157,7 +164,8 @@ $('system-menu').addEventListener('click', e => {
     case 'title': player.title = player.title === v ? '' : (player.titles.includes(v) ? v : player.title); saveGame(); playSfx('ui'); break;
     case 'gate': enterGate(v); return;
     case 'endless': enterEndless(); return;
-    case 'gate-go': { const a = gateAsk; gateAsk = { ...a, ok:true }; if (a.endless) enterEndless(); else enterGate(a.id); gateAsk = null; return; }
+    case 'rift': enterRift(); return;
+    case 'gate-go': { const a = gateAsk; gateAsk = { ...a, ok:true }; if (a.rift) enterRift(); else if (a.endless) enterEndless(); else enterGate(a.id); gateAsk = null; return; }
     case 'gate-back': gateAsk = null; break;
   }
   renderSystemMenu();

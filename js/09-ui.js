@@ -67,7 +67,7 @@ function updateHUD() {
   setD('hud-ult', ultOn); setW('hud-ult-fill', player.ultT > 0 ? player.ultT/(8+2*tr('sovereign'))*100 : player.ult); setC('hud-ult', 'full', player.ult >= 100);
   setT('hud-level', player.ultT > 0 ? `LV. ${player.level}  👁️ MONARCH ${Math.ceil(player.ultT)}s` : legionTimer > 0 ? `LV. ${player.level}  ☠️ LEGION ${Math.ceil(legionTimer)}s` : `LV. ${player.level}`);
   setT('hud-gold', `◈ ${fmtNum(player.gold)}`); setT('hud-potions', `✚ ${player.potions}`);
-  setT('hud-wave', dungeon.bossRef ? 'BOSS HUNT' : dungeon.endless ? `FLOOR ${dungeon.wave}` : `WAVE ${Math.min(dungeon.wave, dungeon.maxWaves)} / ${dungeon.maxWaves}`);
+  setT('hud-wave', dungeon.rift ? riftClock(dungeon.rift.t) : dungeon.bossRef ? 'BOSS HUNT' : dungeon.endless ? `FLOOR ${dungeon.wave}` : `WAVE ${Math.min(dungeon.wave, dungeon.maxWaves)} / ${dungeon.maxWaves}`); // the rift has no waves: the clock instead
   setT('hud-enemies', dungeon.alive > 0 ? `ENEMIES: ${dungeon.alive}` : '');
   if (dungeon.bossRef) { const p = dungeon.bossRef.hp/dungeon.bossRef.maxHp*100; setW('boss-bar-fill', p); setW('boss-bar-ghost', p); }
 
@@ -175,8 +175,12 @@ function tabGates() {
   h += `<div class="gate-item endless ${eLocked ? 'locked' : ''}" ${eLocked ? '' : 'data-act="endless"'} style="border-left:3px solid #8844ff">
     <span class="gate-rank">ENDLESS</span><div class="gate-name">${ENDLESS.name}</div>
     <div class="gate-desc">${eLocked ? `Requires Level ${ENDLESS.reqLevel}` : ENDLESS.desc}</div>
-    <div class="gate-meta">${highScores.bestFloor ? `BEST: FLOOR ${highScores.bestFloor}` : 'UNCLIMBED'}</div></div></div>`;
-  return h;
+    <div class="gate-meta">${highScores.bestFloor ? `BEST: FLOOR ${highScores.bestFloor}` : 'UNCLIMBED'}</div></div>`;
+  if (player.rift) h += `<div class="gate-item rift" data-act="rift" style="border-left:3px solid ${RIFT.theme.line}">
+    <span class="gate-rank">${RIFT.rank}</span><div class="gate-name">${RIFT.name}</div>
+    <div class="gate-desc">${RIFT.desc}</div>
+    <div class="gate-meta">OPEN</div></div>`; // a Gilded Rift is open: one more card, until the hunter goes in
+  return h + '</div>';
 }
 
 function tabTree() {
@@ -294,7 +298,7 @@ function gearSection() {
 //  STORY — full-screen cards in the System's voice: the opening, and a chapter card for each gate
 // ================================================================
 let storyRun = null; // while a card is up: { cards, i, head, onEnd, lock, timer }. Everything else ignores keys and clicks until it ends.
-let gateAsk = null; // when the bag is full, the gate waiting for the hunter's answer: { id } or { endless:true }
+let gateAsk = null; // when the bag is full, the gate waiting for the hunter's answer: { id }, { endless:true } or { rift:true }
 const STORY_CHAPTER_MS = 3200;
 
 // cards: arrays of lines. head: null for the opening, or { chapter, name, rank } for a chapter card. onEnd runs when the last card is done or skipped.

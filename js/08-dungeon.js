@@ -8,14 +8,20 @@ const isBossWave = () => dungeon.endless ? dungeon.wave % 5 === 0 : dungeon.wave
 const show = (id, mode = 'block') => { $(id).style.display = mode; };
 const hide = id => { $(id).style.display = 'none'; };
 const endlessGate = floor => GATE_DEFS[Math.min(GATE_DEFS.length-1, Math.floor((floor-1)/5))];
+// Gilded Rift: the clock (1:00 down to 0:00) and the HUD line that carries it
+const riftClock = t => { const s = Math.max(0, Math.ceil(t)); return Math.floor(s/60) + ':' + String(s%60).padStart(2, '0'); };
+const riftLine = r => `GILDED RIFT — ${riftClock(r.t)} · ${r.caught} / ${r.total} CAUGHT`;
+let riftNews = false; // a rift opened in the gate just cleared; the System says so when the hunter is back in the hub
 
 function startDungeon(gateDef, endless = false) {
-  arenaW = 1400; arenaH = 1000; // reset to normal, expands for boss
-  layout = endless ? null : genLayout(gateDef.waves - 1); // rooms and corridors; the open arena stays for endless mode and boss fights
+  const rift = !!gateDef.rift; // the Gilded Rift: one open arena, a little larger than usual
+  arenaW = rift ? 1800 : 1400; arenaH = rift ? 1300 : 1000; // reset to normal, expands for boss
+  layout = endless || rift ? null : genLayout(gateDef.waves - 1); // rooms and corridors; the open arena stays for endless mode, the rift and boss fights
   enemies = []; projectiles = []; telegraphs = []; zones = []; orbs = []; remnants = []; rewardBoxes = []; spawnQueue = []; timers = [];
   particles = []; texts = []; rings = []; arcs = []; ghosts = []; bolts = [];
   run = { boons:{}, gold:0, kills:0, xp:0, bestCombo:0, time:0, dmgTaken:0, loot:[], boxes:0 };
-  dungeon = { gate:endless ? endlessGate(1) : gateDef, wave:1, maxWaves:endless ? Infinity : gateDef.waves, state:'fight', wait:0, bossRef:null, endless, scale:1, introT:0, alive:0, picks:[] };
+  dungeon = { gate:endless ? endlessGate(1) : gateDef, wave:1, maxWaves:endless || rift ? Infinity : gateDef.waves, state:'fight', wait:0, bossRef:null, endless, scale:1, introT:0, alive:0, picks:[] };
+  if (rift) dungeon.rift = { t:RIFT.time, caught:0, total:RIFT.goblins, done:false }; // time left, goblins caught; startRift adds the tier and the gold
   Object.assign(player, { x:0, y:0, hp:player.maxHp, mp:player.maxMp, cds:{}, ult:0, ultT:0, inv:0, combo:0, comboWin:0, dodgeCd:0, dodgeT:0, atkT:0, perfect:false, hitFlash:0, target:null, counterT:0, dodgeAt:-9 });
   comboCount = 0; comboTimer = 0; legionTimer = 0; lastPlayerAttackTime = -99; lastMoveTime = gameTime; lastMovePos = { x:0, y:0 };
   camera.x = 0; camera.y = 0; camera.focus = null; camera.zoom = baseZoom()*1.3; camera.targetZoom = baseZoom();
@@ -24,10 +30,10 @@ function startDungeon(gateDef, endless = false) {
   buildFloor(dungeon.gate);
   gameState = 'DUNGEON';
   hide('system-menu'); show('hud'); hide('boss-bar-wrap');
-  $('hud-gate-name').textContent = endless ? 'DEMON CASTLE — ENDLESS' : `${gateDef.rank}-RANK: ${gateDef.name.toUpperCase()}`;
-  toast(endless ? 'ENTERING THE DEMON CASTLE' : `ENTERING ${gateDef.rank}-RANK GATE: ${gateDef.name.toUpperCase()}`, 'blue', 2000); say('gate_enter');
+  $('hud-gate-name').textContent = rift ? riftLine(dungeon.rift) : endless ? 'DEMON CASTLE — ENDLESS' : `${gateDef.rank}-RANK: ${gateDef.name.toUpperCase()}`;
+  toast(rift ? 'ENTERING THE GILDED RIFT' : endless ? 'ENTERING THE DEMON CASTLE' : `ENTERING ${gateDef.rank}-RANK GATE: ${gateDef.name.toUpperCase()}`, rift ? 'gold' : 'blue', 2000); say('gate_enter');
   initAudio(); setMusic('battle'); renderBoons(); buildSkillBar();
-  if (!layout) spawnWave(); // with a layout, wave 1 starts when the hunter walks into the first chamber (roomStep)
+  if (!layout && !rift) spawnWave(); // with a layout, wave 1 starts when the hunter walks into the first chamber (roomStep); the rift has no waves
 }
 
 function spawnWave() {
@@ -158,6 +164,8 @@ function clearGate(b) {
   if (run && run.dmgTaken === 0) player.feats.flawless++;
   checkTitles(false);
   if (RANKS.indexOf(g.rank) > RANKS.indexOf(highScores.bestGate)) highScores.bestGate = g.rank;
+  // A Gilded Rift opens: always after the first clear, then 35% of the time, and never a second while one is open. The hub announces it (returnToHub), clear of the extraction screen.
+  if (!player.rift && (player.rifts === 0 && !player.riftSeen || Math.random() < 0.35)) { player.rift = true; player.riftSeen = true; riftNews = true; }
   setMusic('off'); playSfx('victory');
   if (g.boss.shadow) { pendingExtraction = { def:g.boss, x:b.x, y:b.y }; extractTries = 3; showExtraction(); }
   else { camera.focus = null; showVictory(); }
@@ -209,7 +217,7 @@ function endExtraction(delay) {
 function showVictory() {
   say('gate_cleared');
   const g = dungeon.gate, par = g.waves*26;
-  storyVictoryLine(g);
+  storyVictoryLine(g); $('victory-title').textContent = 'GATE CLEARED'; // the rift's end screen renames it
   const score = 100 - Math.min(60, run.dmgTaken/player.maxHp*30) - Math.min(30, Math.max(0, (run.time-par)/par*30));
   const grade = score >= 90 ? 'S' : score >= 75 ? 'A' : score >= 55 ? 'B' : 'C';
   const bonus = Math.floor(g.boss.xp*0.5*{ S:2, A:1.5, B:1.2, C:1 }[grade]);
@@ -224,6 +232,61 @@ function showVictory() {
     <div>Time: <span>${mm}:${ss}</span> &nbsp; Damage Taken: <span>${fmtNum(run.dmgTaken)}</span></div>
     <div>XP Earned: <span>${fmtNum(run.xp)}</span> &nbsp; Gold: <span>${fmtNum(run.gold)} + ${fmtNum(bonus)}</span></div>
     <div>Level: <span>${player.level}</span> &nbsp; Rank: <span>${player.rank}</span></div>
+    ${loot.length ? `<div>Loot: <span>${loot.length} item${loot.length > 1 ? 's' : ''}</span> &nbsp; Best: <span style="color:${GEAR_COLORS[best]}">${GEAR_RARITY[best]}</span></div>` : ''}`;
+  show('victory-overlay', 'flex'); saveGame();
+}
+
+// --- GILDED RIFT: a rare treasure gate. No boss, no chambers, no boons, no extraction, and nothing in it can hurt the hunter. Eight gold goblins flee for 60 seconds.
+// It is not a gate clear: nothing here touches player.cleared, the gate counts, the story, the titles for clears or the result card.
+// The highest gate the hunter's level unlocks (the one the GATES tab marks): the rift's goblins and rewards follow it
+function riftTier() { for (let i = GATE_DEFS.length-1; i > 0; i--) if (player.level >= GATE_DEFS[i].reqLevel) return GATE_DEFS[i]; return GATE_DEFS[0]; }
+function startRift() {
+  startDungeon(RIFT);
+  const r = dungeon.rift, tier = riftTier(), base = tier.enemies[0];
+  r.tier = tier; r.spill = Math.ceil(tier.boss.xp*0.25); r.hit = Math.ceil(r.spill/20); // a catch spills 6 orbs worth r.spill together; each hit spills one small orb
+  const def = E('Gilded Goblin', 'flee', base.hp*2, 0, pSpeed()*0.9, 12, base.xp*3, '#ffcc33'); // no damage; 90% of the hunter's move speed
+  for (let i = 0; i < RIFT.goblins; i++) { // spread round the hunter, 300 to 600 away
+    const a = (i + rand(0.1, 0.9))/RIFT.goblins*TAU, d = rand(300, 600), pt = keepIn(player.x + Math.cos(a)*d, player.y + Math.sin(a)*d, 40);
+    const e = makeEnemy(def, pt.x, pt.y); e.cd = rand(2.5, 4); // the first stumble comes in 2.5 to 4 s like every other
+    enemies.push(e); ring(e.x, e.y, RIFT.theme.line, 4, e.size*2.4, 0.5, 3);
+  }
+}
+// Each frame of a rift run, in place of checkWave: the clock, the HUD line, and the end (all eight caught, or the 60 seconds gone)
+function riftStep(dt) {
+  const r = dungeon.rift;
+  if (r.done) return;
+  r.t = Math.max(0, r.t - dt);
+  const line = riftLine(r); if (line !== r.hud) { r.hud = line; $('hud-gate-name').textContent = line; }
+  if (r.caught >= r.total || r.t <= 0) endRift();
+}
+function endRift() {
+  const r = dungeon.rift, all = r.caught >= r.total;
+  r.done = true; dungeon.state = 'cleared'; setMusic('off'); playSfx('victory');
+  for (const e of enemies) if (e.alive && e.kind === 'flee') { // the goblins still running vanish in a gold sparkle: no kill credit
+    e.alive = false; spawnBurst(e.x, e.y, RIFT.theme.line, 16, 300); ring(e.x, e.y, RIFT.theme.ember, e.size*0.5, e.size*3, 0.4, 3);
+  }
+  if (all) dropGear(player.x, player.y, 2); // all eight caught: one more item, Rare or better
+  for (const o of orbs) if (o.type === 'gold') { player.gold += o.val; run.gold += o.val; } // every gold orb still on the floor is collected at once
+  orbs = orbs.filter(o => o.type === 'gear'); // the items are picked up by showRiftEnd
+  spawnBurst(player.x, player.y - 12, '#ffd866', 30, 340); flash(RIFT.theme.line, 0.25); playSfx('pickup');
+  toast(all ? 'EVERY GOBLIN CAUGHT' : 'THE RIFT CLOSES', 'gold', 2000);
+  saveGame(); after(0.9, showRiftEnd, true); // a moment for the sparkle before the end screen
+}
+function showRiftEnd() {
+  if (!dungeon || !dungeon.rift) return;
+  const r = dungeon.rift, n = r.caught, grade = n >= r.total ? 'S' : n >= 6 ? 'A' : n >= 3 ? 'B' : 'C';
+  storyVictoryLine(RIFT); // RIFT has no closing line: this clears the one left from the last clear
+  run.grade = grade; // no armResultCard: a rift run has no result card, so the button is hidden too
+  const sh = $('victory-share'); if (sh) sh.style.display = 'none';
+  $('victory-title').textContent = 'RIFT CLOSED';
+  const ge = $('victory-grade'); ge.textContent = grade; ge.style.color = { S:'#bb66ff', A:'#ffcc00', B:'#00d4ff', C:'#8899aa' }[grade];
+  const spent = n >= r.total ? Math.min(run.time, RIFT.time) : RIFT.time, mm = Math.floor(spent/60), ss = String(Math.floor(spent%60)).padStart(2, '0');
+  sweepGear(); // items still on the floor are picked up before the count
+  const loot = run.loot, best = loot.reduce((m, it) => Math.max(m, it.rarity), 0);
+  $('victory-stats').innerHTML = `
+    <div>Goblins Caught: <span>${n} / ${r.total}</span></div>
+    <div>Time: <span>${mm}:${ss}</span> &nbsp; XP Earned: <span>${fmtNum(run.xp)}</span></div>
+    <div>Gold: <span>${fmtNum(run.gold)}</span></div>
     ${loot.length ? `<div>Loot: <span>${loot.length} item${loot.length > 1 ? 's' : ''}</span> &nbsp; Best: <span style="color:${GEAR_COLORS[best]}">${GEAR_RARITY[best]}</span></div>` : ''}`;
   show('victory-overlay', 'flex'); saveGame();
 }
@@ -251,6 +314,7 @@ function returnToHub() {
   player.shadows.forEach(s => { s.active = false; });
   if (AC && AC.state !== 'running') AC.resume();
   setMusic('hub'); renderSystemMenu(); saveGame();
+  if (riftNews) { riftNews = false; systemPop('GILDED RIFT', 'A RIFT OF GOLD HAS OPENED', 'FIND IT UNDER GATES'); }
 }
 
 // --- BOONS ---
@@ -281,7 +345,7 @@ function togglePause() {
   if (paused) {
     $('pause-stats').innerHTML = `
       <div>Level: ${player.level} &nbsp; Rank: ${player.rank}</div>
-      <div>${dungeon.endless ? `Floor: ${dungeon.wave}` : `Wave: ${dungeon.wave} / ${dungeon.maxWaves}`}</div>
+      <div>${dungeon.rift ? `Goblins Caught: ${dungeon.rift.caught} / ${dungeon.rift.total}` : dungeon.endless ? `Floor: ${dungeon.wave}` : `Wave: ${dungeon.wave} / ${dungeon.maxWaves}`}</div>
       <div>Kills: ${run.kills} &nbsp; XP: ${fmtNum(run.xp)} &nbsp; Gold: ${fmtNum(run.gold)}</div>`;
     show('pause-overlay', 'flex'); if (AC) AC.suspend();
   } else { hide('pause-overlay'); if (AC) AC.resume(); }

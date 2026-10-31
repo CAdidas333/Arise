@@ -71,6 +71,10 @@ const GATE_DEFS = [
 // The Hunter's Record counts kills by these names: every gate enemy and every boss. A save keeps only counts under these.
 function recordNames() { const s = new Set(); for (const g of GATE_DEFS) { for (const e of g.enemies) s.add(e.name); s.add(g.boss.name); } return s; }
 const ENDLESS = { id:'endless', name:'Demon Castle', rank:'∞', reqLevel:15, desc:'Endless floors. A boss every 5th. How high can you climb?' };
+// The Gilded Rift: a rare treasure gate that opens after a clear. No boss, no chambers, nothing that hurts: eight gold goblins flee for 60 seconds.
+// It wears the Dragon's Lair floor (floor names the file in assets/floors) and has no .boss or .enemies, so nothing may read them.
+const RIFT = { id:'rift', name:'Gilded Rift', rank:'RIFT', reqLevel:1, waves:1, time:60, goblins:8, floor:'a_gate', ambientColor:'#332a00',
+  theme:{ a:'#16130a', b:'#100d07', line:'#ffcc33', ember:'#ffe58a' }, desc:'Gold goblins flee. 60 seconds. Catch what you can.', rift:true };
 
 // The System's words, all original. opening: cards shown once to a new hunter, one to three lines each ({name} becomes the hunter's name).
 // Per gate id: the chapter number, the lines on its chapter card (first visit), and one closing line for the first clear.

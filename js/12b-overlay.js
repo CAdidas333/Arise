@@ -68,7 +68,7 @@ function drawWeather(id, par) {
       ctx.globalAlpha = 0.05 + 0.05*(0.5 + 0.5*Math.sin(clock*1.5 + m.ph));
       ctx.drawImage(img, W*(i/4) + Math.sin(clock*0.7 + m.ph)*20 - w/2, H - h*0.5, w, h);
     }
-  } else if (id === 'a_gate') { // gold cinders fall slowly, swaying
+  } else if (id === 'a_gate' || id === 'rift') { // gold cinders fall slowly, swaying (the Gilded Rift has the same)
     ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#ffcc55';
     for (const m of weather) {
       const x = (((m.x*W + Math.sin(clock*0.9 + m.ph)*26*m.z - camera.x*m.z*par) % W) + W) % W, y = (((m.y*H + clock*(30 + m.z*46) - camera.y*m.z*par) % H) + H) % H;
@@ -155,7 +155,7 @@ function drawMinimap() {
   }
   ctx.fillStyle = COLORS.accent; ctx.globalAlpha = 0.6;
   player.shadows.forEach(s => { if (s.active) dot2(px(s.x), py(s.y), 1.6); });
-  enemies.forEach(e => { if (!e.alive || e.isBoss) return; ctx.fillStyle = e.elite ? '#ffcc66' : COLORS.danger; ctx.globalAlpha = 0.7; dot2(px(e.x), py(e.y), e.elite ? 2.6 : 1.8); });
+  enemies.forEach(e => { if (!e.alive || e.isBoss) return; const gold = e.kind === 'flee'; ctx.fillStyle = gold ? '#ffcc33' : e.elite ? '#ffcc66' : COLORS.danger; ctx.globalAlpha = gold ? 1 : 0.7; dot2(px(e.x), py(e.y), gold ? 2.6 : e.elite ? 2.6 : 1.8); }); // a Gilded Goblin shows gold
   ctx.fillStyle = '#bb88ff'; ctx.globalAlpha = 0.9;
   remnants.forEach(r => dot2(px(r.x), py(r.y), 2));
   rewardBoxes.forEach(b => { if (b.open < 0) { ctx.fillStyle = COLORS.primary; ctx.globalAlpha = 0.9; ctx.fillRect(px(b.x) - 2, py(b.y) - 2, 4, 4); } }); // unopened reward boxes
@@ -169,7 +169,7 @@ function drawMinimap() {
   ctx.restore();
   // Stationary warning
   const st = gameTime - lastMoveTime;
-  if (st > 3 && dungeon.state === 'fight' && enemies.some(e => e.alive)) {
+  if (st > 3 && dungeon.state === 'fight' && !dungeon.rift && enemies.some(e => e.alive)) { // nothing in the rift hurts, so standing still is no warning
     ctx.globalAlpha = 0.85; ctx.fillStyle = '#ff4444'; ctx.font = '9px Orbitron, monospace'; ctx.textAlign = 'center';
     ctx.fillText('⚠ MOVE! DMG x' + (1 + Math.min((st-3)*0.15, 2.0)).toFixed(1), cx, my + mh + 14);
     ctx.textAlign = 'left';

@@ -1085,16 +1085,22 @@ const Fig = (function () {
   function turn(o, target, k) { let d = target - o.rotation.y; d -= Math.round(d / (PI * 2)) * PI * 2; o.rotation.y += d * k; }
   const A = { t: 0, ph: 0, amp: 0, wind: 0, strike: 0, dash: 0 };
 
+  // A Gilded Goblin (Gilded Rift) is the melee figure, in gold, over a soft round gold glow and with no ring. keyFor maps its kind 'flee' to melee.
+  const gildedAura = auraMat(0xffcc33, 0.3, true);
   function forEnemy(e) {
-    const boss = !!e.isBoss, col = e.color || '#ffffff';
-    const fig = make(keyFor(boss ? 'boss' : e.kind, (e.def && e.def.name) || e.name), (boss || e.elite) ? 'ring' : null, e.elite);
+    const boss = !!e.isBoss, col = e.color || '#ffffff', gilded = e.kind === 'flee';
+    const fig = make(keyFor(boss ? 'boss' : e.kind, (e.def && e.def.name) || e.name), (boss || e.elite) ? 'ring' : gilded ? 'disc' : null, e.elite);
     fig.userData.pals = boss ? [bossPal(col, ''), bossPal(col, 'W'), bossPal(col, 'R')] : [enemyPal(col, e.elite, false), enemyPal(col, e.elite, true)];
+    if (gilded) { // its own palettes (copies, the shared ones stay as they are) with the soft glow in place of the hard-edged disc, also in the hit flash
+      fig.userData.pals = fig.userData.pals.map(p => Object.assign({}, p, { aura: gildedAura }));
+      fig.userData.flash = Object.assign({}, flashPal(), { aura: gildedAura });
+    }
     return fig;
   }
   function enemy(fig, e, dt, now) {
     const ud = fig.userData, sz = e.size || 14, grow = e.spawnT > 0 ? Math.max(0, 1 - e.spawnT / 0.55) : 1, k = sz * (0.5 + 0.5 * grow);
     const blink = (e.state === 'wind' || e.state === 'cwind') && S(now * 45) > 0;
-    setPal(fig, e.hitFlash > 0 ? flashPal() : ud.pals[blink ? 1 : (e.isBoss && e.phase >= 2) ? 2 : 0]);
+    setPal(fig, e.hitFlash > 0 ? (ud.flash || flashPal()) : ud.pals[blink ? 1 : (e.isBoss && e.phase >= 2) ? 2 : 0]);
     fig.scale.set(k, k, k);
     fig.position.set(e.x, -(1 - grow) * ud.h * k, e.y);                            // spawning: it rises out of the floor
     if (e.facing && (e.facing.x || e.facing.y)) fig.rotation.y = Math.atan2(e.facing.x, e.facing.y);
