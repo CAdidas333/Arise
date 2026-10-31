@@ -54,12 +54,26 @@ function buyPotion() {
   player.gold -= c; player.potions++; playSfx('buy'); saveGame();
 }
 // --- GEAR --- i is a place in the bag
-function equipGear(i) {
-  const it = player.bag[i];
-  if (!it) { playSfx('deny'); return; }
-  const old = player.gear[it.slot];
+function wearGear(i) {
+  const it = player.bag[i], old = player.gear[it.slot];
   if (old) player.bag[i] = old; else player.bag.splice(i, 1); // what was worn takes the item's place in the bag
-  player.gear[it.slot] = it; gearChanged();
+  player.gear[it.slot] = it;
+}
+function equipGear(i) {
+  if (!player.bag[i]) { playSfx('deny'); return; }
+  wearGear(i); gearChanged();
+  playSfx('buy'); saveGame();
+}
+// EQUIP BEST: in each slot the strongest bag item goes on if it beats what is worn; the old piece takes its place in the bag
+function equipBestGear() {
+  let n = 0;
+  for (const s of GEAR_SLOTS) {
+    let best = -1;
+    player.bag.forEach((it, i) => { if (it.slot === s && gearBetter(it) && (best < 0 || gearScore(it) > gearScore(player.bag[best]))) best = i; });
+    if (best >= 0) { wearGear(best); n++; }
+  }
+  if (!n) { playSfx('deny'); return; }
+  gearChanged(); toast(`EQUIPPED ${n} UPGRADE${n > 1 ? 'S' : ''}`);
   playSfx('buy'); saveGame();
 }
 function unequipGear(slot) {
@@ -136,6 +150,7 @@ $('system-menu').addEventListener('click', e => {
     case 'gear-equip': equipGear(+v); break;
     case 'gear-unequip': unequipGear(v); break;
     case 'gear-sell': sellGear(+v); break;
+    case 'gear-best': equipBestGear(); break;
     case 'gear-sell-weaker': sellWeakerGear(); break;
     case 'aim': cycleAim(); break;
     case 'look': cycleLook(); break;
