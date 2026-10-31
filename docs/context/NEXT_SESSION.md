@@ -18,6 +18,8 @@ worked when the free tiers were dead: Claude Sonnet sub-agents with `isolation: 
 5. **Name your shadows** in the SHADOWS tab (NAME), and open the new **RECORD** tab (key 7) to see every enemy you have slain.
 6. **ARMORY: EQUIP BEST** puts on every upgrade in your bag at once.
 7. **In 3D, Controls tab, Hunter look:** the classic stick-figure hunter works in 3D too.
+8. **The Gilded Rift (new 10-31 evening):** clear any gate and a gold RIFT card may appear under GATES (always after your first
+   clear). Inside, eight gold goblins run from you for 60 seconds; they never hit back. Catch them for gold and items.
 
 ## Ranked next actions
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
@@ -34,7 +36,7 @@ worked when the free tiers were dead: Claude Sonnet sub-agents with `isolation: 
 ### Checks after every merge (all must pass before `tools/stamp.sh`)
 `bash tools/check_names.sh`, `node -e "require('./tools/lib/headless.js').createGame()"`, `node tools/test_layout.js` (PASS 8000),
 `test_gear` (PASS 626220), `test_army` (PASS 570), `test_boxes` (PASS 3595), `test_titles` (PASS 71), `test_shadow_names` (PASS 16),
-`test_record` (PASS 123), `test_equip_best` (PASS 22); the bot when balance or levelling changes. Frames: the headless Chrome recipe
+`test_record` (PASS 123), `test_equip_best` (PASS 22), `test_rift` (PASS 310); the bot when balance or levelling changes. Frames: the headless Chrome recipe
 (LESSONS 2026-10-15; the browser pane hangs under heavy load, so prefer headless; give each run its own `--user-data-dir` and a
 `perl -e 'alarm 100; exec @ARGV'` guard).
 

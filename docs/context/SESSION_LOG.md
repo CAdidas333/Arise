@@ -1,5 +1,18 @@
 # Arise — Session Log
 
+## Session 10 — 2026-10-31 (Saturday afternoon, under Houston) — the Gilded Rift
+
+### What Changed
+- **Renewal** from S9; S9 archived. Paused 14:22 to 15:03 for AVL's priority (nothing of Arise's was running).
+- **The Gilded Rift** (F23; brief e1c6d87, Sonnet sub-agent 1ba0a66, merge da90209, ship 65dad29, stamp 20261031172320): a rare treasure gate after a clear; eight fleeing gold goblins, 60 seconds, nothing that hurts, no boss; not a gate clear. The free tiers returned nothing (Gemini 429 out of quota, the free OpenCode model silent for 35 minutes), so a Claude Sonnet sub-agent built it in a worktree; it crawled through the 16:00 to 17:00 machine overload. By hand: the catch count joins the clock on the top HUD, since phones hide the bottom gate-name line.
+- **Cleanup:** two empty S9 worker worktrees (gate-dressing, hunters-record) and the merged sub-agent worktree removed.
+
+### Checks
+`check_names.sh` (names ok), `node --check`, the headless load, `test_rift` (PASS 310), `test_record` (123), `test_equip_best` (22), `test_shadow_names` (16), `test_titles` (71), `test_boxes` (3595), `test_army` (570), `test_layout` (8000), `test_gear` (626220). Browser, local preview: 2D and 3D, entered through the hub card, a goblin at 200 fled to 400 in half a second, 8 of 8 gives RIFT CLOSED grade S with gold and loot counted and `player.cleared` unchanged; phone 375 by 812 with touch: card fits, `0:42 · 3/8` beside the pause button; no console errors. Public pages on the new stamp.
+
+### Not Done
+Chris has not played; real phone and iPad, the music by ear (F12, E1 to E5, E3, U6).
+
 ## Session 9, continued — 2026-10-31 (night, Houston's orders: Chris asleep, push hard) — weather, shadow names, the Hunter's Record, gate dressing, EQUIP BEST, a 3D culling fix
 
 ### What Changed
