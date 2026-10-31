@@ -9,6 +9,7 @@ function createPlayer(name) {
     stats:{ STR:5, AGI:5, INT:5, VIT:5, PER:5 }, statPoints:0, skillPoints:0, tree:{},
     weapon:0, gold:0, potions:1, shadows:[], cleared:{},
     titles:[], title:'', feats:{ perfects:0, boxes:0, flawless:0 },
+    slain:{}, // the Hunter's Record: enemy name → how many the hunter has slain
     gear:{ armor:null, boots:null, ring:null }, bag:[],
     story:{ opening:false, gates:{} }, // what the story has shown: the opening once, each gate's chapter card once
     hp:1, maxHp:1, mp:1, maxMp:1, x:0, y:0, facing:{ x:1, y:0 },

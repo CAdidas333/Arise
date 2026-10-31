@@ -68,6 +68,8 @@ const GATE_DEFS = [
     enemies:[ E('Stone Knight','melee',3400,420,96,22,1000,'#8899aa'), E('Seraph Statue','caster',2400,480,50,18,1200,'#aaccee'), E('Stone Hound','charger',3000,440,110,18,1100,'#778899'), E('Temple Sentinel','brute',8000,520,58,32,2000,'#667788',3) ],
     boss:{ name:'Statue of God', title:'The Architect\'s Final Trial', hp:250000, damage:800, speed:50, size:66, xp:45000, color:'#ddeeff', shadow:true, patterns:['nova','spiral','slam','burst','summon','charge','pillars'] } },
 ];
+// The Hunter's Record counts kills by these names: every gate enemy and every boss. A save keeps only counts under these.
+function recordNames() { const s = new Set(); for (const g of GATE_DEFS) { for (const e of g.enemies) s.add(e.name); s.add(g.boss.name); } return s; }
 const ENDLESS = { id:'endless', name:'Demon Castle', rank:'∞', reqLevel:15, desc:'Endless floors. A boss every 5th. How high can you climb?' };
 
 // The System's words, all original. opening: cards shown once to a new hunter, one to three lines each ({name} becomes the hunter's name).

@@ -89,9 +89,9 @@ function updateHUD() {
 }
 
 // ================================================================
-//  SYSTEM MENU — Status · Gates · Skill Tree · Shadows · Armory
+//  SYSTEM MENU — Status · Gates · Skill Tree · Shadows · Record · Armory
 // ================================================================
-const TABS = [['status','STATUS'], ['gates','GATES'], ['tree','SKILL TREE'], ['shadows','SHADOWS'], ['armory','ARMORY'], ['controls','CONTROLS']];
+const TABS = [['status','STATUS'], ['gates','GATES'], ['tree','SKILL TREE'], ['shadows','SHADOWS'], ['record','RECORD'], ['armory','ARMORY'], ['controls','CONTROLS']];
 let nickEdit = -1; // the shadow being named, or -1
 const row = (k, v) => `<div class="stat-row"><span class="stat-name">${k}</span><span class="stat-value">${v}</span></div>`;
 const potionCost = () => 40 + player.level*6;
@@ -119,7 +119,7 @@ function renderSystemMenu() {
     <div style="margin-top:12px;font-size:12px;color:${w.color};letter-spacing:1px;text-align:center">⚔ ${w.name}</div>
     ${isMobile ? '' : `<button class="sys-btn" data-act="aim" style="width:100%;margin-top:14px">AIM: ${settings.aim.toUpperCase()} &nbsp;[M]</button>`}`;
 
-  $('sys-main').innerHTML = ({ status:tabStatus, gates:tabGates, tree:tabTree, shadows:tabShadows, armory:tabArmory, controls:tabControls })[menuTab]();
+  $('sys-main').innerHTML = ({ status:tabStatus, gates:tabGates, tree:tabTree, shadows:tabShadows, record:tabRecord, armory:tabArmory, controls:tabControls })[menuTab]();
 }
 
 function tabStatus() {
@@ -217,6 +217,23 @@ function tabShadows() {
   });
   if (nickEdit >= 0) setTimeout(() => { const e = $('nick-input'); if (e) e.focus(); }, 0);
   return h + '</div><div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:1px">Three shadows walk with you. Arise: Legion calls the strongest for a short time. The Awakening calls every shadow you own.</div>';
+}
+
+// The Hunter's Record: each gate in order, its enemies and boss with the number slain. Never slain shows ??? dimmed; a boss shadow the hunter owns is marked.
+function tabRecord() {
+  const cols = ['', ''];
+  let seen = 0, total = 0;
+  GATE_DEFS.forEach((g, gi) => {
+    let h = `<h3>${g.rank}-RANK · ${esc(g.name)}</h3>`;
+    [...g.enemies.map(e => [e.name, e.kind.toUpperCase(), false]), [g.boss.name, 'BOSS', true]].forEach(([name, kind, boss]) => {
+      const n = player.slain[name] | 0, raised = boss && player.shadows.some(s => s.name === name);
+      total++; if (n > 0) seen++;
+      const tag = `<span style="opacity:.4">${kind}</span>${raised ? ' <span style="color:#bb88ff">· SHADOW RAISED</span>' : ''}`;
+      h += `<div class="stat-row"${n > 0 ? '' : ' style="opacity:.35"'}><span class="stat-name">${n > 0 ? esc(name) : '???'}<span style="display:block;font-size:10px;letter-spacing:1px">${tag}</span></span><span class="stat-value">${fmtNum(n)}</span></div>`;
+    });
+    cols[gi < GATE_DEFS.length/2 ? 0 : 1] += h;
+  });
+  return `<h3>Discovered ${seen} / ${total}</h3><div class="two-col"><div>${cols[0]}</div><div>${cols[1]}</div></div>`;
 }
 
 function tabControls() {
