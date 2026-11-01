@@ -1249,3 +1249,19 @@ function drawHunterClassic(x, y, o) {
   }
   ctx.restore();
 }
+
+// Record tab picture: each enemy or boss drawn facing the viewer in a 96x96 square, or as a flat dark silhouette if never slain
+const RECORD_PICS = {};
+function recordPic(def, boss, known) {
+  const k = def.name + (known ? '' : '?');
+  if (RECORD_PICS[k]) return RECORD_PICS[k];
+  const S = 96, sc = S*0.35/def.size;
+  ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0, 0, S, S);
+  ctx.translate(S/2, S/2); ctx.scale(sc, sc);
+  drawEnemy({ x:0, y:0, size:def.size, kind:def.kind, color:def.color, facing:{ x:0, y:1 }, animT:0, spawnT:0, hitFlash:0, state:'chase', elite:false, isBoss:!!boss, def, phase:1, name:def.name });
+  if (!known) { ctx.setTransform(1,0,0,1,0,0); ctx.globalCompositeOperation = 'source-atop'; ctx.fillStyle = '#1a1d2a'; ctx.fillRect(0, 0, S, S); }
+  const off = document.createElement('canvas'); off.width = off.height = S;
+  off.getContext('2d').drawImage(canvas, 0, 0, S, S, 0, 0, S, S);
+  ctx.restore();
+  return RECORD_PICS[k] = off.toDataURL();
+}

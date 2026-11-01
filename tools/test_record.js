@@ -112,7 +112,7 @@ try {
   if ((html0.match(/\?\?\?/g) || []).length !== names.length) fail(`a fresh hunter sees ${(html0.match(/\?\?\?/g) || []).length} ???, not ${names.length}`);
   if (html0.includes('SHADOW RAISED')) fail('SHADOW RAISED shows with no shadow owned');
   if (!html0.includes('BOSS') || !html0.includes('MELEE')) fail('the kind labels are missing');
-  const shown = (html, n) => html.includes(`<span class="stat-name">${n}<`); // the name as a row shows it, not inside a gate heading
+  const shown = (html, n) => new RegExp(`<span class="stat-name">(?:<img class="rec-pic"[^>]*>)?${n}<`).test(html); // the name as a row shows it, not inside a gate heading
   for (const n of names) if (shown(html0, n)) fail(`${n} is shown though it was never slain`);
   checked += 4 + names.length;
   kill(GOBLIN); kill(GOBLIN); kill(QUEEN, '{ boss:true }');
@@ -123,6 +123,23 @@ try {
   if ((html1.match(/\?\?\?/g) || []).length !== names.length - 2) fail('the unslain names are not all ???');
   if ((html1.match(/SHADOW RAISED/g) || []).length !== 1) fail('SHADOW RAISED should show once, on the Spider Queen');
   checked += 4;
+
+  // 11. recordPic: one 40x40 rec-pic image per row, cached under name (known) and name+'?' (unknown)
+  if (at('typeof recordPic === "function"')) {
+    const rows = html1.split('<div class="stat-row"').slice(1);
+    if (rows.length !== names.length) fail(`expected ${names.length} rows, got ${rows.length}`);
+    for (const r of rows) {
+      if ((r.match(/<img class="rec-pic" /g) || []).length !== 1) fail('a row does not have exactly one rec-pic image');
+      if (!/<img class="rec-pic" src="data:image\/png[^"]*" width="40" height="40" alt=""/.test(r)) fail('rec-pic image attributes are wrong');
+      checked++;
+    }
+    const pics = at('RECORD_PICS');
+    if (!pics['Goblin?'] || !pics['Goblin'] || pics['Goblin?'] === pics['Goblin']) fail('known and unknown Goblin do not have distinct cached pictures');
+    if (!pics['Spider Queen?'] || !pics['Spider Queen'] || pics['Spider Queen?'] === pics['Spider Queen']) fail('known and unknown Spider Queen do not have distinct cached pictures');
+    if (!pics['Orc Warrior?'] || pics['Orc Warrior']) fail('unslain Orc Warrior should only have the unknown cache key');
+    if (at('recordPic(GATE_DEFS[0].enemies[0], false, true)') !== pics['Goblin']) fail('recordPic did not return the cached picture');
+    checked += 4;
+  }
 
   console.log('PASS ' + checked);
 } catch (err) {
