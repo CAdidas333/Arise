@@ -1,4 +1,4 @@
-# Brief: room shapes (L, notched and cross-shaped chambers)
+# Brief: room shapes (L-shaped and notched chambers)
 
 Plain JavaScript, classic scripts sharing ONE global scope (no modules, no build step). Both pages, `index.html` (2D) and
 `3d/index.html` (3D), load the same `js/` game logic; the 3D page swaps the 2D renderer for `3d/render3d.js`. A top-level name
@@ -6,12 +6,13 @@ declared twice, or a `const` declared twice inside one function, stops a whole s
 top-level clashes and `node --check <file>` catches the rest.
 
 Goal: more variety WITHOUT more difficulty. Today every chamber in a gate is a plain rectangle (`genLayout` in `js/03a-layout.js`).
-Make some of them L-shaped, notched or cross-shaped by cutting corners off the rectangle. Nothing else about a fight changes: the
+Make some of them L-shaped or notched by cutting one or two corners off the rectangle. Nothing else about a fight changes: the
 same waves, the same enemies, the same number of chambers.
 
 ## What the player sees
-About half the fight chambers (never the entry room, index 0) lose one or more corners: one corner (an L, about 25 percent of
-chambers), two corners (about 15 percent), or all four (a cross, about 15 percent); the rest stay rectangles. A cut corner is solid
+About half the fight chambers (never the entry room, index 0) lose one or two corners: one corner (an L, about 30 percent of
+chambers) or two corners (about 25 percent); the rest stay rectangles. Never three or four: a room cut on every side reads as a
+cross from above, which the art rule forbids. A cut corner is solid
 wall like any other: the hunter, enemies, shadows and shots stay out of it, the stone walls and their dressing (pilasters, torches,
 rubble, floor inlay) follow the new outline in 2D and in 3D, and the floor is only drawn inside the chamber. Corridors still meet the
 chamber exactly where they did; a cut never touches a corridor mouth.
@@ -24,7 +25,7 @@ chamber exactly where they did; a cut never touches a corridor mouth.
    the cuts). A cut is a corner rectangle 25 to 38 percent of the room's width by 25 to 38 percent of its height. Skip any cut that
    would come within 60 of a hall's rectangle (both the hall in and the hall out, and the stub on the last room), and never cut room
    0. The room's centre must stay in its floor (it does when each cut is under half of each side; the reward box spawns at the
-   centre, `js/08-dungeon.js`). Store `shape` (`'rect'`, `'L'`, `'two'`, `'cross'`) on each room for the test.
+   centre, `js/08-dungeon.js`). Store `shape` (`'rect'`, `'L'`, `'two'`) on each room for the test; when a planned second cut is skipped, the room is an `'L'`.
 2. Everything that treats a room as its rectangle must use `parts` where the floor matters. Find every reader (`grep -n "rooms"`
    across `js/` and `3d/render3d.js`; at the time of writing: `mapRects`, `roomAt`, `pointInRoom`, `layout.rects` and `computeWalls`
    input in `js/03a-layout.js`; `buildLayoutDecor` (floor inlay, pilasters, props) in `js/03a-layout.js`; the 2D draw in
@@ -37,7 +38,7 @@ chamber exactly where they did; a cut never touches a corridor mouth.
 3. Doors (`doors` in `genLayout`) stay where they are: they sit on the bounding edges at corridor mouths, which the cut rules keep.
 4. Test: extend `tools/test_layout.js` (keep every existing rule and its count passing, PASS 8000 or more) with, for every seed it
    already runs: every room has `parts`; parts lie inside the bounding rectangle and do not overlap; the parts of one room are
-   connected; room 0 is `'rect'`; no part's cut corner comes within 60 of any hall; the room centre is inside a part; 200
+   connected; room 0 is `'rect'`; no room has more than two cuts; no part's cut corner comes within 60 of any hall; the room centre is inside a part; 200
    `pointInRoom` samples per room fall inside a part; a point in a cut corner gives `roomAt` -1 and `inMap` false; across the seeds
    the share of non-rect fight rooms is between 0.4 and 0.65 and every shape occurs. Print `PASS <n>` as now.
 
@@ -47,8 +48,8 @@ chamber exactly where they did; a cut never touches a corridor mouth.
   damage, rewards or the boss arena; the open arena (`layout === null`) is untouched.
 - In three.js r149 an `InstancedMesh` is culled by its base geometry at the origin; any new instanced mesh needs
   `frustumCulled = false` (lesson G9).
-- Art rule: no star symbols, runes, occult or religious imagery. Plain stone walls only; a cross-shaped room is a floor plan, so do
-  not mark, decorate or name it as a cross anywhere a player can see (the `shape` value is internal).
+- Art rule: no star symbols, runes, occult or religious imagery. Plain stone walls only; at most two corners cut per room, so no
+  floor plan can read as a cross from above (2D view and minimap).
 - Match the surrounding style: compact statements, one short comment per item saying what the player sees.
 
 ## Checks to run (all must pass)
