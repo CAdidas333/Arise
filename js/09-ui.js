@@ -223,17 +223,18 @@ function tabShadows() {
   return h + '</div><div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:1px">Three shadows walk with you. Arise: Legion calls the strongest for a short time. The Awakening calls every shadow you own.</div>';
 }
 
-// The Hunter's Record: each gate in order, its enemies and boss with the number slain. Never slain shows ??? dimmed; a boss shadow the hunter owns is marked.
+// The Hunter's Record: each gate in order, its enemies and boss with a 40x40 picture (or silhouette) and the number slain. Never slain shows ??? dimmed; a boss shadow the hunter owns is marked.
 function tabRecord() {
   const cols = ['', ''];
   let seen = 0, total = 0;
   GATE_DEFS.forEach((g, gi) => {
     let h = `<h3>${g.rank}-RANK · ${esc(g.name)}</h3>`;
-    [...g.enemies.map(e => [e.name, e.kind.toUpperCase(), false]), [g.boss.name, 'BOSS', true]].forEach(([name, kind, boss]) => {
-      const n = player.slain[name] | 0, raised = boss && player.shadows.some(s => s.name === name), known = n > 0 || raised; // a boss shadow raised before the Record existed counts as met
+    [...g.enemies.map(e => [e, e.kind.toUpperCase(), false]), [g.boss, 'BOSS', true]].forEach(([def, kind, boss]) => {
+      const name = def.name, n = player.slain[name] | 0, raised = boss && player.shadows.some(s => s.name === name), known = n > 0 || raised; // a boss shadow raised before the Record existed counts as met
       total++; if (known) seen++;
+      const pic = typeof recordPic === 'function' ? `<img class="rec-pic" src="${recordPic(def, boss, known)}" width="40" height="40" alt="" style="vertical-align:middle;margin-right:10px;float:left;image-rendering:auto">` : '';
       const tag = `<span style="opacity:.4">${kind}</span>${raised ? ' <span style="color:#bb88ff">· SHADOW RAISED</span>' : ''}`;
-      h += `<div class="stat-row"${known ? '' : ' style="opacity:.35"'}><span class="stat-name">${known ? esc(name) : '???'}<span style="display:block;font-size:10px;letter-spacing:1px">${tag}</span></span><span class="stat-value">${fmtNum(n)}</span></div>`;
+      h += `<div class="stat-row"${known ? '' : ' style="opacity:.35"'}><span class="stat-name">${pic}${known ? esc(name) : '???'}<span style="display:block;font-size:10px;letter-spacing:1px">${tag}</span></span><span class="stat-value">${fmtNum(n)}</span></div>`;
     });
     cols[gi < GATE_DEFS.length/2 ? 0 : 1] += h;
   });

@@ -20,8 +20,9 @@ const ROOT = path.join(__dirname, '..', '..');
 // converts to the number 0 in arithmetic, so canvas contexts, DOM nodes and AudioContexts
 // can be touched freely without throwing.
 function makeSoak() {
+  let png = 0;
   const soak = new Proxy(function () {}, {
-    get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : soak),
+    get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : k === 'toDataURL' ? () => 'data:image/png;base64,' + (++png) : soak),
     apply: () => soak,
     construct: () => soak,
     set: () => true,
