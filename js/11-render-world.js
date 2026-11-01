@@ -93,14 +93,22 @@ function drawLayout(vx0, vy0, vx1, vy1) {
   }
   drawWallFurniture(dc, vx0, vy0, vx1, vy1, FACE); // pilasters and torch brackets: after the face, before the floors of any joining corridor cover it
 
+  // The parts of a chamber (a chamber with a cut corner has two or three) are filled as ONE path, so no seam shows where they meet
+  const fillRects = ok => {
+    ctx.beginPath();
+    for (const r of layout.rects) {
+      if (!ok(r)) continue;
+      const x0 = Math.max(vx0, r.x0), y0 = Math.max(vy0, r.y0);
+      const x1 = Math.min(vx1, r.x1), y1 = Math.min(vy1, r.y1);
+      if (x1 > x0 && y1 > y0) ctx.rect(x0, y0, x1-x0, y1-y0);
+    }
+    ctx.fill();
+  };
+
   // 1. Floors
   if (floorPat) {
     ctx.fillStyle = floorPat;
-    layout.rects.forEach(r => {
-      const x0 = Math.max(vx0, r.x0), y0 = Math.max(vy0, r.y0);
-      const x1 = Math.min(vx1, r.x1), y1 = Math.min(vy1, r.y1);
-      if (x1 > x0 && y1 > y0) ctx.fillRect(x0, y0, x1-x0, y1-y0);
-    });
+    fillRects(() => true);
   }
 
   // 2. Corridors a little darker
@@ -114,12 +122,7 @@ function drawLayout(vx0, vy0, vx1, vy1) {
 
   // 3. Rooms not yet reached a little darker
   ctx.fillStyle = 'rgba(0,0,0,0.22)';
-  layout.rects.forEach(r => {
-    if (r.kind !== 'room' || r.i <= layout.cleared || r.i === layout.lock) return;
-    const x0 = Math.max(vx0, r.x0), y0 = Math.max(vy0, r.y0);
-    const x1 = Math.min(vx1, r.x1), y1 = Math.min(vy1, r.y1);
-    if (x1 > x0 && y1 > y0) ctx.fillRect(x0, y0, x1-x0, y1-y0);
-  });
+  fillRects(r => r.kind === 'room' && r.i > layout.cleared && r.i !== layout.lock);
 
   // 3b. Floor detail and torchlight: after the floors and their darkening, before the glowing wall lines
   drawRoomDetail(dc, th, vx0, vy0, vx1, vy1);

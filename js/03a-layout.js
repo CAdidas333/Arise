@@ -52,7 +52,7 @@ function computeWalls(rects) {
       for (let j = 0; j < rects.length; j++) {
         if (i === j) continue;
         const o = rects[j];
-        if (o.y0 < Y && Y < o.y1) {
+        if ((o.y0 < Y && Y < o.y1) || (h ? o.y0 : o.y1) === Y) { // o crosses the edge, or lies right against it (two parts of one chamber): no wall there
           spans = subtract1D(spans, o.x0, o.x1);
         }
       }
@@ -70,7 +70,7 @@ function computeWalls(rects) {
       for (let j = 0; j < rects.length; j++) {
         if (i === j) continue;
         const o = rects[j];
-        if (o.x0 < X && X < o.x1) {
+        if ((o.x0 < X && X < o.x1) || (v ? o.x0 : o.x1) === X) {
           spans = subtract1D(spans, o.y0, o.y1);
         }
       }
@@ -83,6 +83,66 @@ function computeWalls(rects) {
     }
   }
   return walls;
+}
+
+// ----------------------------------------------------------------
+//  Room shapes. A fight chamber is its bounding rectangle with one or two corners cut off (never three or four, never the entry room),
+//  so no floor plan can read as a cross. parts: non-overlapping rectangles whose union is the floor (drawing, walls, spawn points).
+//  cover: the largest rectangles inside the floor. They overlap, so a margin test (keepIn, roomAt) never snags on the seam between two parts.
+// ----------------------------------------------------------------
+function roomFloor(r, cuts) {
+  const uniq = a => a.sort((p, q) => p - q).filter((v, k) => k === 0 || v > a[k - 1]);
+  const xs = uniq([r.x0, r.x1].concat(...cuts.map(c => [clamp(c.x0, r.x0, r.x1), clamp(c.x1, r.x0, r.x1)])));
+  const ys = uniq([r.y0, r.y1].concat(...cuts.map(c => [clamp(c.y0, r.y0, r.y1), clamp(c.y1, r.y0, r.y1)])));
+  const nx = xs.length - 1, ny = ys.length - 1;
+  const full = (i, j) => { const mx = (xs[i] + xs[i + 1]) / 2, my = (ys[j] + ys[j + 1]) / 2; return !cuts.some(c => mx > c.x0 && mx < c.x1 && my > c.y0 && my < c.y1); }; // is this grid cell floor
+  const solid = (a, b, c, d) => { // is every cell from column a to b and row c to d floor
+    if (a < 0 || c < 0 || b >= nx || d >= ny) return false;
+    for (let i = a; i <= b; i++) for (let j = c; j <= d; j++) if (!full(i, j)) return false;
+    return true;
+  };
+  const parts = [], cover = [];
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) {
+      if (!full(i, j)) continue;
+      let e = i;
+      while (e + 1 < nx && full(e + 1, j)) e++;
+      const q = parts.find(p => p.x0 === xs[i] && p.x1 === xs[e + 1] && p.y1 === ys[j]); // the same run in the row above: grow it
+      if (q) q.y1 = ys[j + 1]; else parts.push({ x0: xs[i], y0: ys[j], x1: xs[e + 1], y1: ys[j + 1] });
+      i = e;
+    }
+  }
+  for (let a = 0; a < nx; a++) for (let b = a; b < nx; b++) for (let c = 0; c < ny; c++) for (let d = c; d < ny; d++)
+    if (solid(a, b, c, d) && !solid(a - 1, b, c, d) && !solid(a, b + 1, c, d) && !solid(a, b, c - 1, d) && !solid(a, b, c, d + 1)) cover.push({ x0: xs[a], y0: ys[c], x1: xs[b + 1], y1: ys[d + 1] });
+  return { parts, cover };
+}
+
+// About 30 percent of the fight chambers lose one corner and 25 percent two (an L, or a notched room); the rest stay plain. A cut is 25 to 38 percent
+// of the width by 25 to 38 percent of the height and stays 60 clear of every corridor, so a doorway never touches it. Decided last, from the same rng.
+function shapeRooms(rooms, halls, rng, randInt) {
+  for (const r of rooms) {
+    const w = r.x1 - r.x0, h = r.y1 - r.y0, cuts = [], done = [];
+    if (r.i > 0) {
+      const roll = rng(), want = roll < 0.45 ? 0 : roll < 0.75 ? 1 : 2; // 0 plain, 1 an L, 2 two cut corners
+      const c0 = randInt(0, 3), o = randInt(1, 3), order = [c0, (c0 + o) % 4]; // corners to try: 0 north-west, 1 north-east, 2 south-east, 3 south-west
+      for (let q = 1; q < 4; q++) if (q !== o) order.push((c0 + q) % 4);
+      for (let t = 0; t < 4 && cuts.length < want; t++) {
+        const c = order[t], west = c === 0 || c === 3, north = c < 2;
+        let cw = randInt(Math.round(w*0.25), Math.round(w*0.38)), ch = randInt(Math.round(h*0.25), Math.round(h*0.38));
+        for (const e of done) { // two cuts on one side: near-equal depths are made equal, so the wall never jogs by a few units
+          if (north === e.north && Math.abs(ch - e.ch) < 50) ch = e.ch;
+          if (west === e.west && Math.abs(cw - e.cw) < 50) cw = e.cw;
+        }
+        const cut = { x0: west ? r.x0 : r.x1 - cw, y0: north ? r.y0 : r.y1 - ch, x1: west ? r.x0 + cw : r.x1, y1: north ? r.y0 + ch : r.y1 };
+        if (halls.some(hl => rectDist(cut, hl) < 60)) continue;
+        cuts.push(cut); done.push({ west, north, cw, ch });
+      }
+    }
+    const f = roomFloor(r, cuts);
+    r.shape = ['rect', 'L', 'two'][cuts.length]; r.cuts = cuts;
+    r.parts = f.parts.map(p => ({ x0: p.x0, y0: p.y0, x1: p.x1, y1: p.y1, kind: 'room', i: r.i })); // tagged like the room, so every reader of layout.rects sees chambers and corridors alike
+    r.cover = f.cover;
+  }
 }
 
 function genLayout(nFight, seed) {
@@ -242,7 +302,9 @@ function genLayout(nFight, seed) {
 
       if (stubPlaced) {
         // Complete layout
-        const rects = rooms.concat(halls);
+        shapeRooms(rooms, halls, rng, randInt); // after every room, hall and the stub are placed, so a seed keeps its rooms, halls and doors
+        const rects = [].concat(...rooms.map(r => r.parts), halls); // the floor: every chamber's parts, then the corridors
+        const move = [].concat(...rooms.map(r => r.cover), halls); // what the hunter and enemies are tested against (see mapRects)
         const walls = computeWalls(rects);
 
         // Compute doors
@@ -303,6 +365,7 @@ function genLayout(nFight, seed) {
           rooms,
           halls,
           rects,
+          move,
           walls,
           doors,
           exit,
@@ -324,9 +387,9 @@ function mapRects() {
     return [{ x0: -arenaW / 2, y0: -arenaH / 2, x1: arenaW / 2, y1: arenaH / 2 }];
   }
   if (layout.lock >= 0) {
-    return [layout.rooms[layout.lock]];
+    return layout.rooms[layout.lock].cover; // the locked chamber's floor (overlapping rectangles, so a margin never snags on a seam; a cut corner is outside)
   }
-  return layout.rects;
+  return layout.move;
 }
 
 function inMap(x, y, m = 0) {
@@ -368,10 +431,13 @@ function roomAt(x, y, m = 0) {
   if (layout === null) return -1;
   const rms = layout.rooms;
   for (let i = 0; i < rms.length; i++) {
-    const r = rms[i];
-    if (r.x0 + m <= r.x1 - m && r.y0 + m <= r.y1 - m) {
-      if (x >= r.x0 + m && x <= r.x1 - m && y >= r.y0 + m && y <= r.y1 - m) {
-        return i;
+    const cv = rms[i].cover; // a cut corner belongs to no chamber
+    for (let j = 0; j < cv.length; j++) {
+      const r = cv[j];
+      if (r.x0 + m <= r.x1 - m && r.y0 + m <= r.y1 - m) {
+        if (x >= r.x0 + m && x <= r.x1 - m && y >= r.y0 + m && y <= r.y1 - m) {
+          return i;
+        }
       }
     }
   }
@@ -379,12 +445,15 @@ function roomAt(x, y, m = 0) {
 }
 
 function pointInRoom(i, ax, ay, minD) {
-  const r = layout.rooms[i];
-  const xMin = r.x0 + 70, xMax = r.x1 - 70;
-  const yMin = r.y0 + 70, yMax = r.y1 - 70;
+  const parts = layout.rooms[i].parts; // a point 70 inside one part of the floor, parts weighted by their size (never in a cut corner)
+  const area = parts.map(p => Math.max(0, p.x1 - p.x0 - 140) * Math.max(0, p.y1 - p.y0 - 140));
+  const total = area.reduce((a, b) => a + b, 0);
   let lastPt = null;
   const checkDist = (minD !== undefined && minD > 0 && ax !== undefined && ay !== undefined);
   for (let tryIdx = 0; tryIdx < 24; tryIdx++) {
+    let k = 0;
+    if (parts.length > 1) for (let roll = Math.random() * total; k < parts.length - 1 && roll >= area[k]; k++) roll -= area[k];
+    const r = parts[k], xMin = r.x0 + 70, xMax = r.x1 - 70, yMin = r.y0 + 70, yMax = r.y1 - 70;
     const x = xMin + Math.random() * (xMax - xMin);
     const y = yMin + Math.random() * (yMax - yMin);
     lastPt = { x, y };
@@ -405,6 +474,18 @@ const distSeg = (px, py, x0, y0, x1, y1) => {
   return dist(px, py, x0 + t*dx, y0 + t*dy);
 };
 
+// The north-facing wall runs of a chamber: every part's top edge, less what another part right above it covers. A plain room has just its north wall;
+// a cut corner adds the step under it. Pilasters and torches stand on these.
+function northFaces(parts) {
+  const out = [];
+  for (const p of parts) {
+    let spans = [[p.x0, p.x1]];
+    for (const q of parts) if (q.y1 === p.y0) spans = subtract1D(spans, q.x0, q.x1);
+    for (const [u, v] of spans) out.push({ y: p.y0, x0: u, x1: v });
+  }
+  return out;
+}
+
 function buildLayoutDecor(L) {
   const dc = { rooms: [], pil: [], runners: [] };
   const gid = (typeof dungeon !== 'undefined' && dungeon && dungeon.gate) ? dungeon.gate.id : ''; // each gate dresses its rooms its own way; no gate (or no match), no props
@@ -415,25 +496,25 @@ function buildLayoutDecor(L) {
     const halls = L.halls.filter(h => h.x0 < r.x1 && h.x1 > r.x0 && h.y0 < r.y1 && h.y1 > r.y0); // corridors that join this room
     const nearDoor = (x, y, m) => doors.some(d => distSeg(x, y, d.x0, d.y0, d.x1, d.y1) < m);
     const inHall = (x, y, m) => halls.some(h => x > h.x0 - m && x < h.x1 + m && y > h.y0 - m && y < h.y1 + m);
+    const onFloor = (x, y, m) => r.cover.some(c => x >= c.x0 + m && x <= c.x1 - m && y >= c.y0 + m && y <= c.y1 - m); // at least m inside the floor: a cut corner is never floor
     const rd = { r, inlay: [[], []], rubble: [], cracks: [], props: [] };
 
-    // Pilasters along the north wall, one every 240 to 300 units, never within 40 of a door on that wall; every second one carries a torch
-    const nd = doors.filter(d => d.y0 === r.y0 && d.y1 === r.y0);
-    for (let x = r.x0 + rr(110, 160), k = 0; x < r.x1 - 110; x += rr(240, 300))
-      if (!nd.some(d => x > d.x0 - 54 && x < d.x1 + 54)) dc.pil.push({ x, y: r.y0, torch: k++ % 2 === 0, ph: rr(0, TAU) });
+    // Pilasters along every north-facing wall (a cut corner adds the step under it), one every 240 to 300 units, never within 40 of a door on that wall; every second one carries a torch
+    let torch = 0;
+    for (const f of northFaces(r.parts)) {
+      const nd = doors.filter(d => d.y0 === f.y && d.y1 === f.y);
+      for (let x = f.x0 + rr(110, 160); x < f.x1 - 110; x += rr(240, 300))
+        if (!nd.some(d => x > d.x0 - 54 && x < d.x1 + 54)) dc.pil.push({ x, y: f.y, torch: torch++ % 2 === 0, ph: rr(0, TAU) });
+    }
 
-    // Floor inlay in the fight rooms: two plain rectangles, 90 and 110 in from the walls, left open where a corridor mouth crosses them
+    // Floor inlay in the fight rooms: two plain outlines, 90 and 110 in from the walls (they turn with a cut corner), left open where a corridor mouth crosses them
     if (r.i >= 1) [90, 110].forEach((ins, k) => {
-      const a = r.x0 + ins, b = r.x1 - ins, c = r.y0 + ins, d = r.y1 - ins;
-      for (const y of [c, d]) {
-        let spans = [[a, b]];
-        for (const h of halls) if (h.y0 < y && y < h.y1) spans = subtract1D(spans, h.x0 - 14, h.x1 + 14);
-        for (const [u, v] of spans) if (v - u > 6) rd.inlay[k].push(u, y, v, y);
-      }
-      for (const x of [a, b]) {
-        let spans = [[c, d]];
-        for (const h of halls) if (h.x0 < x && x < h.x1) spans = subtract1D(spans, h.y0 - 14, h.y1 + 14);
-        for (const [u, v] of spans) if (v - u > 6) rd.inlay[k].push(x, u, x, v);
+      const inner = roomFloor({ x0: r.x0 + ins, y0: r.y0 + ins, x1: r.x1 - ins, y1: r.y1 - ins }, r.cuts.map(c => ({ x0: c.x0 - ins, y0: c.y0 - ins, x1: c.x1 + ins, y1: c.y1 + ins })));
+      for (const w of computeWalls(inner.parts)) {
+        const horiz = w.y0 === w.y1, at = horiz ? w.y0 : w.x0;
+        let spans = [horiz ? [w.x0, w.x1] : [w.y0, w.y1]];
+        for (const h of halls) if (horiz ? h.y0 < at && at < h.y1 : h.x0 < at && at < h.x1) spans = horiz ? subtract1D(spans, h.x0 - 14, h.x1 + 14) : subtract1D(spans, h.y0 - 14, h.y1 + 14);
+        for (const [u, v] of spans) if (v - u > 6) rd.inlay[k].push(horiz ? u : at, horiz ? at : u, horiz ? v : at, horiz ? at : v);
       }
     });
 
@@ -452,12 +533,12 @@ function buildLayoutDecor(L) {
     // Rubble: 3 to 5 clusters of 3 to 6 small stones near a wall or in a corner, none within 60 of a door or in a corridor mouth
     for (let n = 3 + Math.floor(rng()*3), tries = 0; n > 0 && tries < 60; tries++) {
       const [cx, cy] = spot();
-      if (nearDoor(cx, cy, 100) || inHall(cx, cy, 60)) continue;
+      if (nearDoor(cx, cy, 100) || inHall(cx, cy, 60) || !onFloor(cx, cy, 14)) continue;
       n--;
       for (let s = 3 + Math.floor(rng()*4); s > 0; s--) {
         const a = rr(0, TAU), d = rr(0, 1)*26, w = rr(6, 12);
         const x = clamp(cx + Math.cos(a)*d*1.2, r.x0 + 14, r.x1 - 14), y = clamp(cy + Math.sin(a)*d*0.8, r.y0 + 14, r.y1 - 14); // a stone never pokes into the wall
-        if (nearDoor(x, y, 60) || inHall(x, y, 12)) continue;
+        if (nearDoor(x, y, 60) || inHall(x, y, 12) || !onFloor(x, y, 14)) continue;
         for (let k = 0; k < 4; k++) { // an irregular four-sided stone: top-left, top-right, bottom-right, bottom-left, each corner pulled in and turned a little
           const ang = (225 + 90*k + rr(-28, 28))*Math.PI/180, rad = w*rr(0.55, 1);
           rd.rubble.push(x + Math.cos(ang)*rad, y + Math.sin(ang)*rad*0.85);
@@ -471,12 +552,12 @@ function buildLayoutDecor(L) {
       let x = side < 2 ? r.x0 + t*(r.x1 - r.x0) : side === 2 ? r.x0 + 2 : r.x1 - 2;
       let y = side >= 2 ? r.y0 + t*(r.y1 - r.y0) : side === 0 ? r.y0 + 2 : r.y1 - 2;
       let base = [Math.PI/2, -Math.PI/2, 0, Math.PI][side];
-      if (nearDoor(x, y, 60) || inHall(x, y, 20)) continue;
+      if (nearDoor(x, y, 60) || inHall(x, y, 20) || !onFloor(x, y, 0)) continue; // a crack starts on a wall that exists
       const pts = [x, y];
       for (let k = 4 + Math.floor(rng()*3); k > 0; k--) { // 4 to 6 more points: 5 to 7 in all
         const a = base + rr(-0.9, 0.9), l = rr(45, 90);
         x += Math.cos(a)*l; y += Math.sin(a)*l; base += rr(-0.15, 0.15);
-        if (x < r.x0 + 4 || x > r.x1 - 4 || y < r.y0 + 4 || y > r.y1 - 4 || inHall(x, y, 10)) break;
+        if (!onFloor(x, y, 4) || inHall(x, y, 10)) break;
         pts.push(x, y);
       }
       if (pts.length >= 10) { rd.cracks.push(pts); n--; }
@@ -489,10 +570,10 @@ function buildLayoutDecor(L) {
       if (kind === 'web') {
         q = Math.floor(rng()*4); x = q === 0 || q === 3 ? r.x0 : r.x1; y = q < 2 ? r.y0 : r.y1;
         const sx = q === 0 || q === 3 ? 1 : -1, sy = q < 2 ? 1 : -1; // the web reaches about 44 along both walls, so those ends count too
-        if (rd.props.some(o => o.q === q) || [[0, 0], [44*sx, 0], [0, 44*sy]].some(([u, v]) => nearDoor(x + u, y + v, 100) || inHall(x + u, y + v, 40))) continue;
+        if (rd.props.some(o => o.q === q) || [[0, 0], [44*sx, 0], [0, 44*sy]].some(([u, v]) => nearDoor(x + u, y + v, 100) || inHall(x + u, y + v, 40)) || ![[0, 0], [44*sx, 0], [0, 44*sy], [44*sx, 44*sy]].every(([u, v]) => onFloor(x + u, y + v, 0))) continue; // a cut corner has no web
       } else {
         const [cx, cy] = spot(); x = clamp(cx, r.x0 + 30, r.x1 - 30); y = clamp(cy, r.y0 + 30, r.y1 - 30); // inside the room by at least 30
-        if (nearDoor(x, y, 100) || inHall(x, y, 60) || rd.props.some(o => dist(x, y, o.x, o.y) < 50)) continue;
+        if (nearDoor(x, y, 100) || inHall(x, y, 60) || !onFloor(x, y, 30) || rd.props.some(o => dist(x, y, o.x, o.y) < 50)) continue;
       }
       const o = { t: kind, x, y, s: rr(0.8, 1.3), ph: rr(0, TAU) };
       if (q >= 0) o.q = q;

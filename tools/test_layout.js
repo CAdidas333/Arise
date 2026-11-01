@@ -26,6 +26,7 @@ if (inMap(741, 0, -40)) throw new Error('Rule 12: inMap(741, 0, -40) expected fa
 if (roomAt(0, 0) !== -1) throw new Error('Rule 12: roomAt(0, 0) expected -1, got ' + roomAt(0, 0));
 
 let checkedCount = 0;
+const shapeCount = { rect: 0, L: 0, two: 0 };
 
 for (let seed = 1; seed <= 1000; seed++) {
   for (let nFight = 2; nFight <= 9; nFight++) {
@@ -35,7 +36,8 @@ for (let seed = 1; seed <= 1000; seed++) {
     // --- Rule 1 ---
     if (l.rooms.length !== nFight + 1) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: rooms.length is \${l.rooms.length}\`);
     if (l.halls.length !== nFight + 1) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: halls.length is \${l.halls.length}\`);
-    if (l.rects.length !== 2 * nFight + 2) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: rects.length is \${l.rects.length}\`);
+    const nParts = l.rooms.reduce((n, rm) => n + rm.parts.length, 0);
+    if (l.rects.length !== nParts + nFight + 1) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: rects.length is \${l.rects.length}\`);
     if (l.doors.length !== 2 * nFight + 1) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: doors.length is \${l.doors.length}\`);
     const r0 = l.rooms[0];
     if (r0.x0 !== -280 || r0.y0 !== -230 || r0.x1 !== 280 || r0.y1 !== 230 || r0.kind !== 'room' || r0.i !== 0) {
@@ -58,11 +60,14 @@ for (let seed = 1; seed <= 1000; seed++) {
         throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: hall \${j} invalid metadata\`);
       }
     }
+    let ri = 0;
     for (let k = 0; k < l.rooms.length; k++) {
-      if (l.rects[k] !== l.rooms[k]) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: rects does not match rooms at \${k}\`);
+      for (const pt of l.rooms[k].parts) {
+        if (l.rects[ri++] !== pt) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: rects does not match the parts of room \${k}\`);
+      }
     }
     for (let j = 0; j < l.halls.length; j++) {
-      if (l.rects[l.rooms.length + j] !== l.halls[j]) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: rects does not match halls at \${j}\`);
+      if (l.rects[ri + j] !== l.halls[j]) throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 1: rects does not match halls at \${j}\`);
     }
 
     // --- Rule 2: Clearance ---
@@ -185,6 +190,69 @@ for (let seed = 1; seed <= 1000; seed++) {
       throw new Error(\`Seed \${seed}, nFight \${nFight}, Rule 11: non-deterministic output\`);
     }
 
+    // --- Rule 13: Room shapes (parts, cuts, cover) ---
+    for (let k = 0; k < l.rooms.length; k++) {
+      const rm = l.rooms[k], tag = 'Seed ' + seed + ', nFight ' + nFight + ', Rule 13: room ' + k + ' ';
+      const bw = rm.x1 - rm.x0, bh = rm.y1 - rm.y0;
+      if (!Array.isArray(rm.parts) || !rm.parts.length || !Array.isArray(rm.cuts) || !Array.isArray(rm.cover) || !rm.cover.length) throw new Error(tag + 'has no parts, cuts or cover');
+      if (k === 0 && (rm.shape !== 'rect' || rm.parts.length !== 1 || rm.cuts.length !== 0)) throw new Error(tag + 'the entry room is not a plain rectangle');
+      if (rm.cuts.length > 2) throw new Error(tag + 'has more than two cut corners');
+      if (rm.shape !== ['rect', 'L', 'two'][rm.cuts.length]) throw new Error(tag + 'shape ' + rm.shape + ' does not match ' + rm.cuts.length + ' cuts');
+      if (k >= 1) shapeCount[rm.shape]++;
+      let partArea = 0;
+      for (let a = 0; a < rm.parts.length; a++) {
+        const pa = rm.parts[a];
+        if (!(pa.x1 > pa.x0 && pa.y1 > pa.y0)) throw new Error(tag + 'part ' + a + ' is empty');
+        if (pa.x0 < rm.x0 || pa.x1 > rm.x1 || pa.y0 < rm.y0 || pa.y1 > rm.y1) throw new Error(tag + 'part ' + a + ' is outside the bounding rectangle');
+        if (pa.kind !== 'room' || pa.i !== k) throw new Error(tag + 'part ' + a + ' is not tagged as the room');
+        partArea += (pa.x1 - pa.x0) * (pa.y1 - pa.y0);
+        for (let b = a + 1; b < rm.parts.length; b++) {
+          const pb = rm.parts[b];
+          if (pa.x0 < pb.x1 && pa.x1 > pb.x0 && pa.y0 < pb.y1 && pa.y1 > pb.y0) throw new Error(tag + 'parts ' + a + ' and ' + b + ' overlap');
+        }
+      }
+      let cutArea = 0;
+      for (let a = 0; a < rm.cuts.length; a++) {
+        const c = rm.cuts[a], cw = c.x1 - c.x0, ch = c.y1 - c.y0;
+        if ((c.x0 !== rm.x0 && c.x1 !== rm.x1) || (c.y0 !== rm.y0 && c.y1 !== rm.y1) || c.x0 < rm.x0 || c.x1 > rm.x1 || c.y0 < rm.y0 || c.y1 > rm.y1) throw new Error(tag + 'cut ' + a + ' is not a corner of the room');
+        if (cw < Math.round(bw * 0.25) || cw > Math.round(bw * 0.38) || ch < Math.round(bh * 0.25) || ch > Math.round(bh * 0.38)) throw new Error(tag + 'cut ' + a + ' is ' + cw + ' by ' + ch + ' in a ' + bw + ' by ' + bh + ' room');
+        cutArea += cw * ch;
+        for (let b = a + 1; b < rm.cuts.length; b++) {
+          const d = rm.cuts[b];
+          if (c.x0 < d.x1 && c.x1 > d.x0 && c.y0 < d.y1 && c.y1 > d.y0) throw new Error(tag + 'cuts ' + a + ' and ' + b + ' overlap');
+        }
+        for (let j = 0; j < l.halls.length; j++) {
+          if (testRectDist(c, l.halls[j]) < 60 - 1e-7) throw new Error(tag + 'cut ' + a + ' comes within 60 of hall ' + j);
+        }
+        // a cut corner is not floor: no cover rectangle reaches into it
+        for (const cv of rm.cover) if (cv.x0 < c.x1 && cv.x1 > c.x0 && cv.y0 < c.y1 && cv.y1 > c.y0) throw new Error(tag + 'cover reaches into cut ' + a);
+      }
+      if (Math.abs(partArea - (bw * bh - cutArea)) > 1e-6) throw new Error(tag + 'parts cover ' + partArea + ' but the floor is ' + (bw * bh - cutArea));
+      // the parts are connected: they share edges of positive length
+      const seen = new Set([0]), todo = [0];
+      while (todo.length) {
+        const a = rm.parts[todo.pop()];
+        rm.parts.forEach((pb, b) => {
+          if (seen.has(b)) return;
+          const shareX = Math.min(a.x1, pb.x1) - Math.max(a.x0, pb.x0), shareY = Math.min(a.y1, pb.y1) - Math.max(a.y0, pb.y0);
+          if ((shareX > 0 && (a.y1 === pb.y0 || a.y0 === pb.y1)) || (shareY > 0 && (a.x1 === pb.x0 || a.x0 === pb.x1))) { seen.add(b); todo.push(b); }
+        });
+      }
+      if (seen.size !== rm.parts.length) throw new Error(tag + 'parts are not connected');
+      // the centre is floor, and every cover rectangle lies inside the floor
+      const cx = (rm.x0 + rm.x1) / 2, cy = (rm.y0 + rm.y1) / 2;
+      const inPart = (x, y) => rm.parts.some(pa => x >= pa.x0 && x <= pa.x1 && y >= pa.y0 && y <= pa.y1);
+      if (!inPart(cx, cy)) throw new Error(tag + 'centre is not in a part');
+      for (const cv of rm.cover) for (const fx of [0, 0.25, 0.5, 0.75, 1]) for (const fy of [0, 0.25, 0.5, 0.75, 1]) {
+        if (!inPart(cv.x0 + fx * (cv.x1 - cv.x0), cv.y0 + fy * (cv.y1 - cv.y0))) throw new Error(tag + 'a cover rectangle leaves the floor');
+      }
+      for (const pa of rm.parts) for (const fx of [0, 0.25, 0.5, 0.75, 1]) for (const fy of [0, 0.25, 0.5, 0.75, 1]) {
+        const x = pa.x0 + fx * (pa.x1 - pa.x0), y = pa.y0 + fy * (pa.y1 - pa.y0);
+        if (!rm.cover.some(cv => x >= cv.x0 && x <= cv.x1 && y >= cv.y0 && y <= cv.y1)) throw new Error(tag + 'part point (' + x + ',' + y + ') is not covered');
+      }
+      if (rm.shape === 'rect' && (rm.parts.length !== 1 || rm.cover.length !== 1)) throw new Error(tag + 'a plain room has more than one part');
+    }
+
     // Slower rules run when seed % 20 === 0
     if (seed % 20 === 0) {
       // --- Rule 4: Walls ---
@@ -208,16 +276,18 @@ for (let seed = 1; seed <= 1000; seed++) {
         for (let eIdx = 0; eIdx < edges.length; eIdx++) {
           const [isVert, C, vMin, vMax] = edges[eIdx];
           const intervalEnds = [vMin, vMax];
+          const side = eIdx % 2; // 0: top or left edge, 1: bottom or right edge
+          const across = (o) => isVert ? ((o.x0 < C && C < o.x1) || (side ? o.x0 : o.x1) === C) : ((o.y0 < C && C < o.y1) || (side ? o.y0 : o.y1) === C); // o crosses the edge or lies right against it
           for (let oIdx = 0; oIdx < l.rects.length; oIdx++) {
             if (oIdx === rIdx) continue;
             const o = l.rects[oIdx];
             if (isVert) {
-              if (o.x0 < C && C < o.x1) {
+              if (across(o)) {
                 if (o.y0 >= vMin && o.y0 <= vMax) intervalEnds.push(o.y0);
                 if (o.y1 >= vMin && o.y1 <= vMax) intervalEnds.push(o.y1);
               }
             } else {
-              if (o.y0 < C && C < o.y1) {
+              if (across(o)) {
                 if (o.x0 >= vMin && o.x0 <= vMax) intervalEnds.push(o.x0);
                 if (o.x1 >= vMin && o.x1 <= vMax) intervalEnds.push(o.x1);
               }
@@ -241,7 +311,7 @@ for (let seed = 1; seed <= 1000; seed++) {
             for (let oIdx = 0; oIdx < l.rects.length; oIdx++) {
               if (oIdx === rIdx) continue;
               const o = l.rects[oIdx];
-              if (px > o.x0 && px < o.x1 && py > o.y0 && py < o.y1) {
+              if (across(o) && (isVert ? (py > o.y0 && py < o.y1) : (px > o.x0 && px < o.x1))) {
                 strictlyInside = true;
                 break;
               }
@@ -361,6 +431,39 @@ for (let seed = 1; seed <= 1000; seed++) {
       }
       layout.lock = -1;
 
+      // --- Rule 14: a cut corner is outside every chamber, and a seam between two parts can be walked with a margin ---
+      layout = l;
+      for (let k = 0; k < l.rooms.length; k++) {
+        const rm = l.rooms[k], tag = 'Seed ' + seed + ', nFight ' + nFight + ', Rule 14: room ' + k + ' ';
+        for (const c of rm.cuts) {
+          for (const [fx, fy] of [[0.5, 0.5], [0.1, 0.1], [0.9, 0.9], [0.1, 0.9], [0.9, 0.1]]) {
+            const x = c.x0 + fx * (c.x1 - c.x0), y = c.y0 + fy * (c.y1 - c.y0);
+            if (roomAt(x, y) !== -1) throw new Error(tag + 'roomAt is ' + roomAt(x, y) + ' in a cut corner');
+            if (inMap(x, y)) throw new Error(tag + 'inMap is true in a cut corner');
+            layout.lock = k;
+            const inLocked = inMap(x, y);
+            layout.lock = -1;
+            if (inLocked) throw new Error(tag + 'inMap is true in a cut corner of the locked room');
+          }
+        }
+        for (let a = 0; a < rm.parts.length; a++) for (let b = a + 1; b < rm.parts.length; b++) {
+          const pa = rm.parts[a], pb = rm.parts[b];
+          let sx0, sx1, sy0, sy1;
+          if (pa.y1 === pb.y0 || pa.y0 === pb.y1) { sy0 = sy1 = pa.y1 === pb.y0 ? pa.y1 : pa.y0; sx0 = Math.max(pa.x0, pb.x0); sx1 = Math.min(pa.x1, pb.x1); }
+          else if (pa.x1 === pb.x0 || pa.x0 === pb.x1) { sx0 = sx1 = pa.x1 === pb.x0 ? pa.x1 : pa.x0; sy0 = Math.max(pa.y0, pb.y0); sy1 = Math.min(pa.y1, pb.y1); }
+          else continue;
+          if (Math.max(sx1 - sx0, sy1 - sy0) < 100) continue; // a short seam has no room for a margin of 40
+          const mx = (sx0 + sx1) / 2, my = (sy0 + sy1) / 2;
+          if (!inMap(mx, my, 40)) throw new Error(tag + 'the seam between parts ' + a + ' and ' + b + ' is not walkable with a margin of 40');
+          const kept = keepIn(mx, my, 40);
+          if (Math.abs(kept.x - mx) > 1e-6 || Math.abs(kept.y - my) > 1e-6) throw new Error(tag + 'keepIn moves a hunter standing on the seam between parts ' + a + ' and ' + b);
+        }
+        for (let t = 0; t < 200; t++) { // spawn points are floor, 70 inside a part
+          const pt = pointInRoom(k);
+          if (!rm.parts.some(pa => pt.x >= pa.x0 + 70 - 1e-6 && pt.x <= pa.x1 - 70 + 1e-6 && pt.y >= pa.y0 + 70 - 1e-6 && pt.y <= pa.y1 - 70 + 1e-6)) throw new Error(tag + 'pointInRoom gave a point outside the floor: (' + pt.x + ',' + pt.y + ')');
+        }
+      }
+
       // --- Rule 10: pointInRoom ---
       layout = l;
       for (let k = 1; k <= nFight; k++) {
@@ -380,6 +483,11 @@ for (let seed = 1; seed <= 1000; seed++) {
   }
 }
 
+// --- Rule 13, across all seeds: about half of the fight chambers are cut, and every shape occurs ---
+const fightRooms = shapeCount.rect + shapeCount.L + shapeCount.two, cutShare = (shapeCount.L + shapeCount.two) / fightRooms;
+if (cutShare < 0.4 || cutShare > 0.65) throw new Error('Rule 13: share of cut fight rooms is ' + cutShare + ' (' + JSON.stringify(shapeCount) + ')');
+if (!shapeCount.rect || !shapeCount.L || !shapeCount.two) throw new Error('Rule 13: a shape never occurs ' + JSON.stringify(shapeCount));
+console.error('shapes ' + JSON.stringify(shapeCount) + ' cut share ' + cutShare.toFixed(3));
 console.log('PASS ' + checkedCount);
 `;
 
