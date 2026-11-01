@@ -8,7 +8,7 @@ function createPlayer(name) {
     name, level:1, xp:0, xpToNext:xpNeed(1), rank:'E',
     stats:{ STR:5, AGI:5, INT:5, VIT:5, PER:5 }, statPoints:0, skillPoints:0, tree:{},
     weapon:0, gold:0, potions:1, shadows:[], cleared:{},
-    titles:[], title:'', feats:{ perfects:0, boxes:0, flawless:0 },
+    titles:[], title:'', hue:'', feats:{ perfects:0, boxes:0, flawless:0 }, // title: shown under the name; hue: earned title whose glow colour the hunter wears
     slain:{}, // the Hunter's Record: enemy name → how many the hunter has slain
     rift:false, rifts:0, riftSeen:false, // a Gilded Rift is open; rift runs entered; the first rift has been opened (it is guaranteed once)
     gear:{ armor:null, boots:null, ring:null }, bag:[],

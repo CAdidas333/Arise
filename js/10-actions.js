@@ -162,6 +162,7 @@ $('system-menu').addEventListener('click', e => {
     case 'aim': cycleAim(); break;
     case 'look': cycleLook(); break;
     case 'title': player.title = player.title === v ? '' : (player.titles.includes(v) ? v : player.title); saveGame(); playSfx('ui'); break;
+    case 'hue': player.hue = player.hue === v ? '' : (player.titles.includes(v) ? v : player.hue); saveGame(); playSfx('ui'); break; // wear or take off a title's glow colour
     case 'gate': enterGate(v); return;
     case 'endless': enterEndless(); return;
     case 'rift': enterRift(); return;

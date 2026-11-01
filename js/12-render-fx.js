@@ -9,18 +9,18 @@ const hunterLook = () => settings.hunter === 'classic' ? [drawHunterClassic, 1.1
 
 function drawPlayer() {
   if (dungeon.state === 'dead') return;
-  const ult = player.ultT > 0, wc = WEAPONS[player.weapon].color;
+  const ult = player.ultT > 0, wc = WEAPONS[player.weapon].color, hue = hunterHue(player); // worn title colour tints the floor glow and rim light
   ctx.globalAlpha = 0.4; ctx.fillStyle = '#000';
   ctx.beginPath(); ctx.ellipse(player.x, player.y + 14, 16, 6, 0, 0, TAU); ctx.fill();
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'lighter';
   const R = ult ? 120 : 64, g = ctx.createRadialGradient(player.x, player.y-12, 0, player.x, player.y-12, R);
-  g.addColorStop(0, ult ? 'rgba(136,68,255,0.5)' : 'rgba(0,212,255,0.17)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  g.addColorStop(0, ult ? 'rgba(136,68,255,0.5)' : hexRgba(hue, 0.17)); g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(player.x-R, player.y-12-R, R*2, R*2);
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = player.inv > 0 && player.dodgeT <= 0 && player.hitFlash <= 0 ? 0.5 + Math.sin(clock*40)*0.3 : 1;
   const [hunterFn, hunterScale] = hunterLook();
   hunterFn(player.x, player.y, { face:player.facing.x, anim:player.anim, t:player.animT, scale:hunterScale,
-    color:player.hitFlash > 0 ? COLORS.danger : ult ? '#cc88ff' : COLORS.primary, body:ult ? '#14062a' : '#0b1020',
+    color:player.hitFlash > 0 ? COLORS.danger : ult ? '#cc88ff' : hue, body:ult ? '#14062a' : '#0b1020',
     blade:ult ? '#dd88ff' : wc, eye:ult ? '#ff66ff' : '#aaeeff', cape:ult ? '#1a0633' : '#0a0a18',
     atkP:player.atkT > 0 ? 1 - player.atkT/player.atkDur : 0, atkDir:player.atkDir });
   ctx.globalAlpha = 1;
