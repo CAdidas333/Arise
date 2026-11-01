@@ -5,6 +5,7 @@
 ### What Changed
 - **Renewal** from S9; S9 archived. Paused 14:22 to 15:03 for AVL's priority (nothing of Arise's was running).
 - **The Gilded Rift** (F23; brief e1c6d87, Sonnet sub-agent 1ba0a66, merge da90209, ship 65dad29, stamp 20261031172320): a rare treasure gate after a clear; eight fleeing gold goblins, 60 seconds, nothing that hurts, no boss; not a gate clear. The free tiers returned nothing (Gemini 429 out of quota, the free OpenCode model silent for 35 minutes), so a Claude Sonnet sub-agent built it in a worktree; it crawled through the 16:00 to 17:00 machine overload. By hand: the catch count joins the clock on the top HUD, since phones hide the bottom gate-name line.
+- **Night of 10-31 (Houston: Chris asleep, one heavy job machine-wide):** Record pictures (F24; brief 7af120d, remote-only Gemini worker pass e269088, Gemini back from quota) and room shapes (F25; brief 0aff753, Sonnet sub-agent fe1ef96, no cross plans per the art rule), merged a1ba8d6 and 9500b39, live b4fe27b, stamp 20261101000741. By hand: the test's picture cache cleared before the fresh-hunter check; pictures fail safe (one unreproduced first-load drawImage error blanked the tab); rows laid out with flex so labels sit beside the picture. Tests ran inside a claimed slot (a waiter script that writes START when the night log shows no open heavy job); Houston refused a second slot beside a simulator.
 - **Cleanup:** two empty S9 worker worktrees (gate-dressing, hunters-record) and the merged sub-agent worktree removed.
 
 ### Checks
