@@ -107,6 +107,7 @@ try {
 
   // 10. what the tab says: a fresh hunter sees all ???, a count on every slain line, SHADOW RAISED only on a boss with a shadow
   p = newPlayer();
+  at('if (typeof RECORD_PICS === "object") for (const k in RECORD_PICS) delete RECORD_PICS[k]'); // pictures drawn for the earlier hunter, who had slain everything, must not count here
   const html0 = at('tabRecord()');
   if (!html0.includes(`Discovered 0 / ${names.length}`)) fail('a fresh hunter does not see Discovered 0 / total');
   if ((html0.match(/\?\?\?/g) || []).length !== names.length) fail(`a fresh hunter sees ${(html0.match(/\?\?\?/g) || []).length} ???, not ${names.length}`);
