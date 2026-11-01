@@ -1,14 +1,16 @@
 # Next Session Handoff
-_Written: 2026-10-31 01:50 (Saturday) by Session 9 (wrapped for renewal at 67 percent context), for Chris Whitney. Supersedes earlier versions._
+_Written: 2026-11-01 00:15 (Sunday) by Session 10 (wrapped for renewal near 75 percent context), for Chris Whitney. Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261031014753 (commit f10d695; `main` = `v18-world`). Nothing in
-flight, no worker or sub-agent worktrees left, preview server stopped. Session 9 shipped, all live: the classic hunter in 3D, dark
-edge and darker rooms ahead (U15); the Death Knight's sword at its side (U14); phone and iPad fixes, iPads now get touch controls
-(U16); the music loops without a hole (U17); System reward boxes (F16); System Titles (F17); gate weather (F18); shadow names (F19);
-the Hunter's Record tab (F20); gate dressing (F21); EQUIP BEST (F22); 3D dressing no longer culled away from the origin (G9).
-Chris set his play-test aside for later; do not push him for it. Houston ran the night (10-31) under "push hard"; the routing that
-worked when the free tiers were dead: Claude Sonnet sub-agents with `isolation: worktree`, briefs in `docs/briefs/`.
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261101000741 (ship b4fe27b, docs 35fe294; `main` = `v18-world`).
+Nothing in flight, preview server stopped. Session 10 shipped, all live: the Gilded Rift, a rare treasure gate (F23); a picture
+for each Hunter's Record entry, 2D (F24); L-shaped and notched chambers, 2D and 3D (F25). Chris has not played any of it; do not
+push him. Houston has the con overnight (Chris asleep since 21:12 on 10-31): ONE heavy job machine-wide (node tests, a browser or a
+sub-agent's tests count), load under 12, START/FINISH lines in `_brain/Comms/night-log.md`. The night log spans days, so only
+read lines after Houston's "21:12 Houston: Chris to bed" line; the claim-the-slot waiter that worked is in the S10 session log.
+Gemini came back from quota late on 10-31 (the Record-pictures pass); the free OpenCode model was silent all day. One leftover:
+the merged room-shapes sub-agent worktree `.claude/worktrees/agent-ab1a981026a31c59a` (fe1ef96, merged) is locked by S10's
+process; remove it once S10 is archived (`git worktree remove`, `git branch -d worktree-agent-ab1a981026a31c59a`).
 
 ### Try this first (for Chris, plain words)
 1. **On an iPad:** it works now (before 10-27 an iPad held sideways got no joystick or buttons).
@@ -30,10 +32,11 @@ worked when the free tiers were dead: Claude Sonnet sub-agents with `isolation: 
    `shadowDmg`, boss health, enemy damage.
 2. **Kevin's ideas** as they arrive from the KevinNotary session (it messages the newest "Arise S<n>" session): weigh them, build
    what Chris approves or free rein covers, reply through that session.
-3. **More variety without difficulty, our call under free rein** (Houston: push hard while weekly usage allows): ideas not yet built:
-   a bestiary picture for each Record entry (2D only, the 3D page has no 2D figure drawing), a treasure gate (no boss, fleeing
-   gold goblins, timed), more room shapes, shadow abilities that add style not power. One or two jobs at a time; brief, worker
-   (`--engine auto`), else a Sonnet sub-agent in a worktree; review, test both views, stamp, ship.
+3. **More variety without difficulty, our call under free rein** (Houston: use the runway; weekly resets Sunday 21:00): not
+   yet built: cosmetic hunter colours earned by titles (2D and 3D, no power); shadow style touches that add no power; the balance
+   bot's pathing through shaped rooms (`tools/balance_bot.js` paths by strict rectangle overlap; use `parts`/`cover`). One job at a
+   time at night; brief, worker (`--engine auto`, remote-only pass at night), else a Sonnet sub-agent in a worktree that claims the
+   slot before tests; review, test both views, stamp, ship.
 4. Parked: shared leaderboard and co-op (F1, Chris's word to start).
 
 ### Checks after every merge (all must pass before `tools/stamp.sh`)
