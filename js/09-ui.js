@@ -130,9 +130,9 @@ function tabStatus() {
   left += '<h3>Records</h3>' + row('Best Level', highScores.bestLevel) + row('Best Combo', highScores.bestCombo+'x') + row('Total Kills', fmtNum(highScores.totalKills))
     + row('Gates Cleared', highScores.gatesCleared) + row('Best Gate', highScores.bestGate+'-RANK') + row('Demon Castle', highScores.bestFloor ? 'FLOOR '+highScores.bestFloor : '—');
   left += '<h3>Titles <span style="font-size:11px;opacity:.5">' + player.titles.length + ' / ' + TITLES.length + '</span></h3>';
-  for (const t of TITLES) {
-    const shown = player.title === t.id;
-    if (player.titles.includes(t.id)) left += `<div class="stat-row"><span class="stat-name" style="color:#00d4ff">${t.name}<span style="display:block;font-size:10px;opacity:.4;letter-spacing:1px">${t.how}</span></span><span class="stat-value"><button class="sys-btn${shown ? ' on' : ''}" data-act="title" data-v="${t.id}">${shown ? 'SHOWN' : 'SHOW'}</button></span></div>`;
+  for (const t of TITLES) { // earned titles offer SHOW (name under rank) and WEAR (hunter glow colour) side by side
+    const shown = player.title === t.id, worn = player.hue === t.id;
+    if (player.titles.includes(t.id)) left += `<div class="stat-row"><span class="stat-name" style="color:#00d4ff">${t.name}<span style="display:block;font-size:10px;opacity:.4;letter-spacing:1px">${t.how}</span></span><span class="stat-value" style="display:flex;gap:6px;flex-shrink:0"><button class="sys-btn${shown ? ' on' : ''}" data-act="title" data-v="${t.id}">${shown ? 'SHOWN' : 'SHOW'}</button><button class="sys-btn${worn ? ' on' : ''}" data-act="hue" data-v="${t.id}"><span style="display:inline-block;width:9px;height:9px;margin-right:5px;background:${t.hue};box-shadow:0 0 6px ${t.hue}"></span>${worn ? 'WORN' : 'WEAR'}</button></span></div>`;
     else left += `<div class="stat-row" style="opacity:.35"><span class="stat-name">${t.name}<span style="display:block;font-size:10px;letter-spacing:1px">${t.how}</span></span></div>`;
   }
 

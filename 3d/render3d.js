@@ -1217,12 +1217,12 @@ const Fig = (function () {
     CB.cape = B(CB.hip, 'cape', 0, 16, -3.2); CB.cape.add(new THREE.Mesh(capeGeo, CM.cape));
   })();
 
-  // 0 = as he is, 1 = struck (red for an instant), 2 = awakened (violet). The blades take the colour of the weapon carried.
-  let tintNow = -1, bladeNow = '';
-  function tintHunter(state, blade) {
-    if (state !== tintNow) {
-      tintNow = state;
-      const glow = state === 1 ? 0xff2222 : state === 2 ? 0xbb66ff : CYAN;
+  // 0 = as he is (in his worn title hue, or cyan), 1 = struck (red for an instant), 2 = awakened (violet). The blades take the colour of the weapon carried.
+  let tintNow = -1, hueNow = '', bladeNow = '';
+  function tintHunter(state, blade, hue) {
+    if (state !== tintNow || hue !== hueNow) {
+      tintNow = state; hueNow = hue;
+      const glow = state === 1 ? 0xff2222 : state === 2 ? 0xbb66ff : (hue || CYAN);
       for (const k in HUE) { const m = HM[k]; m.emissive.set(state ? glow : HUE[k]); m.emissiveIntensity = state === 1 ? 0.9 : state === 2 ? 0.55 : 0.45; }
       HM.glow.color.set(glow); HM.eye.color.set(state === 1 ? 0xff5555 : state === 2 ? 0xff66ff : 0xaaeeff);
       CM.line.color.set(glow); CM.rim.color.set(glow);
@@ -1438,20 +1438,21 @@ function draw() {
   if (typeof player !== 'undefined' && player) {
     hunterGroup.position.set(player.x, 0, player.y);
     if (player.facing && (player.facing.x || player.facing.y)) Fig.turn(hunterGroup, Math.atan2(player.facing.x, player.facing.y), Fig.ease(dt, 22));
-    const ult = player.ultT > 0;
+    const CYAN = (typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : '#00d4ff';
+    const ult = player.ultT > 0, hue = typeof hunterHue === 'function' ? hunterHue(player) : CYAN;
     Fig.tintHunter(player.hitFlash > 0 ? 1 : ult ? 2 : 0,
-      ult ? '#dd88ff' : ((typeof WEAPONS !== 'undefined' && WEAPONS[player.weapon]) ? WEAPONS[player.weapon].color : '#aaddff'));
+      ult ? '#dd88ff' : ((typeof WEAPONS !== 'undefined' && WEAPONS[player.weapon]) ? WEAPONS[player.weapon].color : '#aaddff'), hue);
     Fig.setLook(typeof settings !== 'undefined' && settings.hunter === 'classic');
     Fig.poseHunter(player, dt);
     hunterGroup.visible = !(dungeon.state === 'dead')
       && !(player.inv > 0 && player.dodgeT <= 0 && player.hitFlash <= 0 && Math.sin(clock * 40) < -0.3); // 7. i-frames: the hunter blinks out
     hunterLight.position.set(player.x, 30, player.y);
-    hunterLight.color.set(ult ? 0xbb66ff : ((typeof COLORS !== 'undefined' && COLORS.primary) ? COLORS.primary : 0x00d4ff));
+    hunterLight.color.set(ult ? 0xbb66ff : hue);
     const gR = ult ? 120 : 64; // 8. the pool of light under his feet: violet and twice as wide while Awakened
     hunterGlow3D.visible = dungeon.state !== 'dead';
     hunterGlow3D.position.set(player.x, 0.7, player.y);
     hunterGlow3D.scale.set(gR, 1, gR);
-    hunterGlow3D.material.color.set(ult ? 0x8844ff : 0x00d4ff);
+    hunterGlow3D.material.color.set(ult ? 0x8844ff : hue);
     hunterGlow3D.material.opacity = ult ? 0.6 : 0.35;
   } else {
     hunterGroup.visible = false;
