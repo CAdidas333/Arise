@@ -1,5 +1,18 @@
 # Arise — Session Log
 
+## Session 11 — 2026-11-01 (Sunday afternoon, under Houston: Chris outside, "run the team") — hunter colours by title
+
+### What Changed
+- **Renewal** from S10; S10 archived, and the stale S7 (idle since 10-13) archived at Chris's word. The merged room-shapes worktree removed.
+- **Hunter colours earned by titles** (F26; brief 2dbc659, Gemini worker 261aa60 in 563 s, accepted as is, merge d02fe57, ship de300de, stamp 20261101145701): WEAR beside SHOW in STATUS; the worn title's colour tints the hunter's glow in 2D and 3D. Ran in claimed heavy slots (waiter on battery 50 percent, load under 12, no open START).
+- **Chris, 14:58: keep test audio off the Mac's speakers** (another project was testing audio). Memory `feedback_mute_test_audio`: stub `initAudio`, `setMusic`, `playSfx`, `say` before driving the game; headless Chrome with `--mute-audio`; blank the tab after.
+
+### Checks
+`check_names.sh`, `node --check` on every script, the headless load, `test_title_colours` (PASS 43), `test_titles` (71), `test_record` (156), `test_rift` (310), `test_equip_best` (22), `test_shadow_names` (16), `test_boxes` (3595), `test_army` (570), `test_layout` (8000), `test_gear` (626220). Browser, local preview: 2D gold pixels on the hunter only when worn (38 against 0); 3D light and floor pool `#ffd700` worn, `#00d4ff` not; no errors; phone 375 px: SHOW and WEAR on one line. Public pages on the new stamp.
+
+### Not Done
+Chris has not played; real phone and iPad, the music by ear (F12, E1 to E5, E3, U6).
+
 ## Session 10 — 2026-10-31 (Saturday afternoon, under Houston) — the Gilded Rift
 
 ### What Changed

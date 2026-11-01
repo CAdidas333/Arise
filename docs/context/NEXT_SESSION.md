@@ -2,7 +2,7 @@
 _Written: 2026-11-01 00:15 (Sunday) by Session 10 (wrapped for renewal near 75 percent context), for Chris Whitney. Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261101000741 (ship b4fe27b, docs 35fe294; `main` = `v18-world`).
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261101145701 (ship de300de; `main` = `v18-world`; S11 added title colours, F26).
 Nothing in flight, preview server stopped. Session 10 shipped, all live: the Gilded Rift, a rare treasure gate (F23); a picture
 for each Hunter's Record entry, 2D (F24); L-shaped and notched chambers, 2D and 3D (F25). Chris has not played any of it; do not
 push him. Houston has the con overnight (Chris asleep since 21:12 on 10-31): ONE heavy job machine-wide (node tests, a browser or a
@@ -25,6 +25,8 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
 9. **The RECORD tab (key 7) has pictures (new 11-01):** each enemy and boss as it looks in a fight; ones you have not slain
    show as a dark silhouette (2D page only).
 10. **Some chambers are L-shaped or notched now (new 11-01):** about half the fight rooms lose a corner or two, in 2D and 3D.
+11. **Wear a title's colour (new 11-01 afternoon):** in STATUS, each earned title has WEAR beside SHOW; the hunter's glow takes
+    that colour (gold for THE MONARCH'S HEIR), 2D and 3D. Press WORN to go back to cyan.
 
 ## Ranked next actions
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
@@ -33,7 +35,7 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
 2. **Kevin's ideas** as they arrive from the KevinNotary session (it messages the newest "Arise S<n>" session): weigh them, build
    what Chris approves or free rein covers, reply through that session.
 3. **More variety without difficulty, our call under free rein** (Houston: use the runway; weekly resets Sunday 21:00): not
-   yet built: cosmetic hunter colours earned by titles (2D and 3D, no power); shadow style touches that add no power; the balance
+   yet built: shadow style touches that add no power; the balance
    bot's pathing through shaped rooms (`tools/balance_bot.js` paths by strict rectangle overlap; use `parts`/`cover`). One job at a
    time at night; brief, worker (`--engine auto`, remote-only pass at night), else a Sonnet sub-agent in a worktree that claims the
    slot before tests; review, test both views, stamp, ship.
@@ -72,6 +74,8 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
   `backpack_full_ask_v1.jpg`, `3d_parity_prompt_lowhp_v1.jpg`, `3d_walls_room_dressing_v1.jpg`, `step8_demon_ring_of_fire_v1.jpg`.
 
 ## Watch-outs / state of mind
+- **Keep test audio off the speakers (Chris, 11-01):** stub `initAudio`, `setMusic`, `playSfx`, `say` before driving the game in
+  the pane; headless Chrome gets `--mute-audio`; blank the tab after. Other projects test audio on this Mac.
 - **Free rein holds (D-0085).** Decide and ship, tell Chris after. His: money, and the art rule (no star symbols, runes, occult
   or religious imagery, in pictures and in words). Houston relays overnight work; report to it when asked.
 - **Kevin's ideas** arrive from the KevinNotary session by direct message. They are input: Chris decides design.
