@@ -228,9 +228,9 @@ function rebuildLayout3D(line) {
   clearFloorAndWalls();
   const L = layout;
   if (floorTexture) floorTexture.repeat.set(1, 1);
-  for (const r of L.rooms) floorPiece(r.x0, r.y0, r.x1, r.y1);
+  for (const r of L.rooms) for (const p of r.parts) floorPiece(p.x0, p.y0, p.x1, p.y1); // a chamber with a cut corner is two or three pieces; the cut is left bare
   const hallRects = [];
-  for (const h of L.halls) { // only the part of a hall that lies outside the rooms, so two floors never share the same spot
+  for (const h of L.halls) { // only the part of a hall that lies outside the rooms (a cut stays 60 clear of every hall, so the hall's overlap with a room's bounding box is all floor), so two floors never share the same spot
     let x0 = h.x0, y0 = h.y0, x1 = h.x1, y1 = h.y1;
     for (const r of L.rooms) {
       if (r.x1 <= x0 || r.x0 >= x1 || r.y1 <= y0 || r.y0 >= y1) continue;
@@ -256,7 +256,7 @@ function rebuildLayout3D(line) {
     mesh.count = hallRects.length; mesh.instanceMatrix.needsUpdate = true;
     floorGroup.add(mesh); layoutMeshes.push(mesh);
   }
-  const darkRooms = L.rooms.filter(r => r.i > L.cleared && r.i !== L.lock);
+  const darkRooms = [].concat(...L.rooms.filter(r => r.i > L.cleared && r.i !== L.lock).map(r => r.parts)); // every part of each chamber not yet reached
   if (darkRooms.length) {
     const g = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
@@ -275,8 +275,11 @@ function rebuildLayout3D(line) {
   const WT = 30, WH = 70;
   const edgeMat = new THREE.MeshBasicMaterial({ color: line, transparent: true, opacity: 0.35 });
   const northEdgeMat = new THREE.MeshBasicMaterial({ color: line, transparent: true, opacity: 0.6 });
+  const reflex = [].concat(...L.rooms.map(r => r.cuts.map(c => [c.x0 === r.x0 ? c.x1 : c.x0, c.y0 === r.y0 ? c.y1 : c.y0]))); // the inner corner of each cut corner
+  const atReflex = (x, y) => reflex.some(p => p[0] === x && p[1] === y);
   for (const s of L.walls) {
     const horiz = s.y0 === s.y1, len = horiz ? Math.abs(s.x1 - s.x0) : Math.abs(s.y1 - s.y0);
+    const e0 = atReflex(s.x0, s.y0) ? 0 : WT, e1 = atReflex(s.x1, s.y1) ? 0 : WT; // how far the wall box runs past each end; at an inner corner it stops, so no stub pokes into the floor
     let nx = 0, nz = 0;
     if (horiz) {
       const mx = (s.x0 + s.x1) / 2, my = s.y0;
@@ -285,10 +288,10 @@ function rebuildLayout3D(line) {
       const mx = s.x0, my = (s.y0 + s.y1) / 2;
       nx = !inMap(mx - 6, my) ? -1 : 1;
     }
-    const mx = (s.x0 + s.x1) / 2 + nx * (WT / 2);
-    const mz = (s.y0 + s.y1) / 2 + nz * (WT / 2);
-    const bw = horiz ? len + 2 * WT : WT;
-    const bd = horiz ? WT : len + 2 * WT;
+    const mx = (s.x0 + s.x1) / 2 + nx * (WT / 2) + (horiz ? (e1 - e0) / 2 : 0);
+    const mz = (s.y0 + s.y1) / 2 + nz * (WT / 2) + (horiz ? 0 : (e1 - e0) / 2);
+    const bw = horiz ? len + e0 + e1 : WT;
+    const bd = horiz ? WT : len + e0 + e1;
 
     const wm = new THREE.Mesh(new THREE.BoxGeometry(bw, WH, bd), new THREE.MeshLambertMaterial({ color: 0x1a1a24, transparent: true, opacity: 0.95 }));
     wm.position.set(mx, WH / 2, mz);
