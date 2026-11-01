@@ -113,7 +113,7 @@ try {
   if ((html0.match(/\?\?\?/g) || []).length !== names.length) fail(`a fresh hunter sees ${(html0.match(/\?\?\?/g) || []).length} ???, not ${names.length}`);
   if (html0.includes('SHADOW RAISED')) fail('SHADOW RAISED shows with no shadow owned');
   if (!html0.includes('BOSS') || !html0.includes('MELEE')) fail('the kind labels are missing');
-  const shown = (html, n) => new RegExp(`<span class="stat-name">(?:<img class="rec-pic"[^>]*>)?${n}<`).test(html); // the name as a row shows it, not inside a gate heading
+  const shown = (html, n) => new RegExp(`<span class="stat-name"[^>]*>(?:<img class="rec-pic"[^>]*>)?(?:<span>)?${n}<`).test(html); // the name as a row shows it, not inside a gate heading
   for (const n of names) if (shown(html0, n)) fail(`${n} is shown though it was never slain`);
   checked += 4 + names.length;
   kill(GOBLIN); kill(GOBLIN); kill(QUEEN, '{ boss:true }');

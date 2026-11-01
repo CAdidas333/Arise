@@ -232,9 +232,10 @@ function tabRecord() {
     [...g.enemies.map(e => [e, e.kind.toUpperCase(), false]), [g.boss, 'BOSS', true]].forEach(([def, kind, boss]) => {
       const name = def.name, n = player.slain[name] | 0, raised = boss && player.shadows.some(s => s.name === name), known = n > 0 || raised; // a boss shadow raised before the Record existed counts as met
       total++; if (known) seen++;
-      const pic = typeof recordPic === 'function' ? `<img class="rec-pic" src="${recordPic(def, boss, known)}" width="40" height="40" alt="" style="vertical-align:middle;margin-right:10px;float:left;image-rendering:auto">` : '';
+      const src = typeof recordPic === 'function' ? recordPic(def, boss, known) : ''; // the 3D page has no 2D figures, so no pictures there
+      const pic = src ? `<img class="rec-pic" src="${src}" width="40" height="40" alt="" style="flex:none;margin-right:10px;image-rendering:auto">` : '';
       const tag = `<span style="opacity:.4">${kind}</span>${raised ? ' <span style="color:#bb88ff">· SHADOW RAISED</span>' : ''}`;
-      h += `<div class="stat-row"${known ? '' : ' style="opacity:.35"'}><span class="stat-name">${pic}${known ? esc(name) : '???'}<span style="display:block;font-size:10px;letter-spacing:1px">${tag}</span></span><span class="stat-value">${fmtNum(n)}</span></div>`;
+      h += `<div class="stat-row"${known ? '' : ' style="opacity:.35"'}><span class="stat-name"${pic ? ' style="display:flex;align-items:center"' : ''}>${pic}<span>${known ? esc(name) : '???'}<span style="display:block;font-size:10px;letter-spacing:1px">${tag}</span></span></span><span class="stat-value">${fmtNum(n)}</span></div>`;
     });
     cols[gi < GATE_DEFS.length/2 ? 0 : 1] += h;
   });
