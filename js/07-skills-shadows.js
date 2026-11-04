@@ -345,6 +345,14 @@ function updateShadows(dt) {
     }
     { const p = keepIn(s.x, s.y, 14); s.x = p.x; s.y = p.y; }
     if (s.atkT > 0) s.atkT -= dt;
+    // A moving shadow leaves a thin trail of dark violet smoke
+    if (s.moving) {
+      s.trailT = (s.trailT || 0) + dt;
+      if (s.trailT >= (berserk ? 0.08 : 0.14) * (isMobile ? 2 : 1)) {
+        s.trailT = 0;
+        if (particles.length < 700) spawnParticle(s.x + rand(-6, 6), s.y + rand(-4, 4), berserk ? '#3a0f55' : '#1a0a2e', { vx:rand(-10, 10), vy:rand(-30, -10), size:rand(6, 11), life:rand(0.4, 0.7), type:'smoke', drag:1, alpha:0.35 });
+      }
+    }
     if (Math.random() < (berserk ? 14 : 4)*dt) spawnParticle(s.x+rand(-6,6), s.y-rand(0,24), berserk ? '#cc55ff' : COLORS.accent, { vx:rand(-15,15), vy:rand(-70,-25), size:rand(2, berserk ? 6 : 4), life:0.5, alpha:0.6 });
   });
 }

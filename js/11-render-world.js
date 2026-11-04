@@ -1080,6 +1080,12 @@ function drawShadowSoldier(s) {
   ctx.restore();
   if (rising) ctx.restore();
   ctx.globalAlpha = 1;
+  // A named shadow shows its name in faint violet above it in a fight
+  if (s.nick && !(s.riseT > 0)) {
+    ctx.font = '9px Orbitron, monospace'; ctx.textAlign = 'center'; ctx.globalAlpha = 0.55; ctx.fillStyle = '#bb99ee';
+    ctx.fillText(s.nick, s.x, s.y - r * 2.2 - 6);
+    ctx.globalAlpha = 1; ctx.textAlign = 'left';
+  }
 }
 
 function drawTelegraph(g) {
