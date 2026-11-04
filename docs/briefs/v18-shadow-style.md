@@ -32,7 +32,8 @@ Nothing else changes: no damage, speed, range, cooldown, target choice or count 
 
 ## Test (new file `tools/test_shadow_style.js`, modelled on `tools/test_army.js` and `tools/lib/headless.js`)
 - Set up a hunter with three active shadows (one `melee`, one `ranged`, one `charger`) and a few live enemies placed 600 away so
-  the shadows walk, with the player counted as engaged and moving the way `tools/test_army.js` does it. Clear `particles`.
+  the shadows walk, with the player counted as engaged and moving (each step set `lastPlayerAttackTime = gameTime` and `lastMoveTime = gameTime`;
+  `updateShadows` only attacks and walks when both are recent, see its first lines). Clear `particles`.
   Step `updateShadows(1/60)` for 120 steps: smoke particles were added, and no more than `3 * ceil(2 / 0.14) + 3`.
 - Same with no live enemies (shadows stand): no smoke particles added by the shadows.
 - With `particles` already holding 700 entries: stepping adds none.
