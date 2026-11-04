@@ -2,7 +2,9 @@
 _Written: 2026-11-01 00:15 (Sunday) by Session 10 (wrapped for renewal near 75 percent context), for Chris Whitney. Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261101145701 (ship de300de; `main` = `v18-world`; S11 added title colours, F26).
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261101145701 (ship de300de, `main` = 9caa364). `v18-world` is AHEAD of main: the bot fix G10 (tools) and the shadow style touches F27,
+stamp 20261104024127, staged and waiting for Chris's word (Houston rule 11-04 00:14: production deploys need Chris's own words;
+card D-0291). Ship F27 with `git branch -f main v18-world && git push origin main` once he says go.
 Nothing in flight, preview server stopped. Session 10 shipped, all live: the Gilded Rift, a rare treasure gate (F23); a picture
 for each Hunter's Record entry, 2D (F24); L-shaped and notched chambers, 2D and 3D (F25). Chris has not played any of it; do not
 push him. Houston has the con overnight (Chris asleep since 21:12 on 10-31): ONE heavy job machine-wide (node tests, a browser or a
@@ -34,9 +36,8 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
    `shadowDmg`, boss health, enemy damage.
 2. **Kevin's ideas** as they arrive from the KevinNotary session (it messages the newest "Arise S<n>" session): weigh them, build
    what Chris approves or free rein covers, reply through that session.
-3. **More variety without difficulty, our call under free rein** (Houston: use the runway; weekly resets Sunday 21:00): not
-   yet built: shadow style touches that add no power; the balance
-   bot's pathing through shaped rooms (`tools/balance_bot.js` paths by strict rectangle overlap; use `parts`/`cover`). One job at a
+3. **More variety without difficulty, our call under free rein** (Houston: use the runway; weekly resets Sunday 21:00): the listed
+   pieces are done (title colours F26, bot pathing G10, shadow style F27); pick the next from OPEN_THREADS or Kevin's ideas. One job at a
    time at night; brief, worker (`--engine auto`, remote-only pass at night), else a Sonnet sub-agent in a worktree that claims the
    slot before tests; review, test both views, stamp, ship.
 4. Parked: shared leaderboard and co-op (F1, Chris's word to start).

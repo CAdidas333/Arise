@@ -1,5 +1,15 @@
 # Arise — Session Log
 
+## Session 11, night — 2026-11-04 (Houston has the con, Chris asleep) — the bot in shaped rooms, shadow style
+
+### What Changed
+- **The balance bot walks through shaped rooms** (G10; brief 57706f0, Gemini worker b442ded, merge 0d6960f; tools only). Before then after, 2 seeds at skill 0.5: stuck 2 then 0; damage taken about doubled (E 13 to 46 percent) because the bot now reaches the enemies; still no deaths. E1 note: the old bot overstated how easy the game is.
+- **Shadow style touches** (F27; brief 75d3a0b, Gemini worker 7c9ea90, merge 3869aa7, stamp 57210a4): a smoke trail behind moving shadows and names over named shadows, 2D and 3D. STAGED on `v18-world`, not live: Houston's 00:14 rule says production deploys need Chris's own words; card D-0291. `main` stays at 9caa364 (live stamp 20261101145701).
+- Every heavy job waited for Houston's Drive-hold lift (01:54), load under 12 and no open START (`slot2.py` in the session scratchpad); START and FINISH lines in the night log. Browser checks muted (audio functions stubbed, tab blanked after).
+
+### Checks
+`check_names.sh`, `node --check`, headless load, `test_shadow_style` (PASS 15), `test_bot_paths` (46002), `test_army` (570), `test_shadow_names` (16), `test_record` (156), `test_titles` (71), `test_title_colours` (43), `test_boxes` (3595), `test_rift` (310), `test_equip_best` (22), `test_layout` (8000), `test_gear` (626220).
+
 ## Session 11 — 2026-11-01 (Sunday afternoon, under Houston: Chris outside, "run the team") — hunter colours by title
 
 ### What Changed
