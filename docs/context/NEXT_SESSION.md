@@ -2,9 +2,8 @@
 _Written: 2026-11-01 00:15 (Sunday) by Session 10 (wrapped for renewal near 75 percent context), for Chris Whitney. Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261101145701 (ship de300de, `main` = 9caa364). `v18-world` is AHEAD of main: the bot fix G10 (tools) and the shadow style touches F27,
-stamp 20261104024127, staged and waiting for Chris's word (Houston rule 11-04 00:14: production deploys need Chris's own words;
-card D-0291). Ship F27 with `git branch -f main v18-world && git push origin main` once he says go.
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261104024127 (ship 843c9b3 = `main` = `v18-world`): S11 added title colours (F26), the bot's shaped-room pathing (G10) and the shadow
+style touches (F27, live 11-04 on Houston's GO, D-0291: free rein covers cosmetic ships, so no need to wait for Chris).
 Nothing in flight, preview server stopped. Session 10 shipped, all live: the Gilded Rift, a rare treasure gate (F23); a picture
 for each Hunter's Record entry, 2D (F24); L-shaped and notched chambers, 2D and 3D (F25). Chris has not played any of it; do not
 push him. Houston has the con overnight (Chris asleep since 21:12 on 10-31): ONE heavy job machine-wide (node tests, a browser or a
