@@ -17,8 +17,8 @@
 //
 // A run: a fresh hunter at the gate's required level, no gear, weapon 0, one potion, stat
 // points spent the way the game's auto-assign button spreads them, and skill points spent
-// round-robin across the three tree branches. The bot walks the dungeon (BFS over the room
-// and hall rects), closes on the nearest live enemy, slashes in range, uses its other skills
+// round-robin across the three tree branches. The bot walks the dungeon (BFS over the rooms'
+// parts and halls, linked by overlap or a shared edge), closes on the nearest live enemy, slashes in range, uses its other skills
 // when they are off cooldown and an enemy is near, casts the Awakening at 100, drinks a
 // potion below 35% HP, raises any shattered remnant it stands on, takes the first boon, and
 // dodges a telegraph that is about to land with probability = skill. Stat points earned
@@ -60,13 +60,44 @@ function makeRng(seed) {
 }
 
 const inside = (r, x, y) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
-const overlap = (a, b) => a !== b && a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
 
-// BFS over the layout rects (rooms first, then halls) to the rect containing tx,ty.
+// True when two distinct rects overlap or share an edge of length >= 40.
+function link(a, b) {
+  if (a === b) return false;
+  if (a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0) return true;
+  if (a.x1 === b.x0 || a.x0 === b.x1) {
+    if (Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) >= 40) return true;
+  }
+  if (a.y1 === b.y0 || a.y0 === b.y1) {
+    if (Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0) >= 40) return true;
+  }
+  return false;
+}
+
+// Smallest gap distance from a point to a rectangle (0 if inside).
+function pointRectDist(r, px, py) {
+  const dx = Math.max(0, r.x0 - px, px - r.x1);
+  const dy = Math.max(0, r.y0 - py, py - r.y1);
+  return Math.hypot(dx, dy);
+}
+
+// Find the rect containing px,py, or the nearest rect if none contains it.
+function findRect(rects, px, py) {
+  let idx = rects.findIndex(r => inside(r, px, py));
+  if (idx >= 0) return idx;
+  let bd = Infinity, bi = -1;
+  for (let i = 0; i < rects.length; i++) {
+    const d = pointRectDist(rects[i], px, py);
+    if (d < bd) { bd = d; bi = i; }
+  }
+  return bi;
+}
+
+// BFS over the layout rects (rooms' parts and halls) to the rect containing tx,ty.
 function pathTo(layout, x, y, tx, ty) {
   const rects = layout.rects;
-  const start = rects.findIndex(r => inside(r, x, y));
-  const goal = rects.findIndex(r => inside(r, tx, ty));
+  const start = findRect(rects, x, y);
+  const goal = findRect(rects, tx, ty);
   if (start < 0 || goal < 0 || start === goal) return null;
   const prev = new Map();
   const seen = new Set([start]);
@@ -75,7 +106,7 @@ function pathTo(layout, x, y, tx, ty) {
     const next = [];
     for (const i of frontier) {
       for (let j = 0; j < rects.length; j++) {
-        if (seen.has(j) || !overlap(rects[i], rects[j])) continue;
+        if (seen.has(j) || !link(rects[i], rects[j])) continue;
         seen.add(j);
         prev.set(j, i);
         if (j === goal) {
@@ -95,25 +126,49 @@ function rectCenter(r) {
   return { x: (r.x0 + r.x1) / 2, y: (r.y0 + r.y1) / 2 };
 }
 
-// Walk from where the hunter stands toward the entry of chamber `wave` (0-based rooms[]).
+// Centre of the room's largest floor part, or bounding centre if parts is missing.
+function floorPoint(room) {
+  if (!room.parts || !room.parts.length) return rectCenter(room);
+  let best = room.parts[0], maxArea = (best.x1 - best.x0) * (best.y1 - best.y0);
+  for (let i = 1; i < room.parts.length; i++) {
+    const p = room.parts[i];
+    const area = (p.x1 - p.x0) * (p.y1 - p.y0);
+    if (area > maxArea) {
+      maxArea = area;
+      best = p;
+    }
+  }
+  return rectCenter(best);
+}
+
+// Waypoint toward tx,ty along the shortest path through layout rects.
+function stepToward(layout, x, y, tx, ty) {
+  const path = pathTo(layout, x, y, tx, ty);
+  if (!path || path.length < 2) return { x: tx, y: ty };
+  const rects = layout.rects;
+  const goal = path[path.length - 1];
+  if (inside(rects[goal], x, y)) return { x: tx, y: ty };
+  while (path.length > 1 && inside(rects[path[1]], x, y)) path.shift();
+  if (path.length < 2) return { x: tx, y: ty };
+  const A = rects[path[0]], B = rects[path[1]];
+  const ix0 = Math.max(A.x0, B.x0), ix1 = Math.min(A.x1, B.x1);
+  const iy0 = Math.max(A.y0, B.y0), iy1 = Math.min(A.y1, B.y1);
+  const ic = { x: (ix0 + ix1) / 2, y: (iy0 + iy1) / 2 };
+  const d = Math.hypot(ic.x - x, ic.y - y);
+  return d > 24 ? ic : rectCenter(B);
+}
+
+// Walk from where the hunter stands toward chamber `wave` (0-based rooms[]).
 function walkToRoom(api, wave) {
   const layout = api.layout, p = api.player;
-  const target = layout.rooms[wave];
-  const path = pathTo(layout, p.x, p.y, (target.x0 + target.x1) / 2, (target.y0 + target.y1) / 2);
-  const wp = path && path.length > 1 ? rectCenter(layout.rects[path[1]]) : rectCenter(target);
-  return wp;
+  const target = floorPoint(layout.rooms[wave]);
+  return stepToward(layout, p.x, p.y, target.x, target.y);
 }
 
 // The dead-end stub that holds the exit portal: walk there for the boss hunt.
 function walkToExit(api) {
   const layout = api.layout, p = api.player, e = layout.exit;
-  if (inside(insideRect(layout, e.x, e.y), p.x, p.y)) return e;      // already in the stub
-  const path = pathTo(layout, p.x, p.y, e.x, e.y);
-  return path && path.length > 1 ? rectCenter(layout.rects[path[1]]) : e;
-}
-
-function insideRect(layout, x, y) {
-  return layout.rects.find(r => inside(r, x, y)) || layout.rects[0];
+  return stepToward(layout, p.x, p.y, e.x, e.y);
 }
 
 // Movement goes through the touch joystick, which is exactly what updatePlayer reads (it
@@ -202,7 +257,8 @@ function act(api, skill, rng, seen) {
     if (!d.endless && d.wave === d.maxWaves) { const wp = walkToExit(api); mx = wp.x; my = wp.y; }
     else { const wp = walkToRoom(api, d.wave); mx = wp.x; my = wp.y; }
   } else if (tgt) {
-    mx = tgt.x; my = tgt.y;                         // locked in: fight the nearest enemy
+    const wp = stepToward(layout, p.x, p.y, tgt.x, tgt.y); // locked in: fight the nearest enemy
+    mx = wp.x; my = wp.y;
   }
 
   if (dodging) { /* dodge already set the escape direction */ }
@@ -425,7 +481,7 @@ function main() {
   console.log(`TOTAL to fill every skill node: ${treeTotal} points — a hunter earns that at level ${treeLevel} (one point every 2 levels)`);
 }
 
-module.exports = { sim, spendTree, createGame, GATE_CAP };
+module.exports = { link, pathTo, floorPoint, stepToward, sim, spendTree, createGame, GATE_CAP };
 if (require.main === module) try {
   main();
   process.exitCode = 0;
