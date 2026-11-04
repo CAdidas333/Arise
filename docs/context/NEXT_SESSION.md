@@ -2,8 +2,8 @@
 _Written: 2026-11-01 00:15 (Sunday) by Session 10 (wrapped for renewal near 75 percent context), for Chris Whitney. Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261104024127 (ship 843c9b3 = `main` = `v18-world`): S11 added title colours (F26), the bot's shaped-room pathing (G10) and the shadow
-style touches (F27, live 11-04 on Houston's GO, D-0291: free rein covers cosmetic ships, so no need to wait for Chris).
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261104025521 (ship aaca90b = `main` = `v18-world`): S11 added title colours (F26), the bot's shaped-room pathing (G10),
+Record pictures on the 3D page (F28, `js/10b-figures.js` now loads on both pages) and the shadow style touches (F27, live 11-04 on Houston's GO, D-0291: free rein covers cosmetic ships, so no need to wait for Chris).
 Nothing in flight, preview server stopped. Session 10 shipped, all live: the Gilded Rift, a rare treasure gate (F23); a picture
 for each Hunter's Record entry, 2D (F24); L-shaped and notched chambers, 2D and 3D (F25). Chris has not played any of it; do not
 push him. Houston has the con overnight (Chris asleep since 21:12 on 10-31): ONE heavy job machine-wide (node tests, a browser or a
@@ -36,7 +36,7 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
 2. **Kevin's ideas** as they arrive from the KevinNotary session (it messages the newest "Arise S<n>" session): weigh them, build
    what Chris approves or free rein covers, reply through that session.
 3. **More variety without difficulty, our call under free rein** (Houston: use the runway; weekly resets Sunday 21:00): the listed
-   pieces are done (title colours F26, bot pathing G10, shadow style F27); pick the next from OPEN_THREADS or Kevin's ideas. One job at a
+   pieces are done (title colours F26, bot pathing G10, shadow style F27); pick the next from OPEN_THREADS or Kevin's ideas (F28 done too). One job at a
    time at night; brief, worker (`--engine auto`, remote-only pass at night), else a Sonnet sub-agent in a worktree that claims the
    slot before tests; review, test both views, stamp, ship.
 4. Parked: shared leaderboard and co-op (F1, Chris's word to start).
