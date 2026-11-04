@@ -1877,6 +1877,22 @@ function drawFx3D() {
       ctx.textAlign = 'left';
     }
 
+    // A named shadow shows its name in faint violet above it in a fight
+    if (typeof player !== 'undefined' && player && player.shadows) {
+      ctx.font = '9px Orbitron, monospace';
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = '#bb99ee';
+      for (const s of player.shadows) {
+        if (!s.active || !s.nick || (s.riseT > 0)) continue;
+        const p = toScreen(s.x, s.y, s.kind === 'boss' ? 95 : 52);
+        if (!p) continue;
+        ctx.fillText(s.nick, p[0], p[1]);
+      }
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'left';
+    }
+
     // 5. A slow arc of light spins round every elite and boss, marking the dangerous enemies
     ctx.globalCompositeOperation = 'lighter';
     if (typeof enemies !== 'undefined' && enemies) {
