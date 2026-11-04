@@ -142,6 +142,39 @@ try {
     checked += 4;
   }
 
+  // 12. figures shared: js/10b-figures.js loads on 2D and 3D pages and defines the eight figure names
+  const fs = require('fs');
+  const path = require('path');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const scripts = [];
+  const scriptRe = /<script\s+src="(js\/[^"?]+)(?:\?[^"]*)?"/g;
+  let sm;
+  while ((sm = scriptRe.exec(indexHtml))) scripts.push(sm[1]);
+
+  const actIdx = scripts.indexOf('js/10-actions.js');
+  const figIdx = scripts.indexOf('js/10b-figures.js');
+  const renIdx = scripts.indexOf('js/11-render-world.js');
+  if (figIdx === -1 || actIdx === -1 || renIdx === -1 || figIdx !== actIdx + 1 || renIdx !== figIdx + 1) {
+    fail('js/10b-figures.js is not present after js/10-actions.js and before js/11-render-world.js');
+  }
+  checked++;
+
+  const sync3dScripts = scripts.filter(s => s !== 'js/11-render-world.js' && s !== 'js/12-render-fx.js');
+  if (!sync3dScripts.includes('js/10b-figures.js')) {
+    fail('js/10b-figures.js is missing from 3D script list');
+  }
+  checked++;
+
+  const FIG_NAMES = ['line', 'disc', 'enemyPath', 'bossTrim', 'drawBoss', 'drawEnemy', 'RECORD_PICS', 'recordPic'];
+  const src10b = fs.readFileSync(path.join(__dirname, '..', 'js', '10b-figures.js'), 'utf8');
+  const src11 = fs.readFileSync(path.join(__dirname, '..', 'js', '11-render-world.js'), 'utf8');
+  for (const name of FIG_NAMES) {
+    const re = new RegExp(`^(const|let|function) +${name}\\b`, 'm');
+    if (re.test(src11)) fail(`js/11-render-world.js still defines ${name}`);
+    if (!re.test(src10b)) fail(`js/10b-figures.js does not define ${name}`);
+    checked++;
+  }
+
   console.log('PASS ' + checked);
 } catch (err) {
   console.error('FAIL');

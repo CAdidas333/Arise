@@ -3,7 +3,8 @@
 
 The 3D page is the same page with a different renderer: <base href="../"> makes every relative path resolve
 from the repo root, the two 2D drawing scripts are swapped for three.js and 3d/render3d.js, and the view
-switch points back at the 2D page.
+switch points back at the 2D page. js/10b-figures.js (the enemy and boss figures) loads on both pages, for the
+Record pictures.
 """
 import re
 from pathlib import Path
