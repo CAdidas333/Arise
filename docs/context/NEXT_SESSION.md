@@ -28,6 +28,9 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
 10. **Some chambers are L-shaped or notched now (new 11-01):** about half the fight rooms lose a corner or two, in 2D and 3D.
 11. **Wear a title's colour (new 11-01 afternoon):** in STATUS, each earned title has WEAR beside SHOW; the hunter's glow takes
     that colour (gold for THE MONARCH'S HEIR), 2D and 3D. Press WORN to go back to cyan.
+12. **Shadows leave a thin violet smoke trail when they move, and a shadow you named shows its name above it (new 11-04).**
+13. **The RECORD tab has pictures in 3D too now (new 11-04).**
+14. **CONTROLS, Screen shake (new 11-05, live once Houston says go, card D-0317):** FULL, LOW or OFF if the shaking bothers you.
 
 ## Ranked next actions
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
