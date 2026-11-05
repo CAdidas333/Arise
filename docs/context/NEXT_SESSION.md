@@ -2,8 +2,9 @@
 _Written: 2026-11-01 00:15 (Sunday) by Session 10 (wrapped for renewal near 75 percent context), for Chris Whitney. Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261104025521 (ship aaca90b = `main` = `v18-world`): S11 added title colours (F26), the bot's shaped-room pathing (G10),
-Record pictures on the 3D page (F28, `js/10b-figures.js` now loads on both pages) and the shadow style touches (F27, live 11-04 on Houston's GO, D-0291: free rein covers cosmetic ships, so no need to wait for Chris).
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261105021052 (ship 85a1e75 = `main` = `v18-world`): S11 added title colours (F26), the bot's shaped-room pathing (G10),
+Record pictures on the 3D page (F28, `js/10b-figures.js` now loads on both pages), the Screen shake setting (F29, live 11-05,
+D-0317) and the shadow style touches (F27, live 11-04 on Houston's GO, D-0291: free rein covers cosmetic ships, so no need to wait for Chris).
 Nothing in flight, preview server stopped. Session 10 shipped, all live: the Gilded Rift, a rare treasure gate (F23); a picture
 for each Hunter's Record entry, 2D (F24); L-shaped and notched chambers, 2D and 3D (F25). Chris has not played any of it; do not
 push him. Houston has the con overnight (Chris asleep since 21:12 on 10-31): ONE heavy job machine-wide (node tests, a browser or a
@@ -30,7 +31,7 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
     that colour (gold for THE MONARCH'S HEIR), 2D and 3D. Press WORN to go back to cyan.
 12. **Shadows leave a thin violet smoke trail when they move, and a shadow you named shows its name above it (new 11-04).**
 13. **The RECORD tab has pictures in 3D too now (new 11-04).**
-14. **CONTROLS, Screen shake (new 11-05, live once Houston says go, card D-0317):** FULL, LOW or OFF if the shaking bothers you.
+14. **CONTROLS, Screen shake (new 11-05):** FULL, LOW or OFF if the shaking bothers you.
 
 ## Ranked next actions
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
