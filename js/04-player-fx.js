@@ -100,7 +100,9 @@ function smoke(x, y, color, n = 6, spread = 20) {
   for (let i = 0; i < n; i++) spawnParticle(x+rand(-spread,spread), y+rand(-spread,spread), color, { vx:rand(-25,25), vy:rand(-70,-20), size:rand(8,18), life:rand(0.5,1.1), type:'smoke', drag:1, alpha:0.5 });
 }
 const ring = (x, y, color, r0, r1, dur = 0.4, w = 4) => rings.push({ x, y, color, r0, r1, t:0, dur, w });
-const shake = n => { camera.shake = Math.min(28, Math.max(camera.shake, n)); };
+// Camera shake scale: full impact, gentle low shake, or off
+const SHAKE_SCALE = { full:1, low:0.4, off:0 };
+const shake = n => { camera.shake = Math.min(28, Math.max(camera.shake, n * (SHAKE_SCALE[settings.shake] ?? 1))); };
 const flash = (color, alpha) => { if (alpha > screenFlash.alpha) screenFlash = { alpha, color }; };
 const hitstop = s => { hitStop = Math.max(hitStop, s); };
 const slowmo = (scale, sec) => { timeScale = scale; slowT = sec; };

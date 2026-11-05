@@ -106,6 +106,7 @@ function loadGame() {
   if (d.settings) Object.assign(settings, d.settings);
   if (!AIM_MODES.includes(settings.aim)) settings.aim = 'auto';
   if (settings.hunter !== 'classic') settings.hunter = 'new';
+  if (!Object.prototype.hasOwnProperty.call(SHAKE_SCALE, settings.shake)) settings.shake = 'full'; // bad or missing shake setting defaults to full
   highScores = Object.assign(highScores, d.highScores || {});
   questProgress = Object.assign({ kills:0, damageTaken:0, gatesCleared:0 }, d.questProgress || {});
   questDate = d.questDate || '';
