@@ -1,5 +1,12 @@
 # Arise — Session Log
 
+## Session 11, second night — 2026-11-05 (Houston has the con: "a lot of progress in the morning")
+
+### What Changed
+- **Screen shake setting** (F29; brief 33672e5, Gemini worker pass 1 a276385, review caught that `settings.shake in SHAKE_SCALE` accepts `toString` and would make the shake NaN, pass 2 179c918 fixed it with an own-key test and two cases; merge fdbfb39, stamp 2eb77a5). STAGED on `v18-world`, card D-0317 (rule 5 of Houston's 01:1x broadcast).
+- Slot check (`slot2.py`, session scratchpad) now also needs battery 50 percent or more, writes power and load on each START line (Houston's 11-04 13:51 rule), and ignores a START older than 3 hours with no FINISH (VendorHub S1's 18:08 line blocked the slot).
+- Balance bot full run after G10, for fresh E1 numbers (results below when done).
+
 ## Session 11, night — 2026-11-04 (Houston has the con, Chris asleep) — the bot in shaped rooms, shadow style
 
 ### What Changed
