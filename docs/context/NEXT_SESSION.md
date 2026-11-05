@@ -78,6 +78,8 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
   `backpack_full_ask_v1.jpg`, `3d_parity_prompt_lowhp_v1.jpg`, `3d_walls_room_dressing_v1.jpg`, `step8_demon_ring_of_fire_v1.jpg`.
 
 ## Watch-outs / state of mind
+- **The ☠ skull on shadows stays (Houston, D-0318, 11-05):** the art rule covers star symbols, runes, occult and religious
+  imagery; a skull and crossbones is a plain danger mark. If Chris ever objects, swap it for a dark-violet figure.
 - **Keep test audio off the speakers (Chris, 11-01):** stub `initAudio`, `setMusic`, `playSfx`, `say` before driving the game in
   the pane; headless Chrome gets `--mute-audio`; blank the tab after. Other projects test audio on this Mac.
 - **Free rein holds (D-0085).** Decide and ship, tell Chris after. His: money, and the art rule (no star symbols, runes, occult
