@@ -49,7 +49,7 @@ try {
   if (at('settings.shake') !== 'full') fail(`expected shake 'full' after 3rd cycle, got ${at('settings.shake')}`);
   checked++;
 
-  // 5. Save round trip keeps low; a save whose settings.shake is 'wild' loads as 'full'; a save with no shake key loads as 'full'
+  // 5. Save round trip keeps low; invalid saves ('wild', 'toString', 5, missing) load as 'full'
   const newPlayer = () => { const p = api.createPlayer('ShakeBot'); api.player = p; api.resetWorld(); return p; };
   newPlayer();
 
@@ -65,6 +65,28 @@ try {
     loadGame();
   })()`);
   if (at('settings.shake') !== 'full') fail(`save with 'wild' shake did not load as 'full', got ${at('settings.shake')}`);
+  checked++;
+
+  at(`(() => {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY));
+    d.settings.shake = 'toString';
+    localStorage.setItem(SAVE_KEY, JSON.stringify(d));
+    loadGame();
+  })()`);
+  if (at('settings.shake') !== 'full') fail(`save with 'toString' shake did not load as 'full', got ${at('settings.shake')}`);
+  at('camera.shake = 0; shake(10);');
+  if (at('camera.shake') !== 10) fail(`expected finite shake 10 after 'toString' save, got ${at('camera.shake')}`);
+  checked++;
+
+  at(`(() => {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY));
+    d.settings.shake = 5;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(d));
+    loadGame();
+  })()`);
+  if (at('settings.shake') !== 'full') fail(`save with number 5 shake did not load as 'full', got ${at('settings.shake')}`);
+  at('camera.shake = 0; shake(10);');
+  if (at('camera.shake') !== 10) fail(`expected finite shake 10 after number 5 save, got ${at('camera.shake')}`);
   checked++;
 
   at(`(() => {
