@@ -161,6 +161,7 @@ $('system-menu').addEventListener('click', e => {
     case 'gear-sell-weaker': sellWeakerGear(); break;
     case 'aim': cycleAim(); break;
     case 'look': cycleLook(); break;
+    case 'shake': cycleShake(); break;
     case 'title': player.title = player.title === v ? '' : (player.titles.includes(v) ? v : player.title); saveGame(); playSfx('ui'); break;
     case 'hue': player.hue = player.hue === v ? '' : (player.titles.includes(v) ? v : player.hue); saveGame(); playSfx('ui'); break; // wear or take off a title's glow colour
     case 'gate': enterGate(v); return;
@@ -197,6 +198,13 @@ function cycleLook() {
   settings.hunter = settings.hunter === 'classic' ? 'new' : 'classic';
   saveGame(); playSfx('ui');
   toast(settings.hunter === 'classic' ? 'HUNTER LOOK: CLASSIC' : 'HUNTER LOOK: NEW', 'blue', 2000);
+}
+// Screen shake cycles full, low, off with a toast
+function cycleShake() {
+  const modes = ['full', 'low', 'off'];
+  settings.shake = modes[(modes.indexOf(settings.shake)+1) % modes.length];
+  saveGame(); playSfx('ui');
+  toast('SCREEN SHAKE: ' + settings.shake.toUpperCase(), 'blue', 2000);
 }
 function enterHub() { gameState = 'HUB'; show('system-menu'); applySettings(); setMusic('hub'); renderSystemMenu(); }
 function beginFromTitle() {
