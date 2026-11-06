@@ -3,6 +3,7 @@
 ## Session 11, third night — 2026-11-06 (Houston has the con; the Mac restarted 21:36)
 
 - **Screen flashes and Damage numbers** (F30; brief 1ec6be8, free OpenCode worker 516da7c, accepted as is, merge 0101b4d, stamp 2f0e992), LIVE on Houston's GO (D-0326): main 40b32a1, stamp 20261106001744. The first queued run died with the 21:36 restart before it started (nothing lost; the scratchpad, `slot2.py` included, was wiped and rebuilt).
+- **Controller support** (F31; brief 5cab946; Gemini out of credits and two free OpenCode models timed out, so paid HF DeepSeek-V4.1-Flash built it in 241 s, month spend 0.09 USD; accepted as is, merge 17d7f37, stamp 6547c14), LIVE on Houston's GO (D-0327): main 69b0741, stamp 20261106053914. `test_gamepad` PASS 19; bot 1 seed every gate cleared, 0 stuck; muted browser with a fake pad in 3D and 2D.
 - Checks: `test_comfort_settings` (PASS 31) plus every suite (shake 18, army 570, titles 71, title colours 43, record 166, rift 310, shadow style 15, shadow names 16, boxes 3595, equip best 22, layout 8000, gear 626220). Muted browser, 3D at 375 px and 2D desktop, no errors.
 
 ## Session 11, second night — 2026-11-05 (Houston has the con: "a lot of progress in the morning")

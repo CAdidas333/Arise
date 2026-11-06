@@ -2,9 +2,9 @@
 _Written: 2026-11-01 00:15 (Sunday) by Session 10 (wrapped for renewal near 75 percent context), for Chris Whitney. Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261106001744 (ship 40b32a1 = `main` = `v18-world`): S11 added title colours (F26), the bot's shaped-room pathing (G10),
+Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261106053914 (ship 69b0741 = `main` = `v18-world`): S11 added title colours (F26), the bot's shaped-room pathing (G10),
 Record pictures on the 3D page (F28, `js/10b-figures.js` now loads on both pages), the Screen shake setting (F29, live 11-05,
-D-0317), Screen flashes and Damage numbers (F30, live 11-06, D-0326) and the shadow style touches (F27, live 11-04 on Houston's GO, D-0291: free rein covers cosmetic ships, so no need to wait for Chris).
+D-0317), Screen flashes and Damage numbers (F30, live 11-06, D-0326), controller support (F31, live 11-06, D-0327) and the shadow style touches (F27, live 11-04 on Houston's GO, D-0291: free rein covers cosmetic ships, so no need to wait for Chris).
 Nothing in flight, preview server stopped. Session 10 shipped, all live: the Gilded Rift, a rare treasure gate (F23); a picture
 for each Hunter's Record entry, 2D (F24); L-shaped and notched chambers, 2D and 3D (F25). Chris has not played any of it; do not
 push him. Houston has the con overnight (Chris asleep since 21:12 on 10-31): ONE heavy job machine-wide (node tests, a browser or a
@@ -33,6 +33,8 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
 13. **The RECORD tab has pictures in 3D too now (new 11-04).**
 14. **CONTROLS, Screen shake (new 11-05):** FULL, LOW or OFF if the shaking bothers you.
 15. **CONTROLS, Screen flashes and Damage numbers (new 11-06):** softer or no flashes, and hide the numbers if you prefer.
+16. **Play with a game controller (new 11-06):** plug in an Xbox, PlayStation or Switch Pro pad; the CONTROLS tab lists the
+    buttons. Tell me if the layout feels wrong. (Music may need one click or key press before it starts.)
 
 ## Ranked next actions
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
