@@ -162,6 +162,8 @@ $('system-menu').addEventListener('click', e => {
     case 'aim': cycleAim(); break;
     case 'look': cycleLook(); break;
     case 'shake': cycleShake(); break;
+    case 'flashes': cycleFlashes(); break;
+    case 'numbers': toggleNumbers(); break;
     case 'title': player.title = player.title === v ? '' : (player.titles.includes(v) ? v : player.title); saveGame(); playSfx('ui'); break;
     case 'hue': player.hue = player.hue === v ? '' : (player.titles.includes(v) ? v : player.hue); saveGame(); playSfx('ui'); break; // wear or take off a title's glow colour
     case 'gate': enterGate(v); return;
@@ -205,6 +207,19 @@ function cycleShake() {
   settings.shake = modes[(modes.indexOf(settings.shake)+1) % modes.length];
   saveGame(); playSfx('ui');
   toast('SCREEN SHAKE: ' + settings.shake.toUpperCase(), 'blue', 2000);
+}
+// Screen flashes cycle full, low, off with a toast
+function cycleFlashes() {
+  const modes = ['full', 'low', 'off'];
+  settings.flashes = modes[(modes.indexOf(settings.flashes)+1) % modes.length];
+  saveGame(); playSfx('ui');
+  toast('SCREEN FLASHES: ' + settings.flashes.toUpperCase(), 'blue', 2000);
+}
+// Damage numbers toggle on and off with a toast
+function toggleNumbers() {
+  settings.numbers = settings.numbers === 'off' ? 'on' : 'off';
+  saveGame(); playSfx('ui');
+  toast('DAMAGE NUMBERS: ' + settings.numbers.toUpperCase(), 'blue', 2000);
 }
 function enterHub() { gameState = 'HUB'; show('system-menu'); applySettings(); setMusic('hub'); renderSystemMenu(); }
 function beginFromTitle() {
