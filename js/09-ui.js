@@ -247,7 +247,11 @@ function tabControls() {
   const or = ' <span style="opacity:.4;font-family:Rajdhani,sans-serif">or</span> ';
   const left = '<h3>Keyboard + Mouse</h3>' + k('Move', 'W A S D' + or + 'ARROWS') + k('Attack (hold it down)', 'X' + or + 'J' + or + 'CLICK')
     + k('Dodge', 'SPACE' + or + 'SHIFT') + k('Skills', '1 &nbsp; 2 &nbsp; 3 &nbsp; 4 &nbsp; 5') + k('Awakening, when the purple bar is full', 'R')
-    + k('Arise a fallen shadow (stand on the wisp)', 'E') + k('Healing potion', 'F') + k('Pause', 'ESC' + or + 'P') + k('Change aim mode', 'M') + k('Pick a reward between waves', '1 &nbsp; 2 &nbsp; 3');
+    + k('Arise a fallen shadow (stand on the wisp)', 'E') + k('Healing potion', 'F') + k('Pause', 'ESC' + or + 'P') + k('Change aim mode', 'M') + k('Pick a reward between waves', '1 &nbsp; 2 &nbsp; 3')
+    + '<h3>Controller</h3>' + k('Move', 'LEFT STICK') + k('Attack (hold it down)', 'A')
+    + k('Dodge', 'B') + k('Arise a fallen shadow (stand on the wisp)', 'X') + k('Awakening, when the purple bar is full', 'Y')
+    + k('Skills', 'LB &nbsp; RB &nbsp; LT &nbsp; RT') + k('Pick a reward between waves', 'LB &nbsp; RB &nbsp; LT')
+    + k('Healing potion', 'D-PAD DOWN') + k('Pause', 'START');
   const slider = (id, label) => `<div class="stat-row"><span class="stat-name">${label}</span><span class="audio-ctrl"><input type="range" data-set="${id}" min="0" max="100" value="${Math.round(settings[id]*100)}" style="width:150px"></span></div>`;
   const aimText = { auto:'Face where you move. The pointer takes over only while you move it.', keys:'Always face where you move.', mouse:'Always face the pointer.' }[settings.aim];
   const shakeText = { full:'The screen shakes on big hits.', low:'A gentle shake on big hits.', off:'The screen never shakes.' }[settings.shake]; // Screen shake: full, gentle, or none on hits

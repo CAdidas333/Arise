@@ -11,6 +11,7 @@ function updatePlayer(dt) {
   if (keys['a'] || keys['arrowleft']) dx -= 1;
   if (keys['d'] || keys['arrowright']) dx += 1;
   if (touchJoystick.active) { dx += touchJoystick.dx; dy += touchJoystick.dy; }
+  if (padMove.active) { dx += padMove.dx; dy += padMove.dy; } // the pad's left stick adds to the same movement
   if (viewYaw) { const c = Math.cos(viewYaw), s = Math.sin(viewYaw), rx = dx*c + dy*s; dy = -dx*s + dy*c; dx = rx; } // 3D view: "up" means away from the camera
   const mag = Math.hypot(dx, dy);
   if (mag > 0.12) {
@@ -59,7 +60,7 @@ function updatePlayer(dt) {
   if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) comboCount = 0; }
 
   // Hold-to-attack
-  if ((mouse.down || touchAttack || keys['x'] || keys['j']) && (player.cds.slash || 0) <= 0) useSkill(SKILL.slash);
+  if ((mouse.down || touchAttack || keys['x'] || keys['j'] || padAttack) && (player.cds.slash || 0) <= 0) useSkill(SKILL.slash);
 
   if (remnants.length) { for (const r of remnants) r.t += dt; remnants = remnants.filter(r => r.t < r.dur); }
   if (rewardBoxes && rewardBoxes.length) { // system reward box
@@ -88,6 +89,7 @@ function runTimers(dtGame, dtReal) {
 }
 
 function step(raw) {
+  pollPad(); // the pad is read every frame, before the paused check, so Start can resume
   clock += raw;
   if (gameState !== 'DUNGEON' || !player || !dungeon) { updateFx(raw); return; }
   if (paused) return;
