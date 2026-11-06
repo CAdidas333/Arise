@@ -32,6 +32,7 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
 12. **Shadows leave a thin violet smoke trail when they move, and a shadow you named shows its name above it (new 11-04).**
 13. **The RECORD tab has pictures in 3D too now (new 11-04).**
 14. **CONTROLS, Screen shake (new 11-05):** FULL, LOW or OFF if the shaking bothers you.
+15. **CONTROLS, Screen flashes and Damage numbers (new 11-06):** softer or no flashes, and hide the numbers if you prefer.
 
 ## Ranked next actions
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
