@@ -20,7 +20,7 @@ function damageEnemy(e, dmg, o = {}) {
       if (e.state === 'wind' && e.kind !== 'bomber' && o.kb >= 300) { e.state = 'chase'; e.cd = 0.5; telegraphs = telegraphs.filter(g => g.owner !== e); }
     }
   }
-  floatText(e.x, e.y-e.size-8, isCrit ? `${fmtNum(fd)}!` : fmtNum(fd), o.shadow ? '#bb88ff' : isCrit ? '#ffcc00' : '#ffffff', isCrit ? 24 : o.shadow ? 13 : 16);
+  if (settings.numbers !== 'off') floatText(e.x, e.y-e.size-8, isCrit ? `${fmtNum(fd)}!` : fmtNum(fd), o.shadow ? '#bb88ff' : isCrit ? '#ffcc00' : '#ffffff', isCrit ? 24 : o.shadow ? 13 : 16); // Damage numbers: off hides the numbers rising from a hit
   spawnBurst(e.x, e.y, isCrit ? '#ffee88' : e.color, isCrit ? 9 : 4, isCrit ? 380 : 240);
   playSfx(isCrit ? 'crit' : 'hit');
   if (e.kind === 'flee' && dungeon && dungeon.rift && (e.spills|0) < 5) { // a Gilded Goblin spills one small gold orb for each hit, up to 5
@@ -97,7 +97,7 @@ function hurtPlayer(dmg) {
   if (player.hp > 0 && player.hp < player.maxHp*0.25) say('low_hp'); else if (st > 3) say('keep_moving');
   questProgress.damageTaken += fd; highScores.damageTaken += fd; run.dmgTaken += fd;
   playSfx('hurt');
-  floatText(player.x, player.y-46, `-${fmtNum(fd)}`, COLORS.danger, 18);
+  if (settings.numbers !== 'off') floatText(player.x, player.y-46, `-${fmtNum(fd)}`, COLORS.danger, 18); // Damage numbers: off hides the damage the hunter takes
   shake(Math.min(16, 5 + fd/player.maxHp*60));
   spawnBurst(player.x, player.y-12, COLORS.danger, 8, 260); flash('#ff0000', 0.12);
   if (player.hp <= 0) { player.hp = 0; showDeath(); }

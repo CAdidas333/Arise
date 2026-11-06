@@ -6,7 +6,7 @@
 let AC = null, master, musicGain, sfxGain, revSend, noiseBuf;
 let musicMode = 'off', musicStep = 0, nextStepT = 0, musicIntensity = 0.5;
 let synthBus, trkVol, trk = null, trkIv = -1, synthT = 1; // recorded-music state, see RECORDED MUSIC below
-const settings = { music:0.4, sfx:0.6, aim:'auto', hunter:'new', shake:'full' }; // Screen shake: full, low, off
+const settings = { music:0.4, sfx:0.6, aim:'auto', hunter:'new', shake:'full', flashes:'full', numbers:'on' }; // Screen shake full/low/off; screen flashes full/low/off; damage numbers on/off
 
 function initAudio() {
   if (window.__arise) window.__arise.musicState = musicState; // test hook, only when the page was opened with #debug

@@ -103,7 +103,9 @@ const ring = (x, y, color, r0, r1, dur = 0.4, w = 4) => rings.push({ x, y, color
 // Camera shake scale: full impact, gentle low shake, or off
 const SHAKE_SCALE = { full:1, low:0.4, off:0 };
 const shake = n => { camera.shake = Math.min(28, Math.max(camera.shake, n * (SHAKE_SCALE[settings.shake] ?? 1))); };
-const flash = (color, alpha) => { if (alpha > screenFlash.alpha) screenFlash = { alpha, color }; };
+// Screen flash scale: full brightness, soft low flash, or none
+const FLASH_SCALE = { full:1, low:0.4, off:0 };
+const flash = (color, alpha) => { const a = alpha * (Object.prototype.hasOwnProperty.call(FLASH_SCALE, settings.flashes) ? FLASH_SCALE[settings.flashes] : 1); if (a > 0 && a > screenFlash.alpha) screenFlash = { alpha:a, color }; };
 const hitstop = s => { hitStop = Math.max(hitStop, s); };
 const slowmo = (scale, sec) => { timeScale = scale; slowT = sec; };
 function floatText(x, y, text, color = '#fff', size = 16) {
