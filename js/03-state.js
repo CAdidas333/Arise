@@ -188,6 +188,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && gam
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || ('ontouchstart' in window && innerWidth < 1024)
   || (navigator.maxTouchPoints > 1 && matchMedia('(pointer: coarse)').matches) || /[?&]touch=1/.test(location.search);
 const touchJoystick = { active:false, dx:0, dy:0 };
+const padMove = { active:false, dx:0, dy:0 }; // left stick: the pad walks the hunter exactly like the touch stick
+let padAttack = false; // A is held down: keep attacking
+addEventListener('gamepadconnected', () => toast('CONTROLLER CONNECTED', 'blue', 2000)); // a pad was switched on
 
 // One entry point for every action button, on any device
 function act(a) {

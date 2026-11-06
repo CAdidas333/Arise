@@ -271,6 +271,42 @@ function onKey(key, e) {
   if (si >= 0) useSkill(SKILL_DEFS[si]);
 }
 
+// ================================================================
+//  GAMEPAD — a standard pad drives the same keys the keyboard does
+// ================================================================
+// The connected pads as a plain array: null entries dropped, and [] when the browser has no usable list
+function readPads() {
+  const get = navigator.getGamepads;
+  if (typeof get !== 'function') return [];
+  let list;
+  try { list = get.call(navigator); } catch (e) { return []; }
+  if (!list || typeof list.length !== 'number') return [];
+  const out = [];
+  for (let i = 0; i < list.length; i++) if (list[i]) out.push(list[i]);
+  return out;
+}
+const PAD_PREV = []; // last frame's pressed state, per button: only the frame a button goes down fires
+const padDown = (pad, i) => { const b = pad.buttons && pad.buttons[i]; return !!(b && (b.pressed || ((i === 6 || i === 7) && b.value > 0.5))); }; // triggers can be analogue: value counts as a press
+// The player's pad: stick to move, the face buttons and shoulders to act, Start to pause
+function pollPad(pads = readPads()) {
+  const pad = pads && (pads.find(p => p && p.mapping === 'standard') || pads.find(p => p));
+  if (!pad) { padMove.active = false; padAttack = false; return; }
+  const ax = pad.axes || [], len = Math.hypot(ax[0] || 0, ax[1] || 0);
+  if (len > 0.2) { padMove.active = true; padMove.dx = ax[0] || 0; padMove.dy = ax[1] || 0; } // raw values: updatePlayer caps the length at 1, so a light push walks slower
+  else padMove.active = false;
+  const inRun = gameState === 'DUNGEON' && !storyRun;
+  padAttack = !!inRun && !!dungeon && dungeon.state === 'fight' && padDown(pad, 0); // A held keeps the attack going
+  const boon = !!(inRun && dungeon && dungeon.state === 'boon'); // a reward is up: the shoulders pick one
+  const keyFor = i => i === 0 ? (inRun ? 'x' : 'enter') : i === 1 ? ' ' : i === 2 ? 'e' : i === 3 ? 'r'
+    : i === 4 ? (boon ? '1' : '2') : i === 5 ? (boon ? '2' : '3') : i === 6 ? (boon ? '3' : '4')
+    : i === 7 ? '5' : i === 9 ? 'escape' : i === 13 ? 'f' : null;
+  for (let i = 0; i < 17; i++) {
+    const down = padDown(pad, i), was = PAD_PREV[i];
+    if (down && !was) { const k = keyFor(i); if (k) onKey(k, { preventDefault(){}, target:null }); }
+    PAD_PREV[i] = down;
+  }
+}
+
 $('title-screen').addEventListener('click', beginFromTitle);
 $('name-btn').addEventListener('click', confirmName);
 $('extract-btn').addEventListener('click', doExtract);
