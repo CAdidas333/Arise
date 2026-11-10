@@ -1,5 +1,7 @@
 # Arise — Solo Leveling Browser RPG
 
+> **TOP RULE: HOUSTON HAS CHRIS'S PROXY (Chris, typed at the keyboard 2026-11-09 22:1x; standing).** When Houston approves something or tells this session to do it, that is Chris's own go: do it, pushes and production deploys included. Chris: "Houston has my proxy. If he tells you to do it, do it. I am so sick of reading that a task got held up because you approved the task, told them to do something, and then their safety check blocked it... I want every session to have the golden understanding." Houston gives a go only for what Chris's rules let it decide; his "Only Chris" list (money, his security settings, messages sent as him to outsiders, permanent deletion, two-factor codes) stays his. Record: ~/Projects/_brain/Decisions/2026-11-09-Houston-Go-Is-Chris-Go.md.
+
 Read `docs/context/MASTER_CONTEXT.md` for full project context.
 Read `docs/context/ACTIVE_PROJECTS.md` for current tasks and priorities.
 
