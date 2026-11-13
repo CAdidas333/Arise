@@ -164,6 +164,7 @@ $('system-menu').addEventListener('click', e => {
     case 'shake': cycleShake(); break;
     case 'flashes': cycleFlashes(); break;
     case 'numbers': toggleNumbers(); break;
+    case 'rumble': toggleRumble(); break;
     case 'title': player.title = player.title === v ? '' : (player.titles.includes(v) ? v : player.title); saveGame(); playSfx('ui'); break;
     case 'hue': player.hue = player.hue === v ? '' : (player.titles.includes(v) ? v : player.hue); saveGame(); playSfx('ui'); break; // wear or take off a title's glow colour
     case 'gate': enterGate(v); return;
@@ -220,6 +221,12 @@ function toggleNumbers() {
   settings.numbers = settings.numbers === 'off' ? 'on' : 'off';
   saveGame(); playSfx('ui');
   toast('DAMAGE NUMBERS: ' + settings.numbers.toUpperCase(), 'blue', 2000);
+}
+// Controller rumble toggles on and off with a toast
+function toggleRumble() {
+  settings.rumble = settings.rumble === 'off' ? 'on' : 'off';
+  saveGame(); playSfx('ui');
+  toast('CONTROLLER RUMBLE: ' + settings.rumble.toUpperCase(), 'blue', 2000);
 }
 function enterHub() { gameState = 'HUB'; show('system-menu'); applySettings(); setMusic('hub'); renderSystemMenu(); }
 function beginFromTitle() {
@@ -338,6 +345,16 @@ function pollPad(pads = readPads()) {
     else if (down && !was) { const k = keyFor(i); if (k) onKey(k, { preventDefault(){}, target:null }); }
     PAD_PREV[i] = down;
   }
+}
+
+// Big hits buzz the first pad that can rumble: stronger for bigger hits, at most once per 0.05 s
+let padRumbleT = -1;
+function padRumble(n) {
+  if (settings.rumble === 'off' || !(n > 0) || clock - padRumbleT < 0.05) return;
+  const pad = readPads().find(p => p.vibrationActuator && typeof p.vibrationActuator.playEffect === 'function'); if (!pad) return;
+  padRumbleT = clock;
+  const k = Math.min(1, n / 28);
+  try { const r = pad.vibrationActuator.playEffect('dual-rumble', { duration: Math.round(60 + 140 * k), strongMagnitude: k, weakMagnitude: Math.min(1, k * 0.6 + 0.2) }); if (r && typeof r.catch === 'function') r.catch(() => {}); } catch (e) {}
 }
 
 $('title-screen').addEventListener('click', beginFromTitle);
