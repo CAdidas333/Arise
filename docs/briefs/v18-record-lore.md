@@ -35,16 +35,16 @@ letter-spacing 1 px), dimmed (`opacity:.55`), and wraps on a phone instead of wi
 | Imp Bomber | Small and quick, with a charge that bursts. Keep your distance. |
 | Hellguard | A wall of armour. Circle behind it while it winds up. |
 | Demon Lord | Rings the arena with fire in its last stand. Stay off the flames. |
-| Drake | Charges low and fast across the room. Sidestep, then strike. |
+| Drake | Charges low and fast through the room. Sidestep, then strike. |
 | Wyvern | Spits fire from above. Keep moving and the shots miss. |
 | Flame Cultist | Marks fire on the floor below you. Leave the circle early. |
 | Dragonkin | Big, armoured and slow. Wait out the slam, then hit hard. |
-| Ancient Dragon | Rains fire across the lair. Burning floor hurts while you stand on it. |
+| Ancient Dragon | Rains fire over the lair. Burning floor hurts while you stand on it. |
 | Stone Knight | Hard stone and a heavy sword. Patience wins this fight. |
 | Seraph Statue | Marks the ground for heavy blows. Read the circle and move. |
 | Stone Hound | A stone runner that lunges in a line. Dodge sideways. |
 | Temple Sentinel | Slow and huge. Its slam cracks the floor, so never stand close. |
-| Statue of God | Sweeps a cold eye-beam across the room. Move with it, not into it. |
+| Statue of God | Sweeps a cold eye-beam over the room. Move with it, not into it. |
 
    If a definition in the file has a name that is not in this table, or a table name has no definition, stop and list the
    mismatch in your report instead of inventing a text.
