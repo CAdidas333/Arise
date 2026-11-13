@@ -45,6 +45,15 @@ try {
   at('exitPhoto(); draw();');
   is('__mm', 1, 'drawMinimap calls outside photo mode');
 
+  // 4b. The 2D [E] ARISE prompt is not drawn in photo mode (the remnant wisp still is)
+  // The game's ctx is a const soak, so drawPickups is re-run with a recording ctx shadowing it.
+  at('globalThis.__txt = []; globalThis.__rec = new Proxy(function () {}, { get: (t, k) => k === "fillText" ? (s => __txt.push(String(s))) : k === Symbol.toPrimitive ? () => 0 : __rec, apply: () => __rec, set: () => true }); globalThis.__dp = new Function("ctx", "return (" + drawPickups.toString() + ")")(__rec);');
+  at('remnants = [{ x:player.x + 10, y:player.y, t:0, dur:14 }]; photoMode = false; __dp();');
+  is("__txt.some(t => t.indexOf('ARISE') >= 0)", true, 'ARISE prompt drawn outside photo mode');
+  at('__txt = []; photoMode = true; __dp(); photoMode = false;');
+  is("__txt.some(t => t.indexOf('ARISE') >= 0)", false, 'ARISE prompt drawn in photo mode');
+  at('remnants = [];');
+
   // 5. index.html has the button once, inside #pause-overlay
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   if ((html.match(/id="pause-photo"/g) || []).length !== 1) fail('id="pause-photo" must appear exactly once');
