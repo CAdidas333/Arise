@@ -1860,8 +1860,8 @@ function drawFx3D() {
       }
     }
 
-    // 2. "[E] ARISE" pulses over a shadow remnant the hunter stands beside
-    if (typeof remnants !== 'undefined' && remnants) {
+    // 2. "[E] ARISE" pulses over a shadow remnant the hunter stands beside (hidden in photo mode)
+    if (typeof remnants !== 'undefined' && remnants && !(typeof photoMode !== 'undefined' && photoMode)) {
       ctx.font = 'bold 12px Orbitron, monospace';
       ctx.textAlign = 'center';
       for (const r of remnants) {
@@ -2127,7 +2127,7 @@ function drawFx3D() {
     }
 
     // 8b. Between chambers: an arrow to the door out, then to the next chamber, and at the end to the way to the boss
-    if (typeof layout !== 'undefined' && layout && layout.lock < 0 && dungeon.state === 'fight' && !(dungeon.bossRef && dungeon.bossRef.alive)) {
+    if (typeof layout !== 'undefined' && layout && layout.lock < 0 && dungeon.state === 'fight' && !(dungeon.bossRef && dungeon.bossRef.alive) && !(typeof photoMode !== 'undefined' && photoMode)) {
       const k = dungeon.wave - 1, d = layout.doors[2 * k], boss = dungeon.wave >= dungeon.maxWaves;
       let tx, ty;
       if (roomAt(player.x, player.y) === k) { tx = (d.x0 + d.x1) / 2; ty = (d.y0 + d.y1) / 2; }
@@ -2145,14 +2145,14 @@ function drawFx3D() {
     }
 
     // 3. The boss hunt: a red edge arrow with the distance, shown only while the boss is off screen
-    if (dungeon.state === 'fight' && dungeon.bossRef && dungeon.bossRef.alive) {
+    if (dungeon.state === 'fight' && dungeon.bossRef && dungeon.bossRef.alive && !(typeof photoMode !== 'undefined' && photoMode)) {
       const b = dungeon.bossRef, bp = toScreen(b.x, b.y, 20);
       if (!bp || bp[0] < 70 || bp[0] > w - 70 || bp[1] < 70 || bp[1] > h - 70) edgeArrow(b.x, b.y, '#ff3344');
     }
 
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
-    drawMinimap();
+    if (!(typeof photoMode !== 'undefined' && photoMode)) drawMinimap(); // photo mode: no minimap
 
     // 4. The dark presses in from the screen edge, red at low health and violet while Awakened; a red pulse under 25%
     const hp = player.hp / player.maxHp, low = hp < 0.3;

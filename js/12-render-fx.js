@@ -146,7 +146,7 @@ function draw() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = COLORS.bg; ctx.fillRect(0, 0, W, H);
-  if (gameState === 'DUNGEON' && player && dungeon) { drawWorld(); drawPost(); drawMinimap(); drawIndicators(); }
+  if (gameState === 'DUNGEON' && player && dungeon) { drawWorld(); drawPost(); if (!(typeof photoMode !== 'undefined' && photoMode)) { drawMinimap(); drawIndicators(); } } // photo mode: no minimap or edge arrows
   else { drawPortal(ART.hub); drawMotes(COLORS.primary, COLORS.accent, 0); }
   if (screenFlash.alpha > 0) { ctx.globalAlpha = Math.min(1, screenFlash.alpha); ctx.fillStyle = screenFlash.color; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
 }

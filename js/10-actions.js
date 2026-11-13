@@ -251,7 +251,25 @@ function showOpening() {
   if (VOICE_IDS.includes('chosen')) say('chosen');
 }
 
+// Photo mode: the pause menu, HUD, touch controls and toasts vanish for a clean frozen frame; a hint shows 1.5 s, then fades
+let photoMode = false, photoHid = [];
+function enterPhoto() {
+  if (!paused || photoMode) return;
+  photoMode = true; photoHid = ['pause-overlay', 'hud', 'touch-controls', 'toast-container'].map(id => { const el = $(id); const d = el.style.display; el.style.display = 'none'; return [el, d]; });
+  let h = $('photo-hint');
+  if (!h) { h = document.createElement('div'); h.id = 'photo-hint'; h.style.cssText = 'position:fixed;left:0;right:0;bottom:24px;text-align:center;font:11px Orbitron,monospace;letter-spacing:3px;color:rgba(0,212,255,0.7);pointer-events:none;z-index:200;transition:opacity 0.8s'; h.textContent = 'PHOTO MODE · ANY KEY, CLICK OR TAP TO RETURN'; document.body.appendChild(h); }
+  h.style.transition = 'none'; h.style.opacity = '1'; h.style.display = '';
+  setTimeout(() => { if (photoMode) { h.style.transition = 'opacity 0.8s'; h.style.opacity = '0'; } }, 1500);
+}
+// Back to the pause menu exactly as it was; the game stays paused
+function exitPhoto() {
+  if (!photoMode) return;
+  photoMode = false; photoHid.forEach(([el, d]) => { el.style.display = d; }); photoHid = [];
+  const h = $('photo-hint'); if (h) h.style.display = 'none';
+}
+
 function onKey(key, e) {
+  if (photoMode) { exitPhoto(); return; } // any key leaves photo mode and does nothing else
   if (e && e.target && e.target.id === 'nick-input') { // the shadow name box confirms on Enter and fires no game key
     if (key === 'enter') { saveNick(nickEdit); renderSystemMenu(); }
     return;
@@ -372,6 +390,8 @@ $('pause-resume').addEventListener('click', () => { if (paused) togglePause(); }
 $('pause-quit').addEventListener('click', () => { if (dungeon && dungeon.endless) highScores.bestFloor = Math.max(highScores.bestFloor, dungeon.wave-1); returnToHub(); });
 $('hud-pause-btn').addEventListener('click', togglePause);
 $('pause-aim').addEventListener('click', cycleAim);
+$('pause-photo').addEventListener('click', enterPhoto);
+for (const t of ['mousedown', 'touchstart']) addEventListener(t, e => { if (photoMode) { exitPhoto(); e.preventDefault(); e.stopPropagation(); } }, true); // a click or tap leaves photo mode and nothing else
 $('pause-fullscreen').addEventListener('click', () => {
   const el = document.documentElement;
   if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
