@@ -321,7 +321,7 @@ function padMenu() {
 // Its visible, enabled buttons, in page order
 function padButtons(box) {
   if (!box || typeof box.querySelectorAll !== 'function') return [];
-  return Array.from(box.querySelectorAll('button')).filter(b => b.offsetParent !== null && !b.disabled);
+  return Array.from(box.querySelectorAll('button, a.continue-btn')).filter(b => b.offsetParent !== null && !b.disabled);
 }
 let padFocus = -1;
 let padLit = null; // the one element wearing the cyan outline

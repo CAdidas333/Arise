@@ -683,7 +683,7 @@ function drawPickups() {
     ctx.beginPath(); ctx.moveTo(r.x - 10, r.y + 8); ctx.quadraticCurveTo(r.x - 14 + fl*3, r.y - 10, r.x + fl*4, r.y - 30 - fl*3); ctx.quadraticCurveTo(r.x + 14 + fl*3, r.y - 10, r.x + 10, r.y + 8); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = '#bb88ff'; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = '#ddbbff'; disc(r.x - 4, r.y - 8, 1.8); disc(r.x + 4, r.y - 8, 1.8);
-    if (dist(player.x, player.y, r.x, r.y) < 95) {
+    if (dist(player.x, player.y, r.x, r.y) < 95 && !(typeof photoMode !== 'undefined' && photoMode)) { // photo mode: the wisp stays, the [E] ARISE prompt goes
       ctx.globalAlpha = fade*(0.7 + 0.3*Math.sin(clock*8)); ctx.fillStyle = '#ddbbff';
       ctx.font = 'bold 12px Orbitron, monospace'; ctx.textAlign = 'center';
       ctx.fillText(isMobile ? 'ARISE' : '[E]  ARISE', r.x, r.y - 44);

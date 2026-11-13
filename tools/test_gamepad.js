@@ -123,6 +123,11 @@ try {
   ok(at('menuTab') === 'record', `LB from tab 0 gave ${at('menuTab')}, expected record`);
   tap(5);
   ok(at('menuTab') === 'status', `RB gave ${at('menuTab')}, expected status`);
+  // the pause menu's view-switch entry is a link, not a button: the D-pad must reach it
+  at('globalThis.__bk = __box; globalThis.__mix = __mk(2); globalThis.__box = { querySelectorAll: sel => sel === "button, a.continue-btn" ? __mix : [] }; padFocus = 0;');
+  tap(13); tap(0);
+  ok(at('__mix[1].clicks') === 1 && at('__mix[0].clicks') === 0, 'the D-pad did not reach the link in the menu');
+  at('__box = __bk; padFocus = -1;');
   tap(5);
   ok(at('menuTab') === 'gates', `RB from tab 0 gave ${at('menuTab')}, expected gates`);
   // 12b. In the hub only Start still sends its key: LT/RT do not jump tabs, X/Y/B send nothing
