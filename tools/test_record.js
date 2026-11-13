@@ -175,6 +175,23 @@ try {
     checked++;
   }
 
+  // 10. every enemy and boss has a fight tip, clean of the art-rule words; the RECORD tab shows it only for a known row
+  const BAD = /STAR|RUNE|GOD|HOLY|SAINT|ANGEL|CROSS|PRAY|CHURCH|TEMPLE|DIVINE|SACRED|CURSE|OCCULT|SPELL|DEVIL|SOUL|HELL/i;
+  const loreDefs = api.GATE_DEFS.flatMap(g => [...g.enemies, g.boss]);
+  if (loreDefs.length !== 29) fail(`${loreDefs.length} definitions, not 29`);
+  for (const d of loreDefs) {
+    const l = d.lore;
+    if (typeof l !== 'string' || l.length < 20 || l.length > 80) fail(`${d.name} has a tip of the wrong length`);
+    if (!l.endsWith('.') || /[<>&]/.test(l)) fail(`${d.name} tip does not end with a full stop or holds < > &`);
+    if (BAD.test(l)) fail(`${d.name} tip holds a banned word: ${l}`);
+    checked += 3;
+  }
+  p = newPlayer(); kill(GOBLIN);
+  const htmlLore = at('tabRecord()');
+  if (!htmlLore.includes(api.GATE_DEFS[0].enemies[0].lore)) fail('the Goblin tip is not in the RECORD tab');
+  if (htmlLore.includes(api.GATE_DEFS[0].enemies[1].lore)) fail('the Goblin Archer tip shows for a never-met row');
+  checked += 2;
+
   console.log('PASS ' + checked);
 } catch (err) {
   console.error('FAIL');

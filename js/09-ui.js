@@ -245,7 +245,7 @@ function tabRecord() {
       const src = typeof recordPic === 'function' ? recordPic(def, boss, known) : ''; // both pages load js/10b-figures.js; a picture that cannot be drawn leaves the row without one
       const pic = src ? `<img class="rec-pic" src="${src}" width="40" height="40" alt="" style="flex:none;margin-right:10px;image-rendering:auto">` : '';
       const tag = `<span style="opacity:.4">${kind}</span>${raised ? ' <span style="color:#bb88ff">· SHADOW RAISED</span>' : ''}`;
-      h += `<div class="stat-row"${known ? '' : ' style="opacity:.35"'}><span class="stat-name"${pic ? ' style="display:flex;align-items:center"' : ''}>${pic}<span>${known ? esc(name) : '???'}<span style="display:block;font-size:10px;letter-spacing:1px">${tag}</span></span></span><span class="stat-value">${fmtNum(n)}</span></div>`;
+      h += `<div class="stat-row"${known ? '' : ' style="opacity:.35"'}><span class="stat-name"${pic ? ' style="display:flex;align-items:center"' : ''}>${pic}<span>${known ? esc(name) : '???'}<span style="display:block;font-size:10px;letter-spacing:1px">${tag}</span>${known && def.lore ? `<span style="display:block;font-size:10px;letter-spacing:1px;opacity:.55">${esc(def.lore)}</span>` : ''}</span></span><span class="stat-value">${fmtNum(n)}</span></div>`;
     });
     cols[gi < GATE_DEFS.length/2 ? 0 : 1] += h;
   });
