@@ -287,6 +287,31 @@ function readPads() {
 }
 const PAD_PREV = []; // last frame's pressed state, per button: only the frame a button goes down fires
 const padDown = (pad, i) => { const b = pad.buttons && pad.buttons[i]; return !!(b && (b.pressed || ((i === 6 || i === 7) && b.value > 0.5))); }; // triggers can be analogue: value counts as a press
+// Menus: the container the pad drives (hub System menu or pause overlay), else null
+function padMenu() {
+  if (gameState === 'HUB' && !storyRun) return $('system-menu');
+  if (gameState === 'DUNGEON' && paused) return $('pause-overlay');
+  return null;
+}
+// Its visible, enabled buttons, in page order
+function padButtons(box) {
+  if (!box || typeof box.querySelectorAll !== 'function') return [];
+  return Array.from(box.querySelectorAll('button')).filter(b => b.offsetParent !== null && !b.disabled);
+}
+let padFocus = -1;
+// The cyan outline moves to the next or previous menu button (wrapping) and the page scrolls to it
+function padMoveFocus(step) {
+  const bs = padButtons(padMenu()); if (!bs.length) return;
+  if (bs[padFocus]) bs[padFocus].style.outline = '';
+  padFocus = step > 0 ? (padFocus < 0 ? 0 : (padFocus + 1) % bs.length) : (padFocus < 0 ? bs.length - 1 : (padFocus + bs.length - 1) % bs.length);
+  padShowFocus(bs);
+}
+function padShowFocus(bs) {
+  if (padFocus >= bs.length) padFocus = bs.length - 1; // a rebuilt menu may have fewer buttons
+  const el = bs[padFocus]; if (!el) return;
+  el.style.outline = '2px solid #00d4ff'; el.style.outlineOffset = '2px';
+  if (el.scrollIntoView) el.scrollIntoView({ block:'nearest' });
+}
 // The player's pad: stick to move, the face buttons and shoulders to act, Start to pause
 function pollPad(pads = readPads()) {
   const pad = pads && (pads.find(p => p && p.mapping === 'standard') || pads.find(p => p));
@@ -300,9 +325,17 @@ function pollPad(pads = readPads()) {
   const keyFor = i => i === 0 ? (inRun ? 'x' : 'enter') : i === 1 ? ' ' : i === 2 ? 'e' : i === 3 ? 'r'
     : i === 4 ? (boon ? '1' : '2') : i === 5 ? (boon ? '2' : '3') : i === 6 ? (boon ? '3' : '4')
     : i === 7 ? '5' : i === 9 ? 'escape' : i === 13 ? 'f' : null;
+  const box = padMenu();
+  if (!box) padFocus = -1; // the highlight starts fresh each time a menu opens
   for (let i = 0; i < 17; i++) {
     const down = padDown(pad, i), was = PAD_PREV[i];
-    if (down && !was) { const k = keyFor(i); if (k) onKey(k, { preventDefault(){}, target:null }); }
+    if (down && !was && box && (i === 0 || i === 4 || i === 5 || (i >= 12 && i <= 15))) { // in a menu: D-pad moves the highlight, A presses, LB/RB flip hub tabs
+      if (i === 12 || i === 14) padMoveFocus(-1);
+      else if (i === 13 || i === 15) padMoveFocus(1);
+      else if (i === 0) { const b = padButtons(box)[padFocus]; if (b) b.click(); padShowFocus(padButtons(padMenu())); }
+      else if (gameState === 'HUB') { const n = TABS.length, c = TABS.findIndex(t => t[0] === menuTab); menuTab = TABS[(Math.max(c, 0) + (i === 4 ? n - 1 : 1)) % n][0]; gateAsk = null; playSfx('ui'); renderSystemMenu(); padShowFocus(padButtons(padMenu())); }
+    }
+    else if (down && !was) { const k = keyFor(i); if (k) onKey(k, { preventDefault(){}, target:null }); }
     PAD_PREV[i] = down;
   }
 }

@@ -103,6 +103,37 @@ try {
   // 11. The Controls tab lists the controller
   ok(at('tabControls()').includes('Controller'), 'tabControls markup does not contain "Controller"');
 
+  // 12. Menus: a fake container with fake buttons stands in for the hub / pause menu
+  at('globalThis.__mk = n => Array.from({length:n}, () => ({ offsetParent:{}, disabled:false, style:{}, clicks:0, click(){ this.clicks++; }, scrollIntoView(){} })); globalThis.__btns = __mk(3); globalThis.__box = { querySelectorAll: () => __btns }; globalThis.__menu0 = padMenu; padMenu = () => __box;');
+  const tap = i => { press(i); at('pollPad(__pads);'); press(i, false); at('pollPad(__pads);'); };
+  const clicks = () => at('__btns.map(b => b.clicks)').join();
+  at('gameState = "HUB"; padFocus = -1;');
+  newPad(); at('globalThis.__calls = []; const __ku0 = usePotion; usePotion = function () { globalThis.__calls.push("potion"); return __ku0.apply(this, arguments); }; const __ok1 = onKey; onKey = function (k) { globalThis.__calls.push(k); return __ok1.apply(this, arguments); };');
+  tap(13); tap(13); tap(0);
+  ok(clicks() === '0,1,0', `D-pad down twice then A clicked ${clicks()}, expected 0,1,0`);
+  ok(at('__btns[0].style.outline') === '' && at('__btns[1].style.outline').includes('#00d4ff'), 'the old outline was not cleared or the new one not set');
+  ok(at('__calls.indexOf("potion")') < 0 && at('__calls.indexOf("enter")') < 0 && at('__calls.indexOf("f")') < 0, `a driven menu still sent ${JSON.stringify(at('__calls'))}`);
+  tap(15); tap(15);
+  ok(at('padFocus') === 0, `wrapping past the end gave ${at('padFocus')}, expected 0`);
+  at('padFocus = -1;'); tap(12);
+  ok(at('padFocus') === 2, `D-pad up from -1 gave ${at('padFocus')}, expected 2`);
+  at('__btns[1].offsetParent = null; padFocus = 0;'); tap(13);
+  ok(at('padFocus') === 1 && at('padButtons(__box).length') === 2, 'a hidden button was not skipped');
+  at('__btns[1].offsetParent = {}; menuTab = "status";'); tap(4);
+  ok(at('menuTab') === 'record', `LB from tab 0 gave ${at('menuTab')}, expected record`);
+  tap(5);
+  ok(at('menuTab') === 'status', `RB gave ${at('menuTab')}, expected status`);
+  tap(5);
+  ok(at('menuTab') === 'gates', `RB from tab 0 gave ${at('menuTab')}, expected gates`);
+  at('onKey = __ok1; usePotion = __ku0; padMenu = __menu0;');
+
+  // 13. In a fight (not paused) the D-pad still drinks a potion
+  newPad(); enterFight(); at('paused = false; globalThis.__calls = []; onKey = function (k) { globalThis.__calls.push(k); }; padFocus = -1;');
+  tap(13);
+  ok(at('__calls.indexOf("f")') >= 0, `fight D-pad down sent ${JSON.stringify(at('__calls'))}, expected "f"`);
+  ok(at('padMenu()') === null, 'padMenu() was not null in a fight');
+  at('onKey = __ok1;');
+
   console.log('PASS ' + checked);
 } catch (err) {
   console.error('FAIL');
