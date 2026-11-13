@@ -306,16 +306,17 @@ function padButtons(box) {
   return Array.from(box.querySelectorAll('button')).filter(b => b.offsetParent !== null && !b.disabled);
 }
 let padFocus = -1;
+let padLit = null; // the one element wearing the cyan outline
+function padLight(el) { if (padLit) { padLit.style.outline = ''; padLit.style.outlineOffset = ''; } padLit = el || null; }
 // The cyan outline moves to the next or previous menu button (wrapping) and the page scrolls to it
 function padMoveFocus(step) {
   const bs = padButtons(padMenu()); if (!bs.length) return;
-  if (bs[padFocus]) bs[padFocus].style.outline = '';
   padFocus = step > 0 ? (padFocus < 0 ? 0 : (padFocus + 1) % bs.length) : (padFocus < 0 ? bs.length - 1 : (padFocus + bs.length - 1) % bs.length);
   padShowFocus(bs);
 }
 function padShowFocus(bs) {
   if (padFocus >= bs.length) padFocus = bs.length - 1; // a rebuilt menu may have fewer buttons
-  const el = bs[padFocus]; if (!el) return;
+  const el = bs[padFocus]; padLight(el); if (!el) return;
   el.style.outline = '2px solid #00d4ff'; el.style.outlineOffset = '2px';
   if (el.scrollIntoView) el.scrollIntoView({ block:'nearest' });
 }
@@ -333,7 +334,7 @@ function pollPad(pads = readPads()) {
     : i === 4 ? (boon ? '1' : '2') : i === 5 ? (boon ? '2' : '3') : i === 6 ? (boon ? '3' : '4')
     : i === 7 ? '5' : i === 9 ? 'escape' : i === 13 ? 'f' : null;
   const box = padMenu();
-  if (!box) padFocus = -1; // the highlight starts fresh each time a menu opens
+  if (!box) { padFocus = -1; padLight(null); } // no menu: the highlight starts fresh and no outline is left behind
   for (let i = 0; i < 17; i++) {
     const down = padDown(pad, i), was = PAD_PREV[i];
     if (down && !was && box && (i === 0 || i === 4 || i === 5 || (i >= 12 && i <= 15))) { // in a menu: D-pad moves the highlight, A presses, LB/RB flip hub tabs
@@ -342,7 +343,8 @@ function pollPad(pads = readPads()) {
       else if (i === 0) { const b = padButtons(box)[padFocus]; if (b) b.click(); padShowFocus(padButtons(padMenu())); }
       else if (gameState === 'HUB') { const n = TABS.length, c = TABS.findIndex(t => t[0] === menuTab); menuTab = TABS[(Math.max(c, 0) + (i === 4 ? n - 1 : 1)) % n][0]; gateAsk = null; playSfx('ui'); renderSystemMenu(); padShowFocus(padButtons(padMenu())); }
     }
-    else if (down && !was) { const k = keyFor(i); if (k) onKey(k, { preventDefault(){}, target:null }); }
+    // in a menu only Start (pause/resume) still sends its key
+    else if (down && !was && (!box || i === 9)) { const k = keyFor(i); if (k) onKey(k, { preventDefault(){}, target:null }); }
     PAD_PREV[i] = down;
   }
 }

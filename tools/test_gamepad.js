@@ -125,6 +125,18 @@ try {
   ok(at('menuTab') === 'status', `RB gave ${at('menuTab')}, expected status`);
   tap(5);
   ok(at('menuTab') === 'gates', `RB from tab 0 gave ${at('menuTab')}, expected gates`);
+  // 12b. In the hub only Start still sends its key: LT/RT do not jump tabs, X/Y/B send nothing
+  at('menuTab = "status"; globalThis.__calls = [];');
+  tap(6); tap(7); tap(2); tap(3); tap(1);
+  ok(at('menuTab') === 'status', `LT/RT in the hub changed the tab to ${at('menuTab')}`);
+  ok(at('__calls.length') === 0, `X/Y/B/LT/RT in the hub sent ${JSON.stringify(at('__calls'))}`);
+  tap(9);
+  ok(at('__calls.indexOf("escape")') >= 0, `Start in the hub sent ${JSON.stringify(at('__calls'))}, expected "escape"`);
+  // 12c. Leaving the menu clears the outline on the button that was lit
+  at('padFocus = -1;'); tap(13);
+  ok(at('__btns[0].style.outline').includes('#00d4ff'), 'the pause-style button was not lit');
+  at('globalThis.__m1 = padMenu; padMenu = () => null; pollPad(__pads); padMenu = __m1;');
+  ok(at('__btns[0].style.outline') === '' && at('__btns[0].style.outlineOffset') === '' && at('padLit') === null, 'the outline lingered after the menu closed');
   at('onKey = __ok1; usePotion = __ku0; padMenu = __menu0;');
 
   // 13. In a fight (not paused) the D-pad still drinks a potion
