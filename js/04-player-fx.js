@@ -10,6 +10,7 @@ function createPlayer(name) {
     weapon:0, gold:0, potions:1, shadows:[], cleared:{},
     titles:[], title:'', hue:'', feats:{ perfects:0, boxes:0, flawless:0 }, // title: shown under the name; hue: earned title whose glow colour the hunter wears
     slain:{}, // the Hunter's Record: enemy name → how many the hunter has slain
+    runs:[], // the last 10 runs, newest first: the STATUS tab's Recent runs
     rift:false, rifts:0, riftSeen:false, // a Gilded Rift is open; rift runs entered; the first rift has been opened (it is guaranteed once)
     gear:{ armor:null, boots:null, ring:null }, bag:[],
     story:{ opening:false, gates:{} }, // what the story has shown: the opening once, each gate's chapter card once

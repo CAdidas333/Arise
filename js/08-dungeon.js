@@ -214,6 +214,8 @@ function endExtraction(delay) {
   setTimeout(() => { if (gameState === 'DUNGEON' && dungeon && dungeon.state === 'cleared') { camera.focus = null; camera.targetZoom = baseZoom(); showVictory(); } }, delay);
 }
 
+// Recent runs: the newest result goes to the front of the STATUS list; one row per run, the last 10 kept
+function logRun(r) { if (!run || run.logged) return; run.logged = true; player.runs.unshift(r); player.runs.length = Math.min(player.runs.length, 10); }
 function showVictory() {
   say('gate_cleared');
   const g = dungeon.gate, par = g.waves*26;
@@ -221,7 +223,7 @@ function showVictory() {
   const score = 100 - Math.min(60, run.dmgTaken/player.maxHp*30) - Math.min(30, Math.max(0, (run.time-par)/par*30));
   const grade = score >= 90 ? 'S' : score >= 75 ? 'A' : score >= 55 ? 'B' : 'C';
   const bonus = Math.floor(g.boss.xp*0.5*{ S:2, A:1.5, B:1.2, C:1 }[grade]);
-  run.grade = grade; run.bonus = bonus; if (typeof armResultCard === 'function') armResultCard('victory'); // for the result card
+  run.grade = grade; run.bonus = bonus; logRun({ t:'gate', id:dungeon.gate.id, grade, time:Math.round(run.time), kills:run.kills }); if (typeof armResultCard === 'function') armResultCard('victory'); // for the result card
   player.gold += bonus;
   const ge = $('victory-grade'); ge.textContent = grade; ge.style.color = { S:'#bb66ff', A:'#ffcc00', B:'#00d4ff', C:'#8899aa' }[grade];
   const mm = Math.floor(run.time/60), ss = String(Math.floor(run.time%60)).padStart(2, '0');
@@ -276,7 +278,7 @@ function showRiftEnd() {
   if (!dungeon || !dungeon.rift) return;
   const r = dungeon.rift, n = r.caught, grade = n >= r.total ? 'S' : n >= 6 ? 'A' : n >= 3 ? 'B' : 'C';
   storyVictoryLine(RIFT); // RIFT has no closing line: this clears the one left from the last clear
-  run.grade = grade; // no armResultCard: a rift run has no result card, so the button is hidden too
+  run.grade = grade; logRun({ t:'rift', grade, caught:n, total:r.total }); // no armResultCard: a rift run has no result card, so the button is hidden too
   const sh = $('victory-share'); if (sh) sh.style.display = 'none';
   $('victory-title').textContent = 'RIFT CLOSED';
   const ge = $('victory-grade'); ge.textContent = grade; ge.style.color = { S:'#bb66ff', A:'#ffcc00', B:'#00d4ff', C:'#8899aa' }[grade];
@@ -296,6 +298,7 @@ function showDeath() {
   setMusic('off'); playSfx('death'); say('death', true, 0.8); slowmo(0.25, 1.2); flash('#ff0000', 0.4); shake(20);
   spawnBurst(player.x, player.y-12, COLORS.primary, 40, 420); smoke(player.x, player.y, '#000', 10, 20);
   if (dungeon.endless) highScores.bestFloor = Math.max(highScores.bestFloor, dungeon.wave-1);
+  if (!dungeon.rift) logRun({ t:'fell', id:dungeon.gate.id, endless:!!dungeon.endless, wave:dungeon.wave, max:dungeon.endless ? 0 : dungeon.maxWaves, kills:run.kills });
   $('death-stats').innerHTML = dungeon.endless
     ? `Reached floor ${dungeon.wave} &nbsp;·&nbsp; ${run.kills} kills &nbsp;·&nbsp; best floor ${highScores.bestFloor}`
     : `Fell on wave ${dungeon.wave} of ${dungeon.maxWaves} &nbsp;·&nbsp; ${run.kills} kills`;

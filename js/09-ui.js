@@ -129,6 +129,16 @@ function tabStatus() {
   for (const [k, v] of Object.entries(player.stats)) left += `<div class="stat-row"><span class="stat-name">${k} <span style="font-size:10px;opacity:.4;letter-spacing:1px">${hint[k]}</span></span><span class="stat-value">${v}${player.statPoints > 0 ? `<button class="stat-btn" data-act="stat" data-v="${k}">+</button>` : ''}</span></div>`;
   left += '<h3>Records</h3>' + row('Best Level', highScores.bestLevel) + row('Best Combo', highScores.bestCombo+'x') + row('Total Kills', fmtNum(highScores.totalKills))
     + row('Gates Cleared', highScores.gatesCleared) + row('Best Gate', highScores.bestGate+'-RANK') + row('Demon Castle', highScores.bestFloor ? 'FLOOR '+highScores.bestFloor : '—');
+  left += '<h3>Recent runs</h3>'; // the last 10 runs, newest first: what was entered, the grade (or FELL), and how it went
+  if (!player.runs.length) left += '<div class="stat-row" style="opacity:.4"><span class="stat-name">No runs yet. Enter a gate from GATES.</span></div>';
+  for (const r of player.runs) {
+    const g = GATE_DEFS.find(x => x.id === r.id), GC = { S:'#bb66ff', A:'#ffcc00', B:'#00d4ff', C:'#8899aa' };
+    const name = r.t === 'rift' ? 'GILDED RIFT' : r.t === 'fell' && r.endless ? 'DEMON CASTLE' : `${g.rank}-RANK · ${esc(g.name)}`;
+    const tag = r.t === 'fell' ? `<span style="color:${COLORS.danger}">FELL</span>` : `<span style="color:${GC[r.grade]}">${r.grade}</span>`;
+    const info = r.t === 'gate' ? `${Math.floor(r.time/60)}:${String(r.time%60).padStart(2, '0')} · ${r.kills} kills` : r.t === 'rift' ? `${r.caught}/${r.total} caught`
+      : `${r.endless ? 'floor ' + r.wave : `wave ${r.wave}/${r.max}`} · ${r.kills} kills`;
+    left += row(name, `${tag} ${info}`);
+  }
   left += '<h3>Titles <span style="font-size:11px;opacity:.5">' + player.titles.length + ' / ' + TITLES.length + '</span></h3>';
   for (const t of TITLES) { // earned titles offer SHOW (name under rank) and WEAR (hunter glow colour) side by side
     const shown = player.title === t.id, worn = player.hue === t.id;
