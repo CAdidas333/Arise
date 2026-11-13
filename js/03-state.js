@@ -51,7 +51,7 @@ function saveGame() {
     v:VERSION, spv:2, name:player.name, level:player.level, xp:player.xp, rank:player.rank,
     stats:{...player.stats}, statPoints:player.statPoints, skillPoints:player.skillPoints, tree:{...player.tree},
     weapon:player.weapon, gold:player.gold, potions:player.potions, cleared:{...player.cleared},
-    titles:[...player.titles], title:player.title, hue:player.hue, feats:{...player.feats}, slain:{...player.slain},
+    titles:[...player.titles], title:player.title, hue:player.hue, feats:{...player.feats}, slain:{...player.slain}, runs:player.runs.slice(0, 10),
     rift:!!player.rift, rifts:player.rifts|0, riftSeen:!!player.riftSeen,
     gear:{...player.gear}, bag:[...player.bag], story:{ opening:!!player.story.opening, gates:{...player.story.gates}, arose:!!player.story.arose },
     shadows:player.shadows.map(s => ({ name:s.name, nick:s.nick || '', kind:s.kind, damage:s.damage, level:s.level, color:s.color, size:s.size, grade:s.grade })), // the names the player gave them are saved with the army
@@ -125,6 +125,18 @@ function loadGame() {
   // The Hunter's Record: only names the game knows, never a count under 0 (a save from before the Record has none)
   const known = recordNames(), sl = d.slain && typeof d.slain === 'object' ? d.slain : {};
   for (const k in sl) if (known.has(k)) player.slain[k] = Math.max(0, sl[k]|0);
+  // Recent runs: only well-formed rows, whole numbers, at most 10 (a save from before has none)
+  const n0 = x => Math.max(0, x|0), gid = id => GATE_DEFS.some(g => g.id === id);
+  player.runs = [];
+  for (const r of Array.isArray(d.runs) ? d.runs : []) {
+    if (player.runs.length >= 10) break;
+    if (!r || typeof r !== 'object' || !['gate', 'rift', 'fell'].includes(r.t)) continue;
+    if (r.t !== 'rift' && !gid(r.id)) continue;
+    if (r.t !== 'fell' && !['S', 'A', 'B', 'C'].includes(r.grade)) continue;
+    player.runs.push(r.t === 'gate' ? { t:'gate', id:r.id, grade:r.grade, time:n0(r.time), kills:n0(r.kills) }
+      : r.t === 'rift' ? { t:'rift', grade:r.grade, caught:n0(r.caught), total:n0(r.total) }
+      : { t:'fell', id:r.id, endless:r.endless === true, wave:n0(r.wave), max:n0(r.max), kills:n0(r.kills) });
+  }
   // The Gilded Rift: a save from before it has none open and none entered
   player.rift = d.rift === true; player.rifts = Math.max(0, d.rifts|0); player.riftSeen = d.riftSeen === true || player.rifts > 0;
   checkDailyReset();
