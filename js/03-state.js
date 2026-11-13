@@ -109,6 +109,7 @@ function loadGame() {
   if (!Object.prototype.hasOwnProperty.call(SHAKE_SCALE, settings.shake)) settings.shake = 'full'; // bad or missing shake setting defaults to full
   if (!Object.prototype.hasOwnProperty.call(FLASH_SCALE, settings.flashes)) settings.flashes = 'full'; // bad or missing screen flash setting defaults to full
   if (settings.numbers !== 'off') settings.numbers = 'on'; // damage numbers default on
+  if (settings.rumble !== 'off') settings.rumble = 'on'; // controller rumble default on
   highScores = Object.assign(highScores, d.highScores || {});
   questProgress = Object.assign({ kills:0, damageTaken:0, gatesCleared:0 }, d.questProgress || {});
   questDate = d.questDate || '';

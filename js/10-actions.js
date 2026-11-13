@@ -164,6 +164,7 @@ $('system-menu').addEventListener('click', e => {
     case 'shake': cycleShake(); break;
     case 'flashes': cycleFlashes(); break;
     case 'numbers': toggleNumbers(); break;
+    case 'rumble': toggleRumble(); break;
     case 'title': player.title = player.title === v ? '' : (player.titles.includes(v) ? v : player.title); saveGame(); playSfx('ui'); break;
     case 'hue': player.hue = player.hue === v ? '' : (player.titles.includes(v) ? v : player.hue); saveGame(); playSfx('ui'); break; // wear or take off a title's glow colour
     case 'gate': enterGate(v); return;
@@ -220,6 +221,12 @@ function toggleNumbers() {
   settings.numbers = settings.numbers === 'off' ? 'on' : 'off';
   saveGame(); playSfx('ui');
   toast('DAMAGE NUMBERS: ' + settings.numbers.toUpperCase(), 'blue', 2000);
+}
+// Controller rumble toggles on and off with a toast
+function toggleRumble() {
+  settings.rumble = settings.rumble === 'off' ? 'on' : 'off';
+  saveGame(); playSfx('ui');
+  toast('CONTROLLER RUMBLE: ' + settings.rumble.toUpperCase(), 'blue', 2000);
 }
 function enterHub() { gameState = 'HUB'; show('system-menu'); applySettings(); setMusic('hub'); renderSystemMenu(); }
 function beginFromTitle() {
@@ -287,6 +294,32 @@ function readPads() {
 }
 const PAD_PREV = []; // last frame's pressed state, per button: only the frame a button goes down fires
 const padDown = (pad, i) => { const b = pad.buttons && pad.buttons[i]; return !!(b && (b.pressed || ((i === 6 || i === 7) && b.value > 0.5))); }; // triggers can be analogue: value counts as a press
+// Menus: the container the pad drives (hub System menu or pause overlay), else null
+function padMenu() {
+  if (gameState === 'HUB' && !storyRun) return $('system-menu');
+  if (gameState === 'DUNGEON' && paused) return $('pause-overlay');
+  return null;
+}
+// Its visible, enabled buttons, in page order
+function padButtons(box) {
+  if (!box || typeof box.querySelectorAll !== 'function') return [];
+  return Array.from(box.querySelectorAll('button')).filter(b => b.offsetParent !== null && !b.disabled);
+}
+let padFocus = -1;
+let padLit = null; // the one element wearing the cyan outline
+function padLight(el) { if (padLit) { padLit.style.outline = ''; padLit.style.outlineOffset = ''; } padLit = el || null; }
+// The cyan outline moves to the next or previous menu button (wrapping) and the page scrolls to it
+function padMoveFocus(step) {
+  const bs = padButtons(padMenu()); if (!bs.length) return;
+  padFocus = step > 0 ? (padFocus < 0 ? 0 : (padFocus + 1) % bs.length) : (padFocus < 0 ? bs.length - 1 : (padFocus + bs.length - 1) % bs.length);
+  padShowFocus(bs);
+}
+function padShowFocus(bs) {
+  if (padFocus >= bs.length) padFocus = bs.length - 1; // a rebuilt menu may have fewer buttons
+  const el = bs[padFocus]; padLight(el); if (!el) return;
+  el.style.outline = '2px solid #00d4ff'; el.style.outlineOffset = '2px';
+  if (el.scrollIntoView) el.scrollIntoView({ block:'nearest' });
+}
 // The player's pad: stick to move, the face buttons and shoulders to act, Start to pause
 function pollPad(pads = readPads()) {
   const pad = pads && (pads.find(p => p && p.mapping === 'standard') || pads.find(p => p));
@@ -300,11 +333,30 @@ function pollPad(pads = readPads()) {
   const keyFor = i => i === 0 ? (inRun ? 'x' : 'enter') : i === 1 ? ' ' : i === 2 ? 'e' : i === 3 ? 'r'
     : i === 4 ? (boon ? '1' : '2') : i === 5 ? (boon ? '2' : '3') : i === 6 ? (boon ? '3' : '4')
     : i === 7 ? '5' : i === 9 ? 'escape' : i === 13 ? 'f' : null;
+  const box = padMenu();
+  if (!box) { padFocus = -1; padLight(null); } // no menu: the highlight starts fresh and no outline is left behind
   for (let i = 0; i < 17; i++) {
     const down = padDown(pad, i), was = PAD_PREV[i];
-    if (down && !was) { const k = keyFor(i); if (k) onKey(k, { preventDefault(){}, target:null }); }
+    if (down && !was && box && (i === 0 || i === 4 || i === 5 || (i >= 12 && i <= 15))) { // in a menu: D-pad moves the highlight, A presses, LB/RB flip hub tabs
+      if (i === 12 || i === 14) padMoveFocus(-1);
+      else if (i === 13 || i === 15) padMoveFocus(1);
+      else if (i === 0) { const b = padButtons(box)[padFocus]; if (b) b.click(); padShowFocus(padButtons(padMenu())); }
+      else if (gameState === 'HUB') { const n = TABS.length, c = TABS.findIndex(t => t[0] === menuTab); menuTab = TABS[(Math.max(c, 0) + (i === 4 ? n - 1 : 1)) % n][0]; gateAsk = null; playSfx('ui'); renderSystemMenu(); padShowFocus(padButtons(padMenu())); }
+    }
+    // in a menu only Start (pause/resume) still sends its key
+    else if (down && !was && (!box || i === 9)) { const k = keyFor(i); if (k) onKey(k, { preventDefault(){}, target:null }); }
     PAD_PREV[i] = down;
   }
+}
+
+// Big hits buzz the first pad that can rumble: stronger for bigger hits, at most once per 0.05 s
+let padRumbleT = -1;
+function padRumble(n) {
+  if (settings.rumble === 'off' || !(n > 0) || clock - padRumbleT < 0.05) return;
+  const pad = readPads().find(p => p.vibrationActuator && typeof p.vibrationActuator.playEffect === 'function'); if (!pad) return;
+  padRumbleT = clock;
+  const k = Math.min(1, n / 28);
+  try { const r = pad.vibrationActuator.playEffect('dual-rumble', { duration: Math.round(60 + 140 * k), strongMagnitude: k, weakMagnitude: Math.min(1, k * 0.6 + 0.2) }); if (r && typeof r.catch === 'function') r.catch(() => {}); } catch (e) {}
 }
 
 $('title-screen').addEventListener('click', beginFromTitle);
