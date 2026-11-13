@@ -42,33 +42,33 @@ const SKILL_DEFS = [
 ];
 const SKILL = Object.fromEntries(SKILL_DEFS.map(s => [s.id, s]));
 
-// enemy def: name, kind, hp, damage, speed(px/s), size, xp, color, w = first wave it appears
-const E = (name,kind,hp,damage,speed,size,xp,color,w=1) => ({ name,kind,hp,damage,speed,size,xp,color,w });
+// enemy def: name, kind, hp, damage, speed(px/s), size, xp, color, w = first wave it appears, lore = the fight tip the RECORD tab shows
+const E = (name,kind,hp,damage,speed,size,xp,color,w,lore) => ({ name,kind,hp,damage,speed,size,xp,color,w,lore });
 const GATE_DEFS = [
   { id:'e_gate', name:'Goblin Cavern', rank:'E', reqLevel:1, waves:5, ambientColor:'#224422',
     theme:{ a:'#0f150f', b:'#0a0f0a', line:'#55cc66', ember:'#66ff88' },
-    enemies:[ E('Goblin','melee',40,10,84,14,15,'#55aa55'), E('Goblin Archer','ranged',26,14,60,12,20,'#448844'), E('Goblin Sapper','bomber',30,22,150,12,25,'#aacc44',3) ],
-    boss:{ name:'Spider Queen', title:'Brood Mother of the Cavern', hp:1500, damage:30, speed:66, size:34, xp:150, color:'#884488', shadow:true, patterns:['burst','summon','charge','brood'] } },
+    enemies:[ E('Goblin','melee',40,10,84,14,15,'#55aa55',1,'Rushes in close and swings fast. Keep moving and cut it down.'), E('Goblin Archer','ranged',26,14,60,12,20,'#448844',1,'Hangs back and fires arrows. Close the gap or dodge the shot.'), E('Goblin Sapper','bomber',30,22,150,12,25,'#aacc44',3,'Runs at you with a lit charge. Step away before it bursts.') ],
+    boss:{ name:'Spider Queen', title:'Brood Mother of the Cavern', hp:1500, damage:30, speed:66, size:34, xp:150, color:'#884488', shadow:true, lore:'Spits webs that slow you, then lays a clutch of eggs.', patterns:['burst','summon','charge','brood'] } },
   { id:'d_gate', name:'Orc Fortress', rank:'D', reqLevel:10, waves:6, ambientColor:'#332211',
     theme:{ a:'#15110c', b:'#0f0c09', line:'#cc7733', ember:'#ffaa55' },
-    enemies:[ E('Orc Warrior','melee',140,40,72,18,60,'#886644'), E('Orc Shaman','caster',90,50,54,16,80,'#668844'), E('Orc Raider','charger',160,50,80,18,85,'#aa7744',2), E('Orc Brute','brute',420,65,50,26,140,'#775533',4) ],
-    boss:{ name:'Orc Chieftain', title:'Warlord of the Iron Tusk', hp:6000, damage:80, speed:62, size:40, xp:700, color:'#aa4422', shadow:true, patterns:['slam','charge','summon','burst','pound'] } },
+    enemies:[ E('Orc Warrior','melee',140,40,72,18,60,'#886644',1,'Heavy blade, steady swings. Dodge the big one and strike back.'), E('Orc Shaman','caster',90,50,54,16,80,'#668844',1,'Marks the ground where a blast will land. Leave the circle.'), E('Orc Raider','charger',160,50,80,18,85,'#aa7744',2,'Lowers its head and charges in a straight line. Sidestep it.'), E('Orc Brute','brute',420,65,50,26,140,'#775533',4,'Slow, tough and hits hard. Never stand in front of the slam.') ],
+    boss:{ name:'Orc Chieftain', title:'Warlord of the Iron Tusk', hp:6000, damage:80, speed:62, size:40, xp:700, color:'#aa4422', shadow:true, lore:'Calls elite orcs to its side, then leaps five times in a row.', patterns:['slam','charge','summon','burst','pound'] } },
   { id:'c_gate', name:'Undead Crypt', rank:'C', reqLevel:25, waves:7, ambientColor:'#1a1133',
     theme:{ a:'#100d18', b:'#0b0912', line:'#8866cc', ember:'#aa88ff' },
-    enemies:[ E('Skeleton','melee',420,85,90,16,140,'#aaaaaa'), E('Bone Archer','ranged',300,100,60,14,160,'#bbbb99'), E('Lich','caster',280,115,48,14,180,'#8866cc'), E('Death Hound','charger',480,105,100,16,190,'#665588',3) ],
-    boss:{ name:'Death Knight', title:'Blood-Red Commander', hp:20000, damage:170, speed:74, size:42, xp:2200, color:'#6622aa', shadow:true, patterns:['charge','slam','spiral','nova','cleave'] } },
+    enemies:[ E('Skeleton','melee',420,85,90,16,140,'#aaaaaa',1,'Fragile but never alone. Clear them before they surround you.'), E('Bone Archer','ranged',300,100,60,14,160,'#bbbb99',1,'Volleys from range. Use walls and corners to break its line.'), E('Lich','caster',280,115,48,14,180,'#8866cc',1,'Fills the floor with marked circles. Keep moving between them.'), E('Death Hound','charger',480,105,100,16,190,'#665588',3,'A fast runner that lunges in a line. Wait for it, then dodge.') ],
+    boss:{ name:'Death Knight', title:'Blood-Red Commander', hp:20000, damage:170, speed:74, size:42, xp:2200, color:'#6622aa', shadow:true, lore:'Raises elite soldiers, then cuts the room into sword lanes.', patterns:['charge','slam','spiral','nova','cleave'] } },
   { id:'b_gate', name:'Demon Realm', rank:'B', reqLevel:45, waves:8, ambientColor:'#331111',
     theme:{ a:'#170c0c', b:'#110909', line:'#cc4444', ember:'#ff6644' },
-    enemies:[ E('Demon','melee',1000,150,78,20,320,'#cc4444'), E('Succubus','ranged',650,180,96,16,400,'#cc44aa'), E('Imp Bomber','bomber',500,220,160,13,330,'#ff7733'), E('Hellguard','brute',2600,210,52,28,600,'#882222',3) ],
-    boss:{ name:'Demon Lord', title:'Sovereign of the Burning Keep', hp:50000, damage:300, speed:68, size:50, xp:6500, color:'#aa0000', shadow:true, patterns:['spiral','nova','charge','summon','burst','firewall'] } },
+    enemies:[ E('Demon','melee',1000,150,78,20,320,'#cc4444',1,'Strong up close. Dodge its swing and punish the opening.'), E('Succubus','ranged',650,180,96,16,400,'#cc44aa',1,'Fires from range and keeps its distance. Chase it down.'), E('Imp Bomber','bomber',500,220,160,13,330,'#ff7733',1,'Small and quick, with a charge that bursts. Keep your distance.'), E('Hellguard','brute',2600,210,52,28,600,'#882222',3,'A wall of armour. Circle behind it while it winds up.') ],
+    boss:{ name:'Demon Lord', title:'Sovereign of the Burning Keep', hp:50000, damage:300, speed:68, size:50, xp:6500, color:'#aa0000', shadow:true, lore:'Rings the arena with fire in its last stand. Stay off the flames.', patterns:['spiral','nova','charge','summon','burst','firewall'] } },
   { id:'a_gate', name:"Dragon's Lair", rank:'A', reqLevel:70, waves:10, ambientColor:'#332200',
     theme:{ a:'#17140c', b:'#110f09', line:'#ccaa22', ember:'#ffcc44' },
-    enemies:[ E('Drake','charger',1900,270,74,24,560,'#cc8800'), E('Wyvern','ranged',1300,300,100,20,700,'#ccaa44'), E('Flame Cultist','caster',1400,330,55,16,650,'#dd6622'), E('Dragonkin','brute',4400,360,54,30,1100,'#aa6600',4) ],
-    boss:{ name:'Ancient Dragon', title:'Calamity of the Old World', hp:100000, damage:520, speed:56, size:58, xp:16000, color:'#ffcc00', shadow:true, patterns:['spiral','nova','slam','burst','charge','breath'] } },
+    enemies:[ E('Drake','charger',1900,270,74,24,560,'#cc8800',1,'Charges low and fast through the room. Sidestep, then strike.'), E('Wyvern','ranged',1300,300,100,20,700,'#ccaa44',1,'Spits fire from above. Keep moving and the shots miss.'), E('Flame Cultist','caster',1400,330,55,16,650,'#dd6622',1,'Marks fire on the floor below you. Leave the circle early.'), E('Dragonkin','brute',4400,360,54,30,1100,'#aa6600',4,'Big, armoured and slow. Wait out the slam, then hit hard.') ],
+    boss:{ name:'Ancient Dragon', title:'Calamity of the Old World', hp:100000, damage:520, speed:56, size:58, xp:16000, color:'#ffcc00', shadow:true, lore:'Rains fire over the lair. Burning floor hurts while you stand on it.', patterns:['spiral','nova','slam','burst','charge','breath'] } },
   { id:'s_gate', floor:'s_gate_v2', name:'Cartenon Temple', rank:'S', reqLevel:90, waves:10, ambientColor:'#223344',
     theme:{ a:'#10141a', b:'#0a0d12', line:'#88ccff', ember:'#cceeff' },
-    enemies:[ E('Stone Knight','melee',3400,420,96,22,1000,'#8899aa'), E('Seraph Statue','caster',2400,480,50,18,1200,'#aaccee'), E('Stone Hound','charger',3000,440,110,18,1100,'#778899'), E('Temple Sentinel','brute',8000,520,58,32,2000,'#667788',3) ],
-    boss:{ name:'Statue of God', title:'The Architect\'s Final Trial', hp:250000, damage:800, speed:50, size:66, xp:45000, color:'#ddeeff', shadow:true, patterns:['nova','spiral','slam','burst','summon','charge','pillars'] } },
+    enemies:[ E('Stone Knight','melee',3400,420,96,22,1000,'#8899aa',1,'Hard stone and a heavy sword. Patience wins this fight.'), E('Seraph Statue','caster',2400,480,50,18,1200,'#aaccee',1,'Marks the ground for heavy blows. Read the circle and move.'), E('Stone Hound','charger',3000,440,110,18,1100,'#778899',1,'A stone runner that lunges in a line. Dodge sideways.'), E('Temple Sentinel','brute',8000,520,58,32,2000,'#667788',3,'Slow and huge. Its slam cracks the floor, so never stand close.') ],
+    boss:{ name:'Statue of God', title:'The Architect\'s Final Trial', hp:250000, damage:800, speed:50, size:66, xp:45000, color:'#ddeeff', shadow:true, lore:'Sweeps a cold eye-beam over the room. Move with it, not into it.', patterns:['nova','spiral','slam','burst','summon','charge','pillars'] } },
 ];
 // The Hunter's Record counts kills by these names: every gate enemy and every boss. A save keeps only counts under these.
 function recordNames() { const s = new Set(); for (const g of GATE_DEFS) { for (const e of g.enemies) s.add(e.name); s.add(g.boss.name); } return s; }
