@@ -3,13 +3,12 @@ _Written: 2026-11-13 21:40 (Friday) by Session 11, refreshed at Houston's reques
 Supersedes earlier versions._
 
 ## Where we left off
-**Live** at https://cadidas333.github.io/Arise/ and `/3d/`: stamp 20261106053914, `main` = 69b0741 (F26 to F31: title colours,
-shadow style, 3D Record pictures, Screen shake, Screen flashes and Damage numbers, controller support).
-**Merged on `v18-world` (0d1e4f1 + this refresh), NOT yet live:** F32 controller in the hub and pause menus, F33 controller rumble
+**Live** at https://cadidas333.github.io/Arise/ and `/3d/`: stamp 20261113223606, `main` = `v18-world` = 35a86e3 (F26 to F36).
+**Shipped 11-13 22:4x:** F32 controller in the hub and pause menus, F33 controller rumble
 (setting ON/OFF), F34 Recent runs in STATUS, F35 Photo mode (pause menu), F36 RECORD fight tips. Built 11-13 by four cloud runs
 (GitHub PRs 1 to 4) and two Claude sub-agents, each reviewed line by line; per-PR test runs all passed in the cloud, and the quick
 local checks on the combined code passed (gamepad 36, rumble 17, recent runs 19, photo mode 16, comfort settings 31).
-**Next step to ship them:** the full local suite, `tools/stamp.sh`, one muted browser check of both views (pause → PHOTO MODE; a
+**How they shipped (the pattern for next time):** the full local suite, `tools/stamp.sh`, one muted browser check of both views (pause → PHOTO MODE; a
 controller-menu pass with a fake pad; STATUS shows Recent runs; RECORD shows a tip for a slain enemy), then
 `git branch -f main v18-world && git push origin main`, `gh run watch`, stamp on both public pages, a LIVE line in the night log.
 Free rein and Houston's proxy (CLAUDE.md top rule, 11-09) cover the ship. The full run was queued at 18:11 and died with the
@@ -41,14 +40,13 @@ description (hold/lift in broadcast.md, no open START in the last 80 log lines, 
 15. **CONTROLS, Screen flashes and Damage numbers (new 11-06):** softer or no flashes, and hide the numbers if you prefer.
 16. **Play with a game controller (new 11-06):** plug in an Xbox, PlayStation or Switch Pro pad; the CONTROLS tab lists the
     buttons. Tell me if the layout feels wrong. (Music may need one click or key press before it starts.)
-17. **(Once F32 to F36 are live)** With a controller, LB and RB switch the hub tabs, the D-pad moves a cyan highlight and A
+17. **(New 11-13)** With a controller, LB and RB switch the hub tabs, the D-pad moves a cyan highlight and A
     presses (pause menu too); big hits rumble the controller (CONTROLS, Controller rumble, to turn it off).
-18. **(Once live) STATUS, Recent runs:** your last 10 runs with grade, time and kills, plus rifts and falls.
-19. **(Once live) Pause, PHOTO MODE:** everything over the game disappears for a clean screenshot; any key, click or tap returns.
-20. **(Once live) RECORD:** each enemy you have met shows a one-line fight tip under its name.
+18. **(New 11-13) STATUS, Recent runs:** your last 10 runs with grade, time and kills, plus rifts and falls.
+19. **(New 11-13) Pause, PHOTO MODE:** everything over the game disappears for a clean screenshot; any key, click or tap returns.
+20. **(New 11-13) RECORD:** each enemy you have met shows a one-line fight tip under its name.
 
 ## Ranked next actions
-0. **Ship F32 to F36** (see "Where we left off"): full suite, stamp, muted browser check, push `main`, check the live stamp.
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
    E4 rooms per gate, E5 gear drops). Do not make enemies hit harder before he has (his word, 2026-10-12). Levers when he asks:
    `shadowDmg`, boss health, enemy damage.
