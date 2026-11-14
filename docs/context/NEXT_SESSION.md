@@ -1,18 +1,24 @@
 # Next Session Handoff
-_Written: 2026-11-01 00:15 (Sunday) by Session 10 (wrapped for renewal near 75 percent context), for Chris Whitney. Supersedes earlier versions._
+_Written: 2026-11-13 21:40 (Friday) by Session 11, refreshed at Houston's request (the drift watch saw the 11-01 version).
+Supersedes earlier versions._
 
 ## Where we left off
-Live at https://cadidas333.github.io/Arise/ and `/3d/`, stamp 20261106053914 (ship 69b0741 = `main` = `v18-world`): S11 added title colours (F26), the bot's shaped-room pathing (G10),
-Record pictures on the 3D page (F28, `js/10b-figures.js` now loads on both pages), the Screen shake setting (F29, live 11-05,
-D-0317), Screen flashes and Damage numbers (F30, live 11-06, D-0326), controller support (F31, live 11-06, D-0327) and the shadow style touches (F27, live 11-04 on Houston's GO, D-0291: free rein covers cosmetic ships, so no need to wait for Chris).
-Nothing in flight, preview server stopped. Session 10 shipped, all live: the Gilded Rift, a rare treasure gate (F23); a picture
-for each Hunter's Record entry, 2D (F24); L-shaped and notched chambers, 2D and 3D (F25). Chris has not played any of it; do not
-push him. Houston has the con overnight (Chris asleep since 21:12 on 10-31): ONE heavy job machine-wide (node tests, a browser or a
-sub-agent's tests count), load under 12, START/FINISH lines in `_brain/Comms/night-log.md`. The night log spans days, so only
-read lines after Houston's "21:12 Houston: Chris to bed" line; the claim-the-slot waiter that worked is in the S10 session log.
-Gemini came back from quota late on 10-31 (the Record-pictures pass); the free OpenCode model was silent all day. One leftover:
-the merged room-shapes sub-agent worktree `.claude/worktrees/agent-ab1a981026a31c59a` (fe1ef96, merged) is locked by S10's
-process; remove it once S10 is archived (`git worktree remove`, `git branch -d worktree-agent-ab1a981026a31c59a`).
+**Live** at https://cadidas333.github.io/Arise/ and `/3d/`: stamp 20261106053914, `main` = 69b0741 (F26 to F31: title colours,
+shadow style, 3D Record pictures, Screen shake, Screen flashes and Damage numbers, controller support).
+**Merged on `v18-world` (0d1e4f1 + this refresh), NOT yet live:** F32 controller in the hub and pause menus, F33 controller rumble
+(setting ON/OFF), F34 Recent runs in STATUS, F35 Photo mode (pause menu), F36 RECORD fight tips. Built 11-13 by four cloud runs
+(GitHub PRs 1 to 4) and two Claude sub-agents, each reviewed line by line; per-PR test runs all passed in the cloud, and the quick
+local checks on the combined code passed (gamepad 36, rumble 17, recent runs 19, photo mode 16, comfort settings 31).
+**Next step to ship them:** the full local suite, `tools/stamp.sh`, one muted browser check of both views (pause → PHOTO MODE; a
+controller-menu pass with a fake pad; STATUS shows Recent runs; RECORD shows a tip for a slain enemy), then
+`git branch -f main v18-world && git push origin main`, `gh run watch`, stamp on both public pages, a LIVE line in the night log.
+Free rein and Houston's proxy (CLAUDE.md top rule, 11-09) cover the ship. The full run was queued at 18:11 and died with the
+21:00 restart before it started.
+**Machine rules (11-13, Houston burn con, `_brain/Decisions/2026-11-13-Burn-And-Games.md`):** Claude-heavy, Mac-light; at most
+2 game lanes (Arise is lane 2); cloud runs for heavy work where the repo is on GitHub; a local heavy job only on the charger,
+battery 50%+, 1-minute load under 12, with power and load on its START line, one machine-wide; yield when load passes 12.
+The slot check lives in the session scratchpad (`slot2.py`) and is wiped by every restart: rebuild it from the S11 session log
+description (hold/lift in broadcast.md, no open START in the last 80 log lines, a START older than 3 hours is stale).
 
 ### Try this first (for Chris, plain words)
 1. **On an iPad:** it works now (before 10-27 an iPad held sideways got no joystick or buttons).
@@ -35,23 +41,33 @@ process; remove it once S10 is archived (`git worktree remove`, `git branch -d w
 15. **CONTROLS, Screen flashes and Damage numbers (new 11-06):** softer or no flashes, and hide the numbers if you prefer.
 16. **Play with a game controller (new 11-06):** plug in an Xbox, PlayStation or Switch Pro pad; the CONTROLS tab lists the
     buttons. Tell me if the layout feels wrong. (Music may need one click or key press before it starts.)
+17. **(Once F32 to F36 are live)** With a controller, LB and RB switch the hub tabs, the D-pad moves a cyan highlight and A
+    presses (pause menu too); big hits rumble the controller (CONTROLS, Controller rumble, to turn it off).
+18. **(Once live) STATUS, Recent runs:** your last 10 runs with grade, time and kills, plus rifts and falls.
+19. **(Once live) Pause, PHOTO MODE:** everything over the game disappears for a clean screenshot; any key, click or tap returns.
+20. **(Once live) RECORD:** each enemy you have met shows a one-line fight tip under its name.
 
 ## Ranked next actions
+0. **Ship F32 to F36** (see "Where we left off"): full suite, stamp, muted browser check, push `main`, check the live stamp.
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
    E4 rooms per gate, E5 gear drops). Do not make enemies hit harder before he has (his word, 2026-10-12). Levers when he asks:
    `shadowDmg`, boss health, enemy damage.
 2. **Kevin's ideas** as they arrive from the KevinNotary session (it messages the newest "Arise S<n>" session): weigh them, build
    what Chris approves or free rein covers, reply through that session.
 3. **More variety without difficulty, our call under free rein** (Houston: use the runway; weekly resets Sunday 21:00): the listed
-   pieces are done (title colours F26, bot pathing G10, shadow style F27); pick the next from OPEN_THREADS or Kevin's ideas (F28 done too). One job at a
-   time at night; brief, worker (`--engine auto`, remote-only pass at night), else a Sonnet sub-agent in a worktree that claims the
-   slot before tests; review, test both views, stamp, ship.
+   pieces are done (F26 to F36); pick the next from OPEN_THREADS or Kevin's ideas. Route: the free worker first; during the burn
+   (until the 11-15 21:00 reset) cloud runs are welcome: `RemoteTrigger` one-time routine on `env_01URWNcYcvZ1WjNyVgsEXqqf`,
+   `clear_mcp_connections: true`, a prompt that branches from `v18-world`, implements one brief and opens a non-draft PR into
+   `v18-world`; wait with `gh pr list --head <branch>` (filter `.[]`, not `.[0]`, or an empty list prints "null"); review the diff;
+   `gh pr merge`. Small review fixes go to a Sonnet sub-agent in a worktree. Then test both views, stamp, ship.
 4. Parked: shared leaderboard and co-op (F1, Chris's word to start).
 
 ### Checks after every merge (all must pass before `tools/stamp.sh`)
 `bash tools/check_names.sh`, `node -e "require('./tools/lib/headless.js').createGame()"`, `node tools/test_layout.js` (PASS 8000),
 `test_gear` (PASS 626220), `test_army` (PASS 570), `test_boxes` (PASS 3595), `test_titles` (PASS 71), `test_shadow_names` (PASS 16),
-`test_record` (PASS 156), `test_equip_best` (PASS 22), `test_rift` (PASS 310); the bot when balance or levelling changes. Frames: the headless Chrome recipe
+`test_record` (PASS 166 before F36; more after), `test_equip_best` (PASS 22), `test_rift` (PASS 310), and every other
+`tools/test_*.js` (title colours 43, shadow style 15, bot paths 46002, shake 18, comfort 31, gamepad 36, rumble 17, recent runs 19,
+photo mode 16); the bot when balance or levelling changes. Frames: the headless Chrome recipe
 (LESSONS 2026-10-15; the browser pane hangs under heavy load, so prefer headless; give each run its own `--user-data-dir` and a
 `perl -e 'alarm 100; exec @ARGV'` guard).
 

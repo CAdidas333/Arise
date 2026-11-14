@@ -1,5 +1,15 @@
 # Arise — Session Log
 
+## Session 11, 2026-11-13 (Chris used a held reset at 17:25: "burn the week"; Houston runs games as 2 lanes, Claude-heavy, Mac-light)
+
+### What Changed
+- Briefs b30386e (controller menus), 592e356 (rumble), d78f8ef (Recent runs), 272830f (Photo mode), 4406a01 and e9d3332 (RECORD fight tips: 29 tips written by the orchestrator; three used "across", which holds the banned CROSS, and were reworded).
+- Four one-time cloud runs (Sonnet, Anthropic cloud env, no connectors) built them and opened GitHub PRs 1 to 4 into `v18-world`. Reviewed line by line: PR 2 needed two fixes (in a menu only Start passes through, so LT/RT no longer jump tabs; the cyan outline never lingers on a pause button), done by a Sonnet sub-agent (435a96f); PR 3 left the 2D [E] ARISE prompt showing in Photo mode and the controller could not reach the pause menu's view-switch link, both fixed by a second sub-agent (8ce15db); PR 4 rewrote the enemy helper, so all 29 defs were compared field by field (only `lore` differs). Merged: 58269a1, 1d27ded, ce3fa3e, bc4cb4f, 7e638a2. Register rows F32 to F36.
+- NOT live yet: the full local suite and stamp were queued for load under 12 and died with the 21:00 restart. Handoff refreshed 21:40 (Houston: drift watch).
+
+### Checks
+Cloud per-PR runs: every `tools/test_*.js` PASS. Local on the combined code: names ok, headless load, gamepad 36, rumble 17, recent runs 19, photo mode 16, comfort settings 31.
+
 ## Session 11, third night — 2026-11-06 (Houston has the con; the Mac restarted 21:36)
 
 - **Screen flashes and Damage numbers** (F30; brief 1ec6be8, free OpenCode worker 516da7c, accepted as is, merge 0101b4d, stamp 2f0e992), LIVE on Houston's GO (D-0326): main 40b32a1, stamp 20261106001744. The first queued run died with the 21:36 restart before it started (nothing lost; the scratchpad, `slot2.py` included, was wiped and rebuilt).
