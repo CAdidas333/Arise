@@ -47,6 +47,8 @@ description (hold/lift in broadcast.md, no open START in the last 80 log lines, 
 20. **(New 11-13) RECORD:** each enemy you have met shows a one-line fight tip under its name.
 
 ## Ranked next actions
+0. **Kevin's idea K1 (11-14):** when Houston clears the Mac, brief and build (a) an optional over-the-shoulder camera in the 3D
+   view and (b) punchier sword hits; tell Kevin through the KevinNotary session when they are live. Unity is Chris's call.
 1. **When Chris has played, tune from what he says** (F12 boss fights, F11 square-up and counter, E1 too easy, E2 first boss,
    E4 rooms per gate, E5 gear drops). Do not make enemies hit harder before he has (his word, 2026-10-12). Levers when he asks:
    `shadowDmg`, boss health, enemy damage.
